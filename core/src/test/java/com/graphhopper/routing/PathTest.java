@@ -864,6 +864,326 @@ public class PathTest {
         assertEquals(delta, instr.getTurnAngle(), 0.01);
     }
 
+    /**
+     * Issue #2771: entrance and exit turns can have opposite signs even though travel around the
+     * roundabout is consistently counterclockwise. The angle has to follow that geometry.
+     */
+    @Test
+    public void testRoundaboutTurnAngleFollowsCounterclockwiseGeometry() {
+        BaseGraph g = newInstructionGraph();
+        NodeAccess na = g.getNodeAccess();
+        // Approach heads south into the circle, so the entrance is a left turn (old code: clockwise).
+        // The circle itself bends left. The departure heads north, a right turn (old code: counterclockwise).
+        na.setNode(0, 48.003, 11.000);
+        na.setNode(1, 48.000, 11.000);
+        na.setNode(2, 48.000, 11.002);
+        na.setNode(3, 48.002, 11.002);
+        na.setNode(4, 48.002, 11.000);
+        na.setNode(5, 48.004, 11.000);
+        directed(g, 0, 1, 10, "Approach", false);
+        directed(g, 1, 2, 5, null, true);
+        directed(g, 2, 3, 5, null, true);
+        directed(g, 3, 4, 5, null, true);
+        directed(g, 4, 5, 7, "Leave", false);
+
+        InstructionList separateExits = routeInstructions(g, 0, 5, true);
+        assertEquals(List.of("continue onto Approach",
+                        "at roundabout, take exit 1 onto Leave",
+                        "exit the roundabout onto Leave",
+                        "arrive at destination"),
+                getTurnDescriptions(separateExits));
+        RoundaboutInstruction instr = (RoundaboutInstruction) separateExits.get(1);
+        RoundaboutInstruction exit = (RoundaboutInstruction) separateExits.get(2);
+        assertEquals(-2 * Math.PI, instr.getTurnAngle(), 1e-9);
+        assertTrue(instr.getTurnAngle() < 0);
+        assertEquals(-6.28, turnAngleJson(instr), 0.0);
+        assertEquals(1, instr.getExitNumber());
+        assertEquals(Boolean.FALSE, instr.getExtraInfoJSON().get("exited"));
+        assertEquals(15, instr.getDistance(), 1e-6);
+        assertEquals(Instruction.ROUNDABOUT_EXIT, exit.getSign());
+        assertEquals(1, exit.getExitNumber());
+        assertTrue(Double.isNaN(exit.getTurnAngle()));
+        assertFalse(exit.getExtraInfoJSON().containsKey("turn_angle"));
+        assertEquals(Boolean.TRUE, exit.getExtraInfoJSON().get("exited"));
+        assertEquals(7, exit.getDistance(), 1e-6);
+        assertEquals(10, separateExits.get(0).getDistance(), 1e-6);
+
+        InstructionList combined = routeInstructions(g, 0, 5, false);
+        assertEquals(List.of("continue onto Approach",
+                        "at roundabout, take exit 1 onto Leave",
+                        "arrive at destination"),
+                getTurnDescriptions(combined));
+        instr = (RoundaboutInstruction) combined.get(1);
+        assertEquals(-2 * Math.PI, instr.getTurnAngle(), 1e-9);
+        assertEquals(-6.28, turnAngleJson(instr), 0.0);
+        assertEquals(Boolean.TRUE, instr.getExtraInfoJSON().get("exited"));
+        assertEquals(22, instr.getDistance(), 1e-6);
+        assertEquals(1, instr.getExitNumber());
+    }
+
+    /**
+     * Mirror image: both the entrance and the exit bend right, so either turn alone reports
+     * counterclockwise. Clockwise travel has to win anyway.
+     */
+    @Test
+    public void testRoundaboutTurnAngleFollowsClockwiseGeometry() {
+        BaseGraph g = newInstructionGraph();
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 48.000, 11.004);
+        na.setNode(1, 48.000, 11.000);
+        na.setNode(4, 48.002, 11.000);
+        na.setNode(3, 48.002, 11.002);
+        na.setNode(2, 48.000, 11.002);
+        na.setNode(5, 48.000, 10.998);
+        directed(g, 0, 1, 10, "Approach", false);
+        directed(g, 1, 4, 5, null, true);
+        directed(g, 4, 3, 5, null, true);
+        directed(g, 3, 2, 5, null, true);
+        directed(g, 2, 5, 7, "Leave", false);
+
+        InstructionList wayList = routeInstructions(g, 0, 5, false);
+        assertEquals(List.of("continue onto Approach",
+                        "at roundabout, take exit 1 onto Leave",
+                        "arrive at destination"),
+                getTurnDescriptions(wayList));
+        RoundaboutInstruction instr = (RoundaboutInstruction) wayList.get(1);
+        assertEquals(Math.PI, instr.getTurnAngle(), 1e-9);
+        assertTrue(instr.getTurnAngle() > 0);
+        assertEquals(3.14, turnAngleJson(instr), 0.0);
+        assertEquals(1, instr.getExitNumber());
+        assertEquals(22, instr.getDistance(), 1e-6);
+    }
+
+    /**
+     * The same arc as several edges and as one edge with pillar points, including a duplicate point
+     * and a heading that crosses the -pi/pi boundary. The entrance turns right and the exit turns
+     * left, so those two signs disagree and only the arc can supply the direction.
+     */
+    @Test
+    public void testRoundaboutTurnAngleEdgesAndPillarsAgree() {
+        double[][] arc = {
+                {48.000, 11.000},
+                {48.000, 11.003},
+                {48.002, 11.005},
+                {48.004, 11.005},
+                {48.006, 11.003},
+                {48.0062, 11.001},
+                {48.0058, 10.999},
+                {48.004, 10.997}
+        };
+        BaseGraph edged = newInstructionGraph();
+        NodeAccess edgedNodes = edged.getNodeAccess();
+        edgedNodes.setNode(0, 47.997, 11.000);
+        for (int i = 0; i < arc.length; i++)
+            edgedNodes.setNode(i + 1, arc[i][0], arc[i][1]);
+        edgedNodes.setNode(arc.length + 1, 48.006, 11.001);
+        directed(edged, 0, 1, 10, "Approach", false);
+        for (int i = 0; i < arc.length - 1; i++) {
+            // repeat the point where the heading passes west, so a duplicate coordinate is on the arc
+            PointList duplicate = (i == 5) ? Helper.createPointList(arc[5][0], arc[5][1]) : null;
+            directed(edged, i + 1, i + 2, 5, null, true, duplicate);
+        }
+        directed(edged, arc.length, arc.length + 1, 7, "Leave", false);
+
+        BaseGraph pillared = newInstructionGraph();
+        NodeAccess pillaredNodes = pillared.getNodeAccess();
+        pillaredNodes.setNode(0, 47.997, 11.000);
+        pillaredNodes.setNode(1, arc[0][0], arc[0][1]);
+        pillaredNodes.setNode(2, arc[arc.length - 1][0], arc[arc.length - 1][1]);
+        pillaredNodes.setNode(3, 48.006, 11.001);
+        PointList pillars = new PointList(arc.length, false);
+        for (int i = 1; i < arc.length - 1; i++) {
+            pillars.add(arc[i][0], arc[i][1]);
+            if (i == 5)
+                pillars.add(arc[i][0], arc[i][1]);
+        }
+        directed(pillared, 0, 1, 10, "Approach", false);
+        directed(pillared, 1, 2, 35, null, true, pillars);
+        directed(pillared, 2, 3, 7, "Leave", false);
+
+        RoundaboutInstruction fromEdges = (RoundaboutInstruction) routeInstructions(edged, 0, arc.length + 1, false).get(1);
+        RoundaboutInstruction fromPillars = (RoundaboutInstruction) routeInstructions(pillared, 0, 3, false).get(1);
+        double expected = expectedRoundaboutAngle(edgedNodes, 0, 1, arc.length, arc.length + 1, false);
+        assertEquals(expected, fromEdges.getTurnAngle(), 1e-8);
+        assertEquals(expected, fromPillars.getTurnAngle(), 1e-8);
+        assertTrue(fromEdges.getTurnAngle() < 0);
+        assertEquals(fromEdges.getTurnAngle(), fromPillars.getTurnAngle(), 1e-8);
+        assertEquals(Helper.round(expected, 2), turnAngleJson(fromEdges), 0.0);
+        assertEquals(turnAngleJson(fromEdges), turnAngleJson(fromPillars), 0.0);
+        assertEquals("at roundabout, take exit 1 onto Leave", fromEdges.getTurnDescription(tr));
+        assertEquals("at roundabout, take exit 1 onto Leave", fromPillars.getTurnDescription(tr));
+        assertEquals(1, fromEdges.getExitNumber());
+        assertEquals(1, fromPillars.getExitNumber());
+    }
+
+    @Test
+    public void testRoundaboutTurnAngleWhenRouteStartsOrEndsInside() {
+        // wholly inside, with enough of a leftward bend to fix the direction
+        BaseGraph inside = newInstructionGraph();
+        NodeAccess insideNodes = inside.getNodeAccess();
+        insideNodes.setNode(1, 48.000, 11.000);
+        insideNodes.setNode(2, 48.000, 11.002);
+        insideNodes.setNode(3, 48.002, 11.002);
+        directed(inside, 1, 2, 5, null, true);
+        directed(inside, 2, 3, 5, null, true);
+        InstructionList insideList = routeInstructions(inside, 1, 3, false);
+        assertEquals(List.of("enter roundabout", "arrive at destination"), getTurnDescriptions(insideList));
+        RoundaboutInstruction insideInstr = (RoundaboutInstruction) insideList.get(0);
+        assertEquals(expectedRoundaboutAngle(insideNodes, 1, 2, 2, 3, false), insideInstr.getTurnAngle(), 1e-9);
+        assertEquals(-3 * Math.PI / 2, insideInstr.getTurnAngle(), 1e-9);
+        assertTrue(insideInstr.getTurnAngle() < 0);
+        assertEquals(-4.71, turnAngleJson(insideInstr), 0.0);
+        assertEquals(Boolean.FALSE, insideInstr.getExtraInfoJSON().get("exited"));
+        assertEquals(0, insideInstr.getExitNumber());
+        assertEquals(10, insideInstr.getDistance(), 1e-6);
+
+        // starts on the circle; the departure bends left and would report the wrong direction on its own
+        BaseGraph fromCircle = newInstructionGraph();
+        NodeAccess fromNodes = fromCircle.getNodeAccess();
+        fromNodes.setNode(1, 48.000, 11.000);
+        fromNodes.setNode(2, 48.000, 11.002);
+        fromNodes.setNode(3, 48.002, 11.002);
+        fromNodes.setNode(4, 48.002, 11.000);
+        fromNodes.setNode(5, 48.000, 10.998);
+        directed(fromCircle, 1, 2, 5, null, true);
+        directed(fromCircle, 2, 3, 5, null, true);
+        directed(fromCircle, 3, 4, 5, null, true);
+        directed(fromCircle, 4, 5, 7, "Leave", false);
+        InstructionList fromList = routeInstructions(fromCircle, 1, 5, true);
+        assertEquals(List.of("at roundabout, take exit 1 onto Leave",
+                        "exit the roundabout onto Leave",
+                        "arrive at destination"),
+                getTurnDescriptions(fromList));
+        RoundaboutInstruction fromInstr = (RoundaboutInstruction) fromList.get(0);
+        assertEquals(expectedRoundaboutAngle(fromNodes, 1, 2, 4, 5, false), fromInstr.getTurnAngle(), 1e-9);
+        assertTrue(fromInstr.getTurnAngle() < 0);
+        assertEquals(Helper.round(fromInstr.getTurnAngle(), 2), turnAngleJson(fromInstr), 0.0);
+        assertEquals(15, fromInstr.getDistance(), 1e-6);
+        assertTrue(Double.isNaN(((RoundaboutInstruction) fromList.get(1)).getTurnAngle()));
+        assertFalse(fromList.get(1).getExtraInfoJSON().containsKey("turn_angle"));
+
+        // ends on the circle; the entrance is a left turn and would report clockwise on its own
+        BaseGraph ontoCircle = newInstructionGraph();
+        NodeAccess ontoNodes = ontoCircle.getNodeAccess();
+        ontoNodes.setNode(0, 48.003, 11.000);
+        ontoNodes.setNode(1, 48.000, 11.000);
+        ontoNodes.setNode(2, 48.000, 11.002);
+        ontoNodes.setNode(3, 48.002, 11.002);
+        ontoNodes.setNode(4, 48.002, 11.000);
+        directed(ontoCircle, 0, 1, 10, "Approach", false);
+        directed(ontoCircle, 1, 2, 5, null, true);
+        directed(ontoCircle, 2, 3, 5, null, true);
+        directed(ontoCircle, 3, 4, 5, null, true);
+        InstructionList ontoList = routeInstructions(ontoCircle, 0, 4, false);
+        assertEquals(List.of("continue onto Approach", "enter roundabout", "arrive at destination"),
+                getTurnDescriptions(ontoList));
+        RoundaboutInstruction ontoInstr = (RoundaboutInstruction) ontoList.get(1);
+        assertEquals(expectedRoundaboutAngle(ontoNodes, 0, 1, 3, 4, false), ontoInstr.getTurnAngle(), 1e-9);
+        assertEquals(-Math.PI / 2, ontoInstr.getTurnAngle(), 1e-9);
+        assertTrue(ontoInstr.getTurnAngle() < 0);
+        assertEquals(-1.57, turnAngleJson(ontoInstr), 0.0);
+        assertEquals(Boolean.FALSE, ontoInstr.getExtraInfoJSON().get("exited"));
+        assertEquals(15, ontoInstr.getDistance(), 1e-6);
+        assertEquals(10, ontoList.get(0).getDistance(), 1e-6);
+    }
+
+    @Test
+    public void testSuccessiveRoundaboutsDoNotKeepRotation() {
+        BaseGraph g = newInstructionGraph();
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 48.003, 11.000);
+        na.setNode(1, 48.000, 11.000);
+        na.setNode(2, 48.000, 11.002);
+        na.setNode(3, 48.002, 11.002);
+        na.setNode(4, 48.002, 11.000);
+        na.setNode(5, 48.004, 11.000);
+        na.setNode(6, 48.004, 11.004);
+        na.setNode(7, 48.002, 11.004);
+        na.setNode(8, 48.002, 11.002);
+        na.setNode(9, 48.005, 11.002);
+        directed(g, 0, 1, 10, "Approach", false);
+        directed(g, 1, 2, 5, null, true);
+        directed(g, 2, 3, 5, null, true);
+        directed(g, 3, 4, 5, null, true);
+        directed(g, 4, 5, 7, "Link", false);
+        directed(g, 5, 6, 5, null, true);
+        directed(g, 6, 7, 5, null, true);
+        directed(g, 7, 8, 5, null, true);
+        directed(g, 8, 9, 7, "Out", false);
+
+        InstructionList wayList = routeInstructions(g, 0, 9, false);
+        assertEquals(List.of("continue onto Approach",
+                        "at roundabout, take exit 1 onto Link",
+                        "at roundabout, take exit 1 onto Out",
+                        "arrive at destination"),
+                getTurnDescriptions(wayList));
+        RoundaboutInstruction first = (RoundaboutInstruction) wayList.get(1);
+        RoundaboutInstruction second = (RoundaboutInstruction) wayList.get(2);
+        assertEquals(-2 * Math.PI, first.getTurnAngle(), 1e-9);
+        assertTrue(first.getTurnAngle() < 0);
+        assertEquals(-6.28, turnAngleJson(first), 0.0);
+        assertEquals(Math.PI, second.getTurnAngle(), 1e-9);
+        assertTrue(second.getTurnAngle() > 0);
+        assertEquals(3.14, turnAngleJson(second), 0.0);
+        assertEquals(22, first.getDistance(), 1e-6);
+        assertEquals(22, second.getDistance(), 1e-6);
+        assertEquals(1, first.getExitNumber());
+        assertEquals(1, second.getExitNumber());
+    }
+
+    /**
+     * A straight roundabout edge has no curvature. Agreeing approach and departure turns still decide
+     * the direction; opposing turns stay undefined and the JSON angle is omitted.
+     */
+    @Test
+    public void testStraightRoundaboutEdgeKeepsEntranceExitEvidence() {
+        BaseGraph agreeing = newInstructionGraph();
+        NodeAccess agreeingNodes = agreeing.getNodeAccess();
+        agreeingNodes.setNode(0, 48.000, 11.000);
+        agreeingNodes.setNode(1, 48.000, 11.002);
+        agreeingNodes.setNode(2, 48.002, 11.004);
+        agreeingNodes.setNode(3, 48.004, 11.004);
+        directed(agreeing, 0, 1, 10, "Approach", false);
+        directed(agreeing, 1, 2, 20, null, true);
+        directed(agreeing, 2, 3, 30, "Out", false);
+        InstructionList agreeingList = routeInstructions(agreeing, 0, 3, false);
+        assertEquals(List.of("continue onto Approach",
+                        "at roundabout, take exit 1 onto Out",
+                        "arrive at destination"),
+                getTurnDescriptions(agreeingList));
+        RoundaboutInstruction agreeingInstr = (RoundaboutInstruction) agreeingList.get(1);
+        assertEquals(Math.PI / 2, agreeingInstr.getTurnAngle(), 1e-9);
+        assertEquals(expectedRoundaboutAngle(agreeingNodes, 0, 1, 2, 3, true), agreeingInstr.getTurnAngle(), 1e-9);
+        assertEquals(1.57, turnAngleJson(agreeingInstr), 0.0);
+        assertEquals(50, agreeingInstr.getDistance(), 1e-6);
+        assertEquals(1, agreeingInstr.getExitNumber());
+
+        BaseGraph conflicting = newInstructionGraph();
+        conflicting.getNodeAccess().setNode(0, 48.000, 11.000);
+        conflicting.getNodeAccess().setNode(1, 48.000, 11.002);
+        conflicting.getNodeAccess().setNode(2, 48.002, 11.002);
+        conflicting.getNodeAccess().setNode(3, 47.998, 11.002);
+        directed(conflicting, 0, 1, 10, "Approach", false);
+        directed(conflicting, 1, 2, 20, null, true);
+        directed(conflicting, 2, 3, 30, "Out", false);
+        InstructionList conflictingList = routeInstructions(conflicting, 0, 3, true);
+        assertEquals(List.of("continue onto Approach",
+                        "at roundabout, take exit 1 onto Out",
+                        "exit the roundabout onto Out",
+                        "arrive at destination"),
+                getTurnDescriptions(conflictingList));
+        RoundaboutInstruction conflictingInstr = (RoundaboutInstruction) conflictingList.get(1);
+        assertTrue(Double.isNaN(conflictingInstr.getTurnAngle()));
+        assertFalse(conflictingInstr.getExtraInfoJSON().containsKey("turn_angle"));
+        assertEquals(1, conflictingInstr.getExitNumber());
+        assertEquals(20, conflictingInstr.getDistance(), 1e-6);
+        RoundaboutInstruction conflictingExit = (RoundaboutInstruction) conflictingList.get(2);
+        assertTrue(Double.isNaN(conflictingExit.getTurnAngle()));
+        assertFalse(conflictingExit.getExtraInfoJSON().containsKey("turn_angle"));
+        assertEquals(30, conflictingExit.getDistance(), 1e-6);
+        assertEquals(Instruction.ROUNDABOUT_EXIT, conflictingExit.getSign());
+    }
+
     @Test
     public void testCalcInstructionsIgnoreContinue() {
         // Follow a couple of straight edges, including a name change
@@ -1530,6 +1850,50 @@ public class PathTest {
         public String getName() {
             return "access";
         }
+    }
+
+    private BaseGraph newInstructionGraph() {
+        return new BaseGraph.Builder(carManager).create();
+    }
+
+    private EdgeIteratorState directed(BaseGraph g, int from, int to, double distance, String name, boolean roundabout) {
+        return directed(g, from, to, distance, name, roundabout, null);
+    }
+
+    private EdgeIteratorState directed(BaseGraph g, int from, int to, double distance, String name, boolean roundabout, PointList pillars) {
+        BooleanEncodedValue accessEnc = carManager.getBooleanEncodedValue(VehicleAccess.key("car"));
+        BooleanEncodedValue roundaboutFlag = carManager.getBooleanEncodedValue(Roundabout.KEY);
+        EdgeIteratorState edge = g.edge(from, to).setDistance(distance).set(carAvSpeedEnc, 60, 0).set(accessEnc, true, false);
+        if (name != null)
+            edge.setKeyValues(Map.of(STREET_NAME, new KValue(name)));
+        if (roundabout)
+            edge.set(roundaboutFlag, true);
+        if (pillars != null && !pillars.isEmpty())
+            edge.setWayGeometry(pillars);
+        return edge;
+    }
+
+    private InstructionList routeInstructions(BaseGraph g, int from, int to, boolean includeExits) {
+        Weighting weighting = new SpeedWeighting(carAvSpeedEnc);
+        Path path = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(from, to);
+        assertTrue(path.isFound(), () -> "no route " + from + "->" + to);
+        return InstructionsFromEdges.calcInstructions(path, path.graph, weighting, carManager, tr, includeExits);
+    }
+
+    /**
+     * Same entrance-to-exit radian as {@link RoundaboutInstruction#getTurnAngle()}, with the sign selected by the caller.
+     */
+    private static double expectedRoundaboutAngle(NodeAccess na, int inFrom, int inTo, int outFrom, int outTo, boolean clockwise) {
+        double inOrientation = AngleCalc.ANGLE_CALC.calcOrientation(na.getLat(inFrom), na.getLon(inFrom), na.getLat(inTo), na.getLon(inTo));
+        double outOrientation = AngleCalc.ANGLE_CALC.calcOrientation(na.getLat(outFrom), na.getLon(outFrom), na.getLat(outTo), na.getLon(outTo));
+        outOrientation = AngleCalc.ANGLE_CALC.alignOrientation(inOrientation, outOrientation);
+        return (clockwise ? Math.PI : -Math.PI) - (outOrientation - inOrientation);
+    }
+
+    private static double turnAngleJson(Instruction instruction) {
+        Object value = instruction.getExtraInfoJSON().get("turn_angle");
+        assertNotNull(value, "turn_angle omitted");
+        return ((Number) value).doubleValue();
     }
 
     List<String> getTurnDescriptions(InstructionList instructionJson) {
