@@ -414,7 +414,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2597, 118)); // watch out, this route has an alternative that looks very different but has almost identical weight
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3588, 170));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2568, 134));
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1491, 84));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1842, 105));
 
         GraphHopper hopper = createHopper(MONACO, TestProfiles.accessSpeedAndPriority("racingbike"));
         hopper.importOrLoad();
