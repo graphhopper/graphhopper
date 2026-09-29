@@ -706,8 +706,9 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), parameters, classHelper, lookup, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), parameters, lookup));
-                    expressions.append("else {").append(statement.operation().build(statement.value())).append("; }\n");
+                    ParseResult valueResult = ValueExpressionVisitor.parseValue(statement.value(), parameters, lookup);
+                    createObjects.addAll(valueResult.guessedVariables);
+                    expressions.append("else {").append(statement.operation().build(valueResult.converted)).append("; }\n");
                 }
             } else if (statement.keyword() == Statement.Keyword.ELSEIF || statement.keyword() == Statement.Keyword.IF) {
                 ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.condition(), nameInConditionValidator, classHelper);
@@ -724,9 +725,10 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), parameters, classHelper, lookup, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    createObjects.addAll(ValueExpressionVisitor.findVariables(statement.value(), parameters, lookup));
+                    ParseResult valueResult = ValueExpressionVisitor.parseValue(statement.value(), parameters, lookup);
+                    createObjects.addAll(valueResult.guessedVariables);
                     expressions.append("if (").append(parseResult.converted).append(") {").
-                            append(statement.operation().build(statement.value())).append(";}\n");
+                            append(statement.operation().build(valueResult.converted)).append(";}\n");
                 }
             } else {
                 throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");

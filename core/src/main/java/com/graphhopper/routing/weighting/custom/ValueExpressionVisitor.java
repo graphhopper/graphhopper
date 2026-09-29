@@ -35,9 +35,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Expression visitor for right-hand side value of limit_to or multiply_by.
+ * Checks the right-hand side value of limit_to, multiply_by or add and builds the "converted" Java from
+ * the parsed value, not from the original text. So comments and unicode escapes never reach the
+ * compiler and the checks below see the same text as the compiler.
  */
-public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
+public class ValueExpressionVisitor {
 
     private static final String INFINITY = Double.toString(Double.POSITIVE_INFINITY);
     private static final Set<String> allowedMethodParents = Set.of("Math");
@@ -45,7 +47,6 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     private static final Set<String> allowedMethods = Set.of("sqrt", "min", "max");
     private final ParseResult result;
     private final NameValidator variableValidator;
-    private String invalidMessage;
 
     public ValueExpressionVisitor(ParseResult result, NameValidator variableValidator) {
         this.result = result;
@@ -62,107 +63,79 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return false;
     }
 
-    @Override
-    public Boolean visitRvalue(Java.Rvalue rv) throws Exception {
+    /**
+     * Checks rv against the allowed list and returns the Java text for it. Throws for anything not allowed.
+     */
+    String emit(Java.Rvalue rv) throws Exception {
         if (rv instanceof Java.AmbiguousName n) {
-            if (n.identifiers.length == 1) {
-                String arg = n.identifiers[0];
-                // e.g. like road_class
-                if (isValidIdentifier(arg)) return true;
-                invalidMessage = "'" + arg + "' not available";
-                return false;
-            }
-            invalidMessage = "identifier " + n + " invalid";
-            return false;
-        }
-        if (rv instanceof Java.Literal) {
-            return true;
+            if (n.identifiers.length != 1)
+                throw new IllegalArgumentException("identifier " + n + " invalid");
+            String arg = n.identifiers[0];
+            // e.g. like max_speed
+            if (isValidIdentifier(arg)) return arg;
+            throw new IllegalArgumentException("'" + arg + "' not available");
+        } else if (rv instanceof Java.IntegerLiteral || rv instanceof Java.FloatingPointLiteral) {
+            // a value is a number, so text, char, boolean and null literals are not allowed
+            return ((Java.Literal) rv).value;
         } else if (rv instanceof Java.UnaryOperation uop) {
             result.operators.add(uop.operator);
-            if (uop.operator.equals("-"))
-                return uop.operand.accept(this);
-            return false;
+            if (!uop.operator.equals("-"))
+                throw new IllegalArgumentException("invalid operation '" + uop.operator + "'");
+            String operand = emit(uop.operand);
+            // "- -x" must not become the decrement "--x"
+            return operand.startsWith("-") ? "- " + operand : "-" + operand;
         } else if (rv instanceof Java.MethodInvocation mi) {
-            if (allowedMethods.contains(mi.methodName)) {
-                // skip methods like this.in()
-                if (mi.target != null) {
-                    // edge.getDistance(), Math.sqrt(2) => check target name (edge or Math)
-                    Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
-                    if (n.identifiers.length == 2) {
-                        if (allowedMethodParents.contains(n.identifiers[0])) {
-                            // edge.getDistance(), Math.sqrt(x) => check target name i.e. edge or Math
-                            if (mi.arguments.length == 0) {
-                                result.guessedVariables.add(n.identifiers[0]); // return "edge"
-                                return true;
-                            } else if (mi.arguments.length == 1) {
-                                // return "x" but verify before
-                                return mi.arguments[0].accept(this);
-                            } else if (mi.arguments.length == 2) {
-                                // Math.min(x, 10) or Math.max(0.5, x)
-                                return mi.arguments[0].accept(this) && mi.arguments[1].accept(this);
-                            }
-                        }
-                        // TODO unlike in ConditionalExpressionVisitor we don't support a call like road_class.ordinal()
-                        //  as this is currently unsupported in FindMinMax
-                    }
-                }
-            }
-            invalidMessage = mi.methodName + " is an illegal method in a value expression";
-            return false;
-        } else if (rv instanceof Java.ParenthesizedExpression) {
-            return ((Java.ParenthesizedExpression) rv).value.accept(this);
+            // Math.sqrt(x), Math.min(x, 10) => the target is [Math, sqrt]. Skips methods like this.in() or chained calls.
+            // TODO unlike in ConditionalExpressionVisitor we don't support a call like road_class.ordinal()
+            //  as this is currently unsupported in FindMinMax
+            if (!allowedMethods.contains(mi.methodName) || mi.target == null
+                    || !(mi.target.toRvalue() instanceof Java.AmbiguousName n) || n.identifiers.length != 2
+                    || !allowedMethodParents.contains(n.identifiers[0])
+                    || mi.arguments.length < 1 || mi.arguments.length > 2)
+                throw new IllegalArgumentException(mi.methodName + " is an illegal method in a value expression");
+            String args = emit(mi.arguments[0]);
+            if (mi.arguments.length == 2) args += ", " + emit(mi.arguments[1]);
+            return n.identifiers[0] + "." + mi.methodName + "(" + args + ")";
+        } else if (rv instanceof Java.ParenthesizedExpression pe) {
+            return "(" + emit(pe.value) + ")";
         } else if (rv instanceof Java.BinaryOperation binOp) {
             String op = binOp.operator;
             result.operators.add(op);
-            if (op.equals("*") || op.equals("+") || binOp.operator.equals("-")) {
-                return binOp.lhs.accept(this) && binOp.rhs.accept(this);
-            }
-            invalidMessage = "invalid operation '" + op + "'";
-            return false;
+            if (!op.equals("*") && !op.equals("+") && !op.equals("-"))
+                throw new IllegalArgumentException("invalid operation '" + op + "'");
+            return emit(binOp.lhs) + " " + op + " " + emit(binOp.rhs);
         }
-        return false;
-    }
-
-    @Override
-    public Boolean visitPackage(Java.Package p) {
-        return false;
-    }
-
-    @Override
-    public Boolean visitType(Java.Type t) {
-        return false;
-    }
-
-    @Override
-    public Boolean visitConstructorInvocation(Java.ConstructorInvocation ci) {
-        return false;
+        throw new IllegalArgumentException("invalid expression '" + rv + "'");
     }
 
     static ParseResult parse(String expression, NameValidator variableValidator) {
         ParseResult result = new ParseResult();
+        result.guessedVariables = new LinkedHashSet<>();
+        result.operators = new LinkedHashSet<>();
         try {
-            Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
+            // no file name => message starts with "Line 1, Column 7: ..."
+            Parser parser = new Parser(new Scanner(null, new StringReader(expression)));
             Java.Atom atom = parser.parseConditionalExpression();
-            if (parser.peek().type == TokenType.END_OF_INPUT) {
-                result.guessedVariables = new LinkedHashSet<>();
-                result.operators = new LinkedHashSet<>();
-                ValueExpressionVisitor visitor = new ValueExpressionVisitor(result, variableValidator);
-                result.ok = atom.accept(visitor);
-                result.invalidMessage = visitor.invalidMessage;
-            }
+            if (parser.peek().type != TokenType.END_OF_INPUT)
+                throw new IllegalArgumentException("invalid expression '" + expression + "'");
+            result.converted = new ValueExpressionVisitor(result, variableValidator).emit(atom.toRvalue());
+            result.ok = true;
         } catch (Exception ex) {
+            // fail closed: no "converted" that could reach the compiler
+            result.ok = false;
+            result.converted = null;
+            result.invalidMessage = ex.getMessage();
         }
         return result;
     }
 
     /**
-     * @return the encoded values and parameters of the value expression. Throws an exception if the
-     * expression is invalid, contains more than one encoded value or can result in a negative value.
+     * @return the checked value with its variables (see findVariables) and the "converted" Java to compile.
      */
-    static Set<String> findVariables(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
-        ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
-        if (!result.ok)
-            throw new IllegalArgumentException(result.invalidMessage);
+    static ParseResult parseValue(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+        ParseResult result = parseOrThrow(valueExpression, parameters, lookup);
+        // from here on use only the text built from the parsed value
+        valueExpression = result.converted;
         Set<String> encodedValues = new LinkedHashSet<>(result.guessedVariables);
         encodedValues.removeIf(v -> CustomModelParser.isParameter(v, parameters));
         if (encodedValues.size() > 1)
@@ -215,13 +188,28 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         if (value < 0)
             throw new IllegalArgumentException("illegal expression as it can result in a negative weight: " + valueExpression);
 
-        return result.guessedVariables;
+        return result;
     }
 
-    static MinMax findMinMax(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+    /**
+     * @return the encoded values and parameters of the value expression. Throws an exception if the
+     * expression is invalid, contains more than one encoded value or can result in a negative value.
+     */
+    static Set<String> findVariables(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+        return parseValue(valueExpression, parameters, lookup).guessedVariables;
+    }
+
+    private static ParseResult parseOrThrow(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
         ParseResult result = parse(valueExpression, key -> lookup.hasEncodedValue(key) || key.contains(INFINITY) || CustomModelParser.isParameter(key, parameters));
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
+        return result;
+    }
+
+    static MinMax findMinMax(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+        ParseResult result = parseOrThrow(valueExpression, parameters, lookup);
+        // from here on use only the text built from the parsed value
+        valueExpression = result.converted;
         Set<String> encodedValues = new LinkedHashSet<>(result.guessedVariables);
         encodedValues.removeIf(v -> CustomModelParser.isParameter(v, parameters));
         if (encodedValues.size() > 1)

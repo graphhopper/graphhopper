@@ -82,6 +82,41 @@ class ValueExpressionVisitorTest {
 
 
     @Test
+    public void convertedIsBuiltFromParsedValue() {
+        NameValidator valid = s -> s.equals("my_speed");
+        // comments, line breaks and unicode escapes do not reach the compiler
+        assertEquals("my_speed * 0.9", parse("my_speed/* c */*0.9", valid).converted);
+        assertEquals("0.5 * 2", parse("0.5 //\\u000a* 2", valid).converted);
+        assertEquals("my_speed + 1", parse("my\\u005fspeed\n+\t1", valid).converted);
+        assertEquals("Math.min(my_speed, (1 - 0.2))", parse("Math.min(my_speed,(1-0.2))", valid).converted);
+        // two unary minus must not become the decrement operator
+        assertEquals("- -my_speed", parse("- -my_speed", valid).converted);
+
+        // A value is a number: no text, char, boolean or null. Text was never executable, as it stays in its
+        // quotes and the compiler rejects it for its type. Now the check rejects it before the compiler.
+        for (String toParse : Arrays.asList("\"abc\"", "'c'", "Math.sqrt(\"x\")", "true", "null", "Math.sqrt()",
+                "Math.sqrt(2).intValue()", "0.5 //\\u000a* System.exit(1)",
+                "1 + \"); call(); (\"", "1 + ')'")) {
+            ParseResult res = parse(toParse, valid);
+            assertFalse(res.ok, "should be rejected: " + toParse);
+            assertNull(res.converted, toParse);
+            assertNotNull(res.invalidMessage, toParse);
+        }
+    }
+
+    @Test
+    public void parameterUsedOnceCannotBeBypassed() {
+        EncodedValueLookup lookup = new EncodingManager.Builder().build();
+        Map<String, CustomModel.Parameter> params = Map.of("factor", new CustomModel.Parameter(0.8));
+        // the second usage is written with a unicode escape for the underscore
+        String msg = assertThrows(IllegalArgumentException.class,
+                () -> ValueExpressionVisitor.findVariables("p_factor * p\\u005ffactor", params, lookup)).getMessage();
+        assertTrue(msg.contains("must not be used more than once"), msg);
+        // a parameter name in a comment is no usage
+        assertEquals(Set.of(), ValueExpressionVisitor.findVariables("2 /* p_factor */", params, lookup));
+    }
+
+    @Test
     public void parameters() {
         DecimalEncodedValue prio = new DecimalEncodedValueImpl("my_priority", 5, 1, false);
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio).build();
