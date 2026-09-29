@@ -154,9 +154,7 @@ class ConditionalExpressionVisitor {
             if (parser.peek().type != TokenType.END_OF_INPUT)
                 throw new IllegalArgumentException("expression is not simple");
             ConditionalExpressionVisitor visitor = new ConditionalExpressionVisitor(result, validator, helper);
-            String converted = visitor.emit(atom.toRvalue());
-
-            result.converted = new StringBuilder(converted);
+            result.converted = visitor.emit(atom.toRvalue());
             result.ok = true;
         } catch (Exception ex) {
             // fail closed: never leave a partially built "converted" that could reach the compiler
