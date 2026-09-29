@@ -2,6 +2,9 @@ graphhopper:
 
   # OpenStreetMap input file PBF or XML, can be changed via command line -Ddw.graphhopper.datareader.file=some.pbf
   datareader.file: ""
+  # By default, GraphHopper will throw an exception during data import if your OpenStreetMap input
+  # file has ways which are not reference-complete (i.e. requiring nodes missing in the input file).
+  datareader.accept_missing_nodes: false
   # Local folder used by graphhopper to store its data
   graph.location: graph-cache
 

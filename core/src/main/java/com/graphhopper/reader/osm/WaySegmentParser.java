@@ -84,7 +84,7 @@ public class WaySegmentParser {
     /**
      * @param osmFile the OSM file to parse, supported formats include .osm.xml, .osm.gz and .xml.pbf
      */
-    public void readOSM(File osmFile) {
+    public void readOSM(File osmFile, boolean acceptMissingNodes) {
         if (nodeData.getNodeCount() > 0)
             throw new IllegalStateException("You can only run way segment parser once");
 
@@ -100,7 +100,7 @@ public class WaySegmentParser {
 
         LOGGER.info("pass2 - start");
         StopWatch sw2 = new StopWatch().start();
-        readOSM(osmFile, new Pass2Handler(), SkipOptions.none());
+        readOSM(osmFile, new Pass2Handler().setAcceptMissingNodes(acceptMissingNodes), SkipOptions.none());
         LOGGER.info("pass2 - finished, took: {}", sw2.stop().getTimeString());
 
         nodeData.release();
@@ -180,6 +180,7 @@ public class WaySegmentParser {
     }
 
     private class Pass2Handler implements ReaderElementHandler {
+        private boolean acceptMissingNodes;
         private boolean handledNodes;
         private boolean handledWays;
         private boolean handledRelations;
@@ -187,6 +188,11 @@ public class WaySegmentParser {
         private long acceptedNodes = 0;
         private long ignoredSplitNodes = 0;
         private long wayCounter = 0;
+
+        public Pass2Handler setAcceptMissingNodes(boolean accept) {
+            acceptMissingNodes = accept;
+            return this;
+        }
 
         @Override
         public void handleNode(ReaderNode node) {
@@ -257,10 +263,13 @@ public class WaySegmentParser {
             List<SegmentNode> segment = new ArrayList<>();
             for (SegmentNode node : fullSegment) {
                 if (!isNodeId(node.id)) {
-                    // this node exists in ways, but not in nodes. we ignore it, but we split the way when we encounter
-                    // such a missing node. for example an OSM way might lead out of an area where nodes are available and
-                    // back into it. we do not want to connect the exit/entry points using a straight line. this usually
-                    // should only happen for OSM extracts
+                    // This node exists in ways, but not in nodes. We ignore it, but we split the way when we encounter
+                    // such a missing node. For example an OSM way might lead out of an area where nodes are available and
+                    // back into it. We do not want to connect the exit/entry points using a straight line. This usually
+                    // should only happen for OSM extracts.
+                    if (!acceptMissingNodes) {
+                        throw new IllegalStateException("Way " + way.getId() + " references node " + node.osmNodeId + " but that node is missing in the input file.");
+                    }
                     if (segment.size() > 1) {
                         splitLoopSegments(segment, way);
                         segment = new ArrayList<>();

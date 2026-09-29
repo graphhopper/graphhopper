@@ -163,7 +163,7 @@ public class OSMReader {
                 .setEdgeHandler(this::addEdge)
                 .setWorkerThreads(config.getWorkerThreads())
                 .build();
-        waySegmentParser.readOSM(osmFile);
+        waySegmentParser.readOSM(osmFile, config.isAcceptMissingNodes());
         osmDataDate = waySegmentParser.getTimestamp();
         if (baseGraph.getNodes() == 0)
             throw new RuntimeException("Graph after reading OSM must not be empty");

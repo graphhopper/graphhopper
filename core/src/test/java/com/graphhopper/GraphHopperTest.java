@@ -2059,6 +2059,7 @@ public class GraphHopperTest {
                         TestProfiles.accessAndSpeed("car").setTurnCostsConfig(TurnCostsConfig.car())
                 );
 
+        hopper.getReaderConfig().setAcceptMissingNodes(true);
         hopper.importOrLoad();
         GHPoint p = new GHPoint(51.433417, 7.009395);
         GHPoint q = new GHPoint(51.432872, 7.010066);
