@@ -106,7 +106,7 @@ See the [changelog file](./CHANGELOG.md) for Java API Changes.
 To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 17) and do:
 
 ```bash
-wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/11.0/graphhopper-web-11.0.jar \
+wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/11.1/graphhopper-web-11.1.jar \
   https://raw.githubusercontent.com/graphhopper/graphhopper/11.x/config-example.yml \
   http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -D"dw.graphhopper.datareader.file=berlin-latest.osm.pbf" -jar graphhopper*.jar server config-example.yml
