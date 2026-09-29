@@ -146,5 +146,39 @@ public class ConditionalExpressionVisitorTest {
         result = parse("Math.sqrt(-2)", (var) -> false, k -> "");
         assertTrue(result.ok);
         assertTrue(result.guessedVariables.isEmpty());
+
+        // two unary minus must not become the decrement operator
+        assertEquals("- -average_slope > -0.5", parse("- -average_slope > -0.5", "average_slope"::equals, k -> "").converted.toString());
+        assertEquals("!!car_access", parse("! !car_access", "car_access"::equals, k -> "").converted.toString());
+    }
+
+    private static final NameValidator VALIDATOR = s -> s.equals("PRIMARY")
+            || s.equals("road_class") || s.equals("street_name") || s.equals("prev_street_name");
+
+    @Test
+    public void testNoShiftedReplacement() {
+        // line breaks, tabs and unicode escapes must not shift the enum or area replacement into the string
+        String area = CustomWeightingHelper.class.getSimpleName() + ".in(this.in_area_1, edge)";
+        for (String sep : Arrays.asList("\n", "\r", "\r\n", "\t", "\\u000a")) {
+            assertEquals("street_name.equals(\"; attack(); \") || road_class == RoadClass.PRIMARY",
+                    parse("street_name.equals(" + sep + "\"; attack(); \") || road_class == PRIMARY", VALIDATOR, k -> "RoadClass").converted.toString());
+            assertEquals("street_name.equals(\"; attack(); \") || " + area,
+                    parse("street_name.equals(" + sep + "\"; attack(); \") || in_area_1", VALIDATOR, k -> "").converted.toString());
+        }
+    }
+
+    @Test
+    public void testLiteralsAndOperators() {
+        assertEquals("road_class == RoadClass.PRIMARY && prev_street_name.equals('x' + \"A 4\")",
+                parse("road_class == PRIMARY && prev_street_name.equals('x' + \"A 4\")", VALIDATOR, k -> "RoadClass").converted.toString());
+        assertTrue(parse("prev_street_name.equals(street_name)", VALIDATOR, k -> "").ok);
+
+        // enum value is validated too
+        assertEquals("'FOO' not available", parse("road_class == FOO", VALIDATOR, k -> "RoadClass").invalidMessage);
+
+        ParseResult result = parse("road_class.ordinal() & 1", VALIDATOR, k -> "");
+        assertFalse(result.ok);
+        assertNull(result.converted);
+        assertEquals("operator & not allowed", result.invalidMessage);
     }
 }
