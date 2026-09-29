@@ -2,6 +2,10 @@
 
 
 
+### 11.1 [not yet released]
+
+- custom models: conditions accept only the binary operators ==, !=, <, >, <=, >=, &&, ||, +, -, *, / and %; bitwise and shift operators like &, |, ^, << and >> are rejected now
+
 ### 11.0 [14 Oct 2025]
 
 - country-dependent toll rules are now always enabled. in the absence of explicit tags or special toll rules we use Toll.NO instead of Toll.MISSING #3111

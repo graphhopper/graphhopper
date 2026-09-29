@@ -224,6 +224,10 @@ language (other programming languages like C or JavaScript are very similar in t
 could look like this: `road_class == PRIMARY || road_class == TERTIARY` which uses the **or**
 (`||`) operator and literally means "road_class equals PRIMARY or road_class equals TERTIARY".
 
+Only a subset of Java is allowed in a condition: the operators `==`, `!=`, `<`, `>`, `<=`, `>=`, `&&`, `||`, `+`, `-`,
+`*`, `/` and `%`, the negations `!` and `-`, parentheses and a few methods like `Math.sqrt`. Everything else, e.g. the
+bitwise operators `&` and `|`, is rejected.
+
 There can be multiple such 'if statements' in the speed section, and they are evaluated from top to bottom:
 
 ```json

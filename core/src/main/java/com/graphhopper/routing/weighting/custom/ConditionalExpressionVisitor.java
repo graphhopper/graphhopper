@@ -27,18 +27,22 @@ import java.util.*;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.IN_AREA_PREFIX;
 
 /**
- * Expression visitor for the if or else_if condition.
+ * Checks the if/else_if condition and builds the "converted" Java from the parsed condition, not by
+ * copying parts of the original text.
  */
-class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
+class ConditionalExpressionVisitor {
 
     private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("edge", "Math", "country"));
     private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
             "contains", "sqrt", "abs", "isRightHandTraffic"));
+    // operators are written as fixed strings, never copied from the user text; the list keeps conditions simple
+    private static final Set<String> allowedBinaryOps = new HashSet<>(Arrays.asList(
+            "==", "!=", "<", ">", "<=", ">=", "&&", "||", "*", "+", "-", "/", "%"));
+    private static final String HELPER = CustomWeightingHelper.class.getSimpleName();
+
     private final ParseResult result;
-    private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator variableValidator;
     private final ClassHelper classHelper;
-    private String invalidMessage;
 
     public ConditionalExpressionVisitor(ParseResult result, NameValidator variableValidator, ClassHelper classHelper) {
         this.result = result;
@@ -56,97 +60,81 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
         return false;
     }
 
-    @Override
-    public Boolean visitRvalue(Java.Rvalue rv) throws Exception {
+    /**
+     * Checks rv against the allowed list and returns the Java text for it. Throws for anything not
+     * allowed, so nothing unexpected can reach the output.
+     */
+    String emit(Java.Rvalue rv) throws Exception {
         if (rv instanceof Java.AmbiguousName) {
             Java.AmbiguousName n = (Java.AmbiguousName) rv;
-            if (n.identifiers.length == 1) {
-                String arg = n.identifiers[0];
-                if (arg.startsWith(IN_AREA_PREFIX)) {
-                    int start = rv.getLocation().getColumnNumber() - 1;
-                    replacements.put(start, new Replacement(start, arg.length(),
-                            CustomWeightingHelper.class.getSimpleName() + ".in(this." + arg + ", edge)"));
-                    result.guessedVariables.add(arg);
-                    return true;
-                } else {
-                    // e.g. like road_class
-                    if (isValidIdentifier(arg)) return true;
-                    invalidMessage = "'" + arg + "' not available";
-                    return false;
-                }
+            if (n.identifiers.length != 1)
+                throw new IllegalArgumentException("identifier " + n + " invalid");
+            String arg = n.identifiers[0];
+            if (arg.startsWith(IN_AREA_PREFIX)) {
+                result.guessedVariables.add(arg);
+                // area name: write the helper call directly (not copied from the user text)
+                return HELPER + ".in(this." + arg + ", edge)";
             }
-            invalidMessage = "identifier " + n + " invalid";
-            return false;
-        }
-        if (rv instanceof Java.Literal) {
-            return true;
+            if (isValidIdentifier(arg)) return arg;
+            throw new IllegalArgumentException("'" + arg + "' not available");
+        } else if (rv instanceof Java.Literal) {
+            // Emit the token as scanned. Safe for text too: the scanner only yields
+            // a closed string with inner quotes escaped. A quote written as \\u0022 ends the string like a
+            // normal quote and the rest is parsed and validated as code, i.e. same as typing the quote.
+            return ((Java.Literal) rv).value;
         } else if (rv instanceof Java.UnaryOperation) {
             Java.UnaryOperation uo = (Java.UnaryOperation) rv;
-            if (uo.operator.equals("!")) return uo.operand.accept(this);
-            if (uo.operator.equals("-")) return uo.operand.accept(this);
-            return false;
+            if (!uo.operator.equals("!") && !uo.operator.equals("-"))
+                throw new IllegalArgumentException("unary operator " + uo.operator + " not allowed");
+            String operand = emit(uo.operand);
+            // "- -x" must not become the decrement "--x"
+            return uo.operator.equals("-") && operand.startsWith("-") ? "- " + operand : uo.operator + operand;
         } else if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
-            if (allowedMethods.contains(mi.methodName) && mi.target != null) {
-                Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
-                if (n.identifiers.length == 2) {
-                    if (allowedMethodParents.contains(n.identifiers[0])) {
-                        // edge.getDistance(), Math.sqrt(x) => check target name i.e. edge or Math
-                        if (mi.arguments.length == 0) {
-                            result.guessedVariables.add(n.identifiers[0]); // return "edge"
-                            return true;
-                        } else if (mi.arguments.length == 1) {
-                            // return "x" but verify before
-                            return mi.arguments[0].accept(this);
-                        }
-                    } else if (variableValidator.isValid(n.identifiers[0])) {
-                        // road_class.ordinal()
-                        if (mi.arguments.length == 0) {
-                            result.guessedVariables.add(n.identifiers[0]); // return road_class
-                            return true;
-                        }
-                    }
-                }
-            }
-            invalidMessage = mi.methodName + " is an illegal method in a conditional expression";
-            return false;
+            String illegal = mi.methodName + " is an illegal method in a conditional expression";
+            // a chained call like edge.getName().contains("A 4") has no 2-identifier AmbiguousName target -> rejected
+            if (!allowedMethods.contains(mi.methodName) || mi.target == null
+                    || !(mi.target.toRvalue() instanceof Java.AmbiguousName))
+                throw new IllegalArgumentException(illegal);
+            Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
+            // Janino models "a.b()" with target identifiers [a, b] -> [0] is the parent (edge, Math, road_class, ...)
+            if (n.identifiers.length != 2 || mi.arguments.length > 1)
+                throw new IllegalArgumentException(illegal);
+            String parent = n.identifiers[0];
+            boolean parentAllowed = allowedMethodParents.contains(parent);
+            // an argument is only allowed for edge, Math and country, e.g. road_class.ordinal() has none
+            if (!parentAllowed && (!variableValidator.isValid(parent) || mi.arguments.length > 0))
+                throw new IllegalArgumentException(illegal);
+            // edge.getDistance() or road_class.ordinal() => remember edge or road_class, but not Math of Math.sqrt(x)
+            if (mi.arguments.length == 0)
+                result.guessedVariables.add(parent);
+            String arg = mi.arguments.length == 0 ? "" : emit(mi.arguments[0]);
+            return parent + "." + mi.methodName + "(" + arg + ")";
         } else if (rv instanceof Java.ParenthesizedExpression) {
-            return ((Java.ParenthesizedExpression) rv).value.accept(this);
+            return "(" + emit(((Java.ParenthesizedExpression) rv).value) + ")";
         } else if (rv instanceof Java.BinaryOperation) {
             Java.BinaryOperation binOp = (Java.BinaryOperation) rv;
-            int startRH = binOp.rhs.getLocation().getColumnNumber() - 1;
-            if (binOp.lhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.lhs).identifiers.length == 1) {
-                String lhVarAsString = ((Java.AmbiguousName) binOp.lhs).identifiers[0];
-                boolean eqOps = binOp.operator.equals("==") || binOp.operator.equals("!=");
-                if (binOp.rhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.rhs).identifiers.length == 1) {
-                    // Make enum explicit as NO or OTHER can occur in other enums so convert "toll == NO" to "toll == Toll.NO"
-                    String rhValueAsString = ((Java.AmbiguousName) binOp.rhs).identifiers[0];
-                    if (variableValidator.isValid(lhVarAsString) && Helper.toUpperCase(rhValueAsString).equals(rhValueAsString)) {
-                        if (!eqOps)
-                            throw new IllegalArgumentException("Operator " + binOp.operator + " not allowed for enum");
-                        String value = classHelper.getClassName(binOp.lhs.toString());
-                        replacements.put(startRH, new Replacement(startRH, rhValueAsString.length(), value + "." + rhValueAsString));
-                    }
+            if (!allowedBinaryOps.contains(binOp.operator))
+                throw new IllegalArgumentException("operator " + binOp.operator + " not allowed");
+            String lh = emit(binOp.lhs);
+            // validates the enum value too
+            String rh = emit(binOp.rhs);
+            if (binOp.lhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.lhs).identifiers.length == 1
+                    && binOp.rhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.rhs).identifiers.length == 1) {
+                String lhVar = ((Java.AmbiguousName) binOp.lhs).identifiers[0];
+                String rhValue = ((Java.AmbiguousName) binOp.rhs).identifiers[0];
+                // make enum explicit as NO/OTHER can occur in other enums: "toll == NO" -> "toll == Toll.NO"
+                if (variableValidator.isValid(lhVar) && Helper.toUpperCase(rhValue).equals(rhValue)) {
+                    if (!binOp.operator.equals("==") && !binOp.operator.equals("!="))
+                        throw new IllegalArgumentException("Operator " + binOp.operator + " not allowed for enum");
+                    String enumClass = classHelper.getClassName(lhVar);
+                    if (!Helper.isEmpty(enumClass))
+                        rh = enumClass + "." + rhValue;
                 }
             }
-            return binOp.lhs.accept(this) && binOp.rhs.accept(this);
+            return lh + " " + binOp.operator + " " + rh;
         }
-        return false;
-    }
-
-    @Override
-    public Boolean visitPackage(Java.Package p) {
-        return false;
-    }
-
-    @Override
-    public Boolean visitType(Java.Type t) {
-        return false;
-    }
-
-    @Override
-    public Boolean visitConstructorInvocation(Java.ConstructorInvocation ci) {
-        return false;
+        throw new IllegalArgumentException("invalid expression " + rv);
     }
 
     /**
@@ -158,39 +146,26 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
      */
     static ParseResult parse(String expression, NameValidator validator, ClassHelper helper) {
         ParseResult result = new ParseResult();
+        result.guessedVariables = new LinkedHashSet<>();
         try {
-            Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
+            // no file name => message starts with "Line 1, Column 7: ..."
+            Parser parser = new Parser(new Scanner(null, new StringReader(expression)));
             Java.Atom atom = parser.parseConditionalExpression();
             // after parsing the expression the input should end (otherwise it is not "simple")
-            if (parser.peek().type == TokenType.END_OF_INPUT) {
-                result.guessedVariables = new LinkedHashSet<>();
-                ConditionalExpressionVisitor visitor = new ConditionalExpressionVisitor(result, validator, helper);
-                result.ok = atom.accept(visitor);
-                result.invalidMessage = visitor.invalidMessage;
-                if (result.ok) {
-                    result.converted = new StringBuilder(expression.length());
-                    int start = 0;
-                    for (Replacement replace : visitor.replacements.values()) {
-                        result.converted.append(expression, start, replace.start).append(replace.newString);
-                        start = replace.start + replace.oldLength;
-                    }
-                    result.converted.append(expression.substring(start));
-                }
-            }
+            if (parser.peek().type != TokenType.END_OF_INPUT)
+                throw new IllegalArgumentException("expression is not simple");
+            ConditionalExpressionVisitor visitor = new ConditionalExpressionVisitor(result, validator, helper);
+            String converted = visitor.emit(atom.toRvalue());
+
+            result.converted = new StringBuilder(converted);
+            result.ok = true;
         } catch (Exception ex) {
+            // fail closed: never leave a partially built "converted" that could reach the compiler
+            result.ok = false;
+            result.converted = null;
+            if (result.invalidMessage == null)
+                result.invalidMessage = ex.getMessage();
         }
         return result;
-    }
-
-    static class Replacement {
-        int start;
-        int oldLength;
-        String newString;
-
-        public Replacement(int start, int oldLength, String newString) {
-            this.start = start;
-            this.oldLength = oldLength;
-            this.newString = newString;
-        }
     }
 }

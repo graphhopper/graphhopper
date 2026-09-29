@@ -85,6 +85,21 @@ class CustomModelParserTest {
     }
 
     @Test
+    void multiLineCondition() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("road_class ==\nPRIMARY ||\n\troad_class == SECONDARY", MULTIPLY, "0.5"));
+        customModel.addToSpeed(If("true", LIMIT, "100"));
+        CustomWeighting.EdgeToDoubleMapping priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager).getEdgeToPriorityMapping();
+
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(roadClassEnc, RoadClass.PRIMARY);
+        EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(roadClassEnc, RoadClass.SECONDARY);
+        EdgeIteratorState edge3 = graph.edge(2, 3).setDistance(100).set(roadClassEnc, RoadClass.TERTIARY);
+        assertEquals(0.5, priorityMapping.get(edge1, false), 1.e-6);
+        assertEquals(0.5, priorityMapping.get(edge2, false), 1.e-6);
+        assertEquals(1.0, priorityMapping.get(edge3, false), 1.e-6);
+    }
+
+    @Test
     void testPriority() {
         EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).
                 set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80).set(accessEnc, true, true);
