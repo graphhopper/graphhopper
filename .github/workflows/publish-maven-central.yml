@@ -15,7 +15,7 @@ jobs:
         with:
           java-version: 25
           distribution: temurin
-          server-id: ossrh
+          server-id: central
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
           # feed directly as multi line value
