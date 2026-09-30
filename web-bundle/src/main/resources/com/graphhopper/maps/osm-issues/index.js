@@ -439,7 +439,9 @@ function load() {
     // the old markers stay on the map until the new ones are there, so panning does not blank it.
     // The heading says "zoom in" already, only the folded heading needs it spelled out.
     if (!zoomedIn) return setStatus('', 'zoom in');
-    const started = issues.request(extent, {types: types.join(','), roads: roadGroups().join(',')},
+    const params = {types: types.join(','), roads: roadGroups().join(',')};
+    if ($('private').checked) params.private = true;
+    const started = issues.request(extent, params,
         n => setStatus(issueCount(n) + ' in this view'),
         // keep whatever is on the map, the error message alone tells what happened
         err => setStatus(err.message));
@@ -497,6 +499,12 @@ roadBoxes.forEach(cb => cb.onchange = () => {
     localStorage.setItem('road_classes', roadGroups().join(';'));
     load();
 });
+// private roads are off by default: a truck does not route over them. Remembered like the roads
+$('private').checked = localStorage.getItem('private_roads') === 'true';
+$('private').onchange = () => {
+    localStorage.setItem('private_roads', String($('private').checked));
+    load();
+};
 
 /** a layer that is on unless the user turned it off - they are the point of the map */
 function layerSwitch(box, layer, key, changed = () => {}) {

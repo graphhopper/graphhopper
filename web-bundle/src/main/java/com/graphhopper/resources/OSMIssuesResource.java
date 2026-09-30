@@ -58,6 +58,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Finds OSM tagging issues around bridges in the current map view: roads passing under a bridge
@@ -259,6 +260,7 @@ public class OSMIssuesResource {
                           @QueryParam("roads") @DefaultValue("") String roadsStr,
                           @QueryParam("min_clearance") @DefaultValue("0") double minClearance,
                           @QueryParam("tagged") @DefaultValue("false") boolean tagged,
+                          @QueryParam("private") @DefaultValue("false") boolean includePrivate,
                           @QueryParam("limit") @DefaultValue("2000") int limit) {
         for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, OSMWayID.KEY))
             if (!encodingManager.hasEncodedValue(key))
@@ -275,7 +277,7 @@ public class OSMIssuesResource {
         // an empty list means every road class
         Set<String> roads = roadsStr.isEmpty() ? Collections.emptySet()
                 : new HashSet<>(Arrays.asList(roadsStr.toLowerCase().split(",")));
-        List<Map<String, Object>> features = findIssues(bbox, types, roads, minClearance, tagged, limit);
+        List<Map<String, Object>> features = findIssues(bbox, types, roads, minClearance, tagged, includePrivate, limit);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", "FeatureCollection");
@@ -287,13 +289,25 @@ public class OSMIssuesResource {
         return Response.ok(result).header("X-GH-Took", "" + sw.getMillis()).build();
     }
 
+    /**
+     * @param includePrivate also report roads a car may not use: access=private, motor_vehicle=no
+     *                       and the like. Off by default, a truck does not route over them, so
+     *                       a sign there changes nothing. What is tagged already is shown
+     *                       regardless, that is not a work list.
+     */
     private List<Map<String, Object>> findIssues(BBox bbox, Set<String> types, Set<String> roads,
-                                                double minClearance, boolean tagged, int limit) {
+                                                double minClearance, boolean tagged, boolean includePrivate, int limit) {
         BaseGraph graph = graphHopper.getBaseGraph();
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
         EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         EnumEncodedValue<RoadEnvironment> roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         IntEncodedValue wayIdEnc = encodingManager.getIntEncodedValue(OSMWayID.KEY);
+        // the car profile blocks access=private and motor_vehicle=no (block_private is on by
+        // default), so car_access says whether a truck could get there at all
+        BooleanEncodedValue carAccessEnc = encodingManager.hasEncodedValue("car_access")
+                ? encodingManager.getBooleanEncodedValue("car_access") : null;
+        Predicate<EdgeIteratorState> drivable = edge -> includePrivate || tagged || carAccessEnc == null
+                || edge.get(carAccessEnc) || edge.getReverse(carAccessEnc);
 
         IntHashSet visited = new IntHashSet();
         IntArrayList edgeIds = new IntArrayList();
@@ -333,7 +347,8 @@ public class OSMIssuesResource {
 
             // a bridge needs a max_weight regardless of what it crosses (river, railway, road, ...)
             if (types.contains(MISSING_MAXWEIGHT) && edge.getValue(MAX_WEIGHT_TAG) == null
-                    && isMotorized(edge.get(roadClassEnc)) && wanted(edge.get(roadClassEnc), roads)) {
+                    && isMotorized(edge.get(roadClassEnc)) && wanted(edge.get(roadClassEnc), roads)
+                    && drivable.test(edge)) {
                 if (ls == null) ls = edge.fetchWayGeometry(FetchMode.ALL).toLineString(false);
                 Coordinate at = ls.getCoordinateN(ls.getNumPoints() / 2);
                 if (bbox.contains(at.y, at.x))
@@ -376,7 +391,7 @@ public class OSMIssuesResource {
                     if (hasNumber(raw)) anyNumber = true;
                     else if (hasTag) anyWithoutNumber = true;
                     if (hasTag != tagged) continue;
-                    if (!wanted(below.get(roadClassEnc), roads)) continue;
+                    if (!wanted(below.get(roadClassEnc), roads) || !drivable.test(below)) continue;
                     // how much higher the bridge is than the road below, if the graph has elevation.
                     // The outline of a roof sits on the ground, so there is no clearance to estimate
                     String group = bridgeGroup(bridge, roadClassEnc);
@@ -428,7 +443,7 @@ public class OSMIssuesResource {
                 boolean tunnel = edge.get(roadEnvEnc) == RoadEnvironment.TUNNEL;
                 boolean roofed = tunnel || edge.getValue(COVERED_TAG) != null;
                 if (!roofed || !isMotorized(edge.get(roadClassEnc))) continue;
-                if (!wanted(edge.get(roadClassEnc), roads)) continue;
+                if (!wanted(edge.get(roadClassEnc), roads) || !drivable.test(edge)) continue;
                 boolean hasTag = edge.getValue(MAX_HEIGHT_TAG) != null
                         || "no".equals(edge.getValue(MAX_HEIGHT_SIGNED_TAG));
                 if (hasTag != tagged) continue;
@@ -454,7 +469,7 @@ public class OSMIssuesResource {
                 EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
                 if (!"height_restrictor".equals(edge.getValue(BARRIER_TAG))) continue;
                 RoadClass rc = edge.get(roadClassEnc);
-                if (!isMotorized(rc) || !wanted(rc, roads)) continue;
+                if (!isMotorized(rc) || !wanted(rc, roads) || !drivable.test(edge)) continue;
                 boolean hasTag = edge.getValue(MAX_HEIGHT_TAG) != null
                         || "no".equals(edge.getValue(MAX_HEIGHT_SIGNED_TAG));
                 if (hasTag != tagged) continue;
@@ -474,17 +489,14 @@ public class OSMIssuesResource {
         if (types.contains(MAXHEIGHT_BELOW_DEFAULT)) {
             // below_default says a mapper saw that the road is lower than the legal default, so a
             // restriction exists for sure and only the number is missing - the most valuable kind
-            // of gap. Service roads and roads cars may not use are left out, they do not route.
-            BooleanEncodedValue carAccessEnc = encodingManager.hasEncodedValue("car_access")
-                    ? encodingManager.getBooleanEncodedValue("car_access") : null;
+            // of gap. Service roads are left out, they do not route.
             for (int i = 0; i < edgeIds.size() && features.size() < limit; i++) {
                 int edgeId = edgeIds.get(i);
                 EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
                 if (!"below_default".equals(edge.getValue(MAX_HEIGHT_TAG))) continue;
                 if (longestEdge.getOrDefault(edge.get(wayIdEnc), -1) != edgeId) continue;
                 RoadClass rc = edge.get(roadClassEnc);
-                if (!isMotorized(rc) || rc == RoadClass.SERVICE || !wanted(rc, roads)) continue;
-                if (carAccessEnc != null && !edge.get(carAccessEnc) && !edge.getReverse(carAccessEnc)) continue;
+                if (!isMotorized(rc) || rc == RoadClass.SERVICE || !wanted(rc, roads) || !drivable.test(edge)) continue;
                 Coordinate at = halfway(edge.fetchWayGeometry(FetchMode.ALL));
                 addFeature(features, reported, MAXHEIGHT_BELOW_DEFAULT, at, edge, null, wayIdEnc, roadClassEnc);
             }
@@ -558,6 +570,7 @@ public class OSMIssuesResource {
                     // them have to pass the filter - otherwise a filtered class could be reported
                     if (!wanted(edgeA.get(roadClassEnc), roads) || !wanted(edgeB.get(roadClassEnc), roads))
                         continue;
+                    if (!drivable.test(edgeA) || !drivable.test(edgeB)) continue;
                     Coordinate at = crossing(edgeA, lsA, edgeB, geometries.get(otherId), bbox);
                     if (at != null)
                         addFeature(features, reported, MISSING_BRIDGE, at, edgeA, edgeB, wayIdEnc, roadClassEnc);

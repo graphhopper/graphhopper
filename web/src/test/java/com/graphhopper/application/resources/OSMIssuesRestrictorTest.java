@@ -32,8 +32,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -41,13 +43,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Andorra has no barrier=height_restrictor, so this one runs on the small file of the reader
- * test: three restrictor nodes, one without any maxheight, one with its own and one on a way
- * that carries the maxheight.
+ * test: four restrictor nodes, one without any maxheight, one with its own, one on a way that
+ * carries the maxheight and one without maxheight on a private road.
  */
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class OSMIssuesRestrictorTest {
     private static final String DIR = "./target/restrictor-issues-gh/";
-    private static final String BBOX = "bbox=9.3,50.9,9.5,54.1";
+    private static final String BBOX = "bbox=9.3,50.9,9.5,55.1";
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
     private static GraphHopperServerConfiguration createConfig() {
@@ -106,6 +108,16 @@ public class OSMIssuesRestrictorTest {
         }
         // node 35 inherits 3.8 from way 300, that is the way's marker and not a second one
         assertEquals(Map.of("node 25", "2.1", "way 300", "3.8"), found);
+    }
+
+    @Test
+    public void testPrivateRoadsOnlyOnRequest() {
+        // node 45 sits on access=private: a truck never gets there, so by default it is no issue
+        JsonNode json = query(BBOX + "&types=missing_maxheight_restrictor&private=true");
+        assertEquals(2, json.get("features").size(), json.toString());
+        Set<Long> nodes = new HashSet<>();
+        for (JsonNode f : json.get("features")) nodes.add(f.get("properties").get("node_id").asLong());
+        assertEquals(Set.of(15L, 45L), nodes);
     }
 
     @Test

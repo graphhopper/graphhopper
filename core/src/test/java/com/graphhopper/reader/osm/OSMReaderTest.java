@@ -1211,8 +1211,8 @@ public class OSMReaderTest {
             if (iter.getValue(BARRIER_TAG) != null) barriers.put(iter.get(wayIdEnc), iter.detach(false));
             else roads.put(iter.get(wayIdEnc), iter.detach(false));
         }
-        assertEquals(3, barriers.size());
-        assertEquals(3, roads.size());
+        assertEquals(4, barriers.size());
+        assertEquals(4, roads.size());
         for (EdgeIteratorState barrier : barriers.values()) {
             assertEquals("height_restrictor", barrier.getValue(BARRIER_TAG));
             assertTrue(barrier.getDistance() < 0.01);

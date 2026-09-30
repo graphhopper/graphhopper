@@ -17,6 +17,11 @@
         <tag k="barrier" v="height_restrictor"/>
     </node>
     <node id="40" lat="54" lon="9.3" version="1"/>
+    <!-- a height restrictor without maxheight on a private road -->
+    <node id="45" lat="54.5" lon="9.35" version="1">
+        <tag k="barrier" v="height_restrictor"/>
+    </node>
+    <node id="50" lat="55" lon="9.4" version="1"/>
 
     <way id="100" version="1">
         <nd ref="10"/>
@@ -36,5 +41,12 @@
         <nd ref="40"/>
         <tag k="highway" v="residential"/>
         <tag k="maxheight" v="3.8"/>
+    </way>
+    <way id="400" version="1">
+        <nd ref="40"/>
+        <nd ref="45"/>
+        <nd ref="50"/>
+        <tag k="highway" v="residential"/>
+        <tag k="access" v="private"/>
     </way>
 </osm>
