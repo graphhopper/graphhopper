@@ -417,6 +417,8 @@ public class OSMReader {
         EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance);
         osmParsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, relationFlags);
         Map<String, KValue> map = way.getTag("key_values", Collections.emptyMap());
+        if (way.hasTag("gh:barrier_edge"))
+            map = barrierKeyValues(map, nodeTags.get(0), way.getTag("gh:barrier_node_id", 0L));
         if (!map.isEmpty())
             edge.setKeyValues(map);
 
@@ -604,6 +606,32 @@ public class OSMReader {
         // such that the distance could actually be calculated, 3) there was a duration tag we could parse, and 4) the
         // derived speed was not unrealistically slow.
         way.setTag("duration_in_seconds", durationInSeconds);
+    }
+
+    /**
+     * The key values of a barrier edge: those of its way plus what the barrier node says. The way
+     * map is shared by every edge of the way, so it is copied rather than changed.
+     *
+     * @param nodeTags  the tags of the barrier node
+     * @param osmNodeId the OSM id of the barrier node, 0 if unknown
+     */
+    static Map<String, KValue> barrierKeyValues(Map<String, KValue> wayMap, Map<String, Object> nodeTags, long osmNodeId) {
+        Object barrier = nodeTags.get(BARRIER_TAG);
+        if (!(barrier instanceof String) || ((String) barrier).isEmpty())
+            return wayMap;
+        Map<String, KValue> map = new LinkedHashMap<>(wayMap);
+        map.put(BARRIER_TAG, new KValue(KVStorage.cutString((String) barrier)));
+        if (osmNodeId > 0)
+            map.put(OSM_NODE_ID_TAG, new KValue(osmNodeId));
+        // a maxheight on a height_restrictor node is more specific than the one of the way
+        for (String key : OSMMaxHeightParser.MAX_HEIGHT_TAGS) {
+            Object maxHeight = nodeTags.get(key);
+            if (maxHeight instanceof String && !((String) maxHeight).isEmpty()) {
+                map.put(MAX_HEIGHT_TAG, new KValue(KVStorage.cutString((String) maxHeight)));
+                break;
+            }
+        }
+        return map;
     }
 
     static String fixWayName(String str) {

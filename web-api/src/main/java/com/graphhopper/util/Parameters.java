@@ -221,6 +221,10 @@ public class Parameters {
         // what a bridge without a highway carries: railway, pipeline, conveyor, aqueduct. Not an
         // OSM key, see OSMParsers.structureOf
         public static final String STRUCTURE_TAG = "structure";
+        // a barrier node becomes an edge of its own. These carry the value of the node (e.g.
+        // height_restrictor) and the OSM id of the node, so that the node itself can be edited
+        public static final String BARRIER_TAG = "barrier";
+        public static final String OSM_NODE_ID_TAG = "osm_node_id";
 
         public static final String AVERAGE_SPEED = "average_speed";
         public static final String EDGE_ID = "edge_id";

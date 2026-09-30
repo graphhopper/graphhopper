@@ -104,6 +104,29 @@ public class OSMIssuesResourceTest {
     }
 
     @Test
+    public void testHeightRestrictorNodes() {
+        // Andorra has a few barrier=height_restrictor nodes: every one of them without a maxheight
+        // is an issue of its own, with the id of the node - the tag belongs on the node, not the way
+        JsonNode json = query("bbox=1.40,42.42,1.80,42.66&types=missing_maxheight_restrictor");
+        for (JsonNode f : json.get("features")) {
+            JsonNode p = f.get("properties");
+            assertEquals("missing_maxheight_restrictor", p.get("type").asText());
+            assertEquals("height_restrictor", p.get("barrier").asText());
+            assertTrue(p.get("node_id").asLong() > 0, p.toString());
+            assertNull(p.get("maxheight"));
+        }
+        // the ones with a maxheight belong to the green layer
+        JsonNode tagged = query("bbox=1.40,42.42,1.80,42.66&types=missing_maxheight_restrictor&tagged=true");
+        for (JsonNode f : tagged.get("features")) {
+            JsonNode p = f.get("properties");
+            assertEquals("height_restrictor", p.get("barrier").asText());
+            assertNotNull(p.get("maxheight"), p.toString());
+        }
+        System.out.println("height restrictors in andorra: " + json.get("features").size() + " untagged, "
+                + tagged.get("features").size() + " tagged");
+    }
+
+    @Test
     public void testMaxWeightAlsoForBridgesOverRivers() {
         // a bridge needs a max_weight even if it does not cross another road
         JsonNode json = query("bbox=1.50,42.50,1.55,42.53&types=missing_maxweight");

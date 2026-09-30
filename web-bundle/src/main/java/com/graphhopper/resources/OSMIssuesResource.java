@@ -39,10 +39,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 
+import static com.graphhopper.util.Parameters.Details.BARRIER_TAG;
 import static com.graphhopper.util.Parameters.Details.COVERED_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_SIGNED_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_TAG;
 import static com.graphhopper.util.Parameters.Details.MAX_WEIGHT_TAG;
+import static com.graphhopper.util.Parameters.Details.OSM_NODE_ID_TAG;
 import static com.graphhopper.util.Parameters.Details.STRUCTURE_TAG;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -80,6 +82,8 @@ public class OSMIssuesResource {
     public static final String MISSING_MAXHEIGHT_TUNNEL = "missing_maxheight_tunnel";
     /** maxheight=below_default: a mapper confirmed a restriction, but a router still has to guess the number */
     public static final String MAXHEIGHT_BELOW_DEFAULT = "maxheight_below_default";
+    /** a barrier=height_restrictor node without maxheight: the bar is there, the number is not */
+    public static final String MISSING_MAXHEIGHT_RESTRICTOR = "missing_maxheight_restrictor";
 
     /**
      * P(a visit finds a real sign), as additive log-odds over clearance, road below, what is over
@@ -263,7 +267,7 @@ public class OSMIssuesResource {
 
         Set<String> types = typesStr == null || typesStr.isEmpty()
                 ? new HashSet<>(Arrays.asList(MISSING_MAXHEIGHT, MISSING_MAXWEIGHT, MISSING_BRIDGE,
-                        MISSING_MAXHEIGHT_TUNNEL, MAXHEIGHT_BELOW_DEFAULT))
+                        MISSING_MAXHEIGHT_TUNNEL, MAXHEIGHT_BELOW_DEFAULT, MISSING_MAXHEIGHT_RESTRICTOR))
                 : new HashSet<>(Arrays.asList(typesStr.split(",")));
 
         StopWatch sw = new StopWatch().start();
@@ -398,10 +402,12 @@ public class OSMIssuesResource {
 
         // A way is split into edges at every junction, down to a few metres where a footway joins.
         // Markers that stand for a whole way go on the middle of its longest edge in view. Only
-        // tunnels, roofs and ways with maxheight get such a marker.
+        // tunnels, roofs and ways with maxheight get such a marker. A barrier edge is a node, not
+        // the way, and its maxheight may be the one of the node - so it never stands for the way.
         IntIntHashMap longestEdge = new IntIntHashMap();
         for (int i = 0; i < edgeIds.size(); i++) {
             EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeIds.get(i) * 2);
+            if (edge.getValue(BARRIER_TAG) != null) continue;
             if (edge.get(roadEnvEnc) != RoadEnvironment.TUNNEL && edge.getValue(COVERED_TAG) == null
                     && edge.getValue(MAX_HEIGHT_TAG) == null && edge.getValue(MAX_HEIGHT_SIGNED_TAG) == null) continue;
             Coordinate at = halfway(edge.fetchWayGeometry(FetchMode.ALL));
@@ -434,6 +440,34 @@ public class OSMIssuesResource {
                 c.p = MODEL == null ? Double.NaN : MODEL.probability(Double.NaN, Double.NaN, Double.NaN,
                         c.below.get(roadClassEnc).toString(), c.over, c.country, c.neighbours);
                 scored.add(c);
+            }
+        }
+
+        if (types.contains(MISSING_MAXHEIGHT_RESTRICTOR)) {
+            // A barrier=height_restrictor node is an edge of its own in the graph, with the tags of
+            // the node in its key values (see OSMReader.barrierKeyValues). The bar exists for sure,
+            // so the number on it is worth a visit regardless of any model - these come before the
+            // scored list so that a truncated answer keeps them. The maxheight belongs on the node,
+            // but one on the way works for routing too, so the edge counts as tagged then as well.
+            for (int i = 0; i < edgeIds.size() && features.size() < limit; i++) {
+                int edgeId = edgeIds.get(i);
+                EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
+                if (!"height_restrictor".equals(edge.getValue(BARRIER_TAG))) continue;
+                RoadClass rc = edge.get(roadClassEnc);
+                if (!isMotorized(rc) || !wanted(rc, roads)) continue;
+                boolean hasTag = edge.getValue(MAX_HEIGHT_TAG) != null
+                        || "no".equals(edge.getValue(MAX_HEIGHT_SIGNED_TAG));
+                if (hasTag != tagged) continue;
+                // a barrier edge has the node at both ends
+                PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+                Coordinate at = new Coordinate(pl.getLon(0), pl.getLat(0));
+                if (!bbox.contains(at.y, at.x)) continue;
+                Map<String, Object> extra = new LinkedHashMap<>();
+                extra.put("barrier", edge.getValue(BARRIER_TAG));
+                Object nodeId = edge.getValue(OSM_NODE_ID_TAG);
+                if (nodeId != null) extra.put("node_id", nodeId);
+                addFeature(features, reported, MISSING_MAXHEIGHT_RESTRICTOR, at, edge, null, wayIdEnc, roadClassEnc,
+                        extra, MISSING_MAXHEIGHT_RESTRICTOR + "-" + (nodeId == null ? "e" + edgeId : nodeId));
             }
         }
 
@@ -477,6 +511,25 @@ public class OSMIssuesResource {
                 RoadClass rc = edge.get(roadClassEnc);
                 if (!isMotorized(rc) || !wanted(rc, roads)) continue;
                 int wayId = edge.get(wayIdEnc);
+                if (edge.getValue(BARRIER_TAG) != null) {
+                    // a barrier node with a maxheight of its own is a place of its own, apart from
+                    // the way. One inherited from the way says nothing new. When the way itself is
+                    // not in view only a height restrictor is worth a marker - a bollard is not.
+                    EdgeIteratorState road = longestEdge.containsKey(wayId)
+                            ? graph.getEdgeIteratorStateForKey(longestEdge.get(wayId) * 2) : null;
+                    if (road == null ? !"height_restrictor".equals(edge.getValue(BARRIER_TAG))
+                            : Objects.equals(road.getValue(MAX_HEIGHT_TAG), edge.getValue(MAX_HEIGHT_TAG))) continue;
+                    PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+                    Coordinate at = new Coordinate(pl.getLon(0), pl.getLat(0));
+                    if (!bbox.contains(at.y, at.x)) continue;
+                    Map<String, Object> extra = new LinkedHashMap<>();
+                    extra.put("barrier", edge.getValue(BARRIER_TAG));
+                    Object nodeId = edge.getValue(OSM_NODE_ID_TAG);
+                    if (nodeId != null) extra.put("node_id", nodeId);
+                    addFeature(features, reported, MISSING_MAXHEIGHT, at, edge, null, wayIdEnc, roadClassEnc,
+                            extra, MISSING_MAXHEIGHT + "-n" + (nodeId == null ? "e" + edgeId : nodeId));
+                    continue;
+                }
                 if (longestEdge.getOrDefault(wayId, -1) != edgeId) continue;
                 if (reported.contains(MISSING_MAXHEIGHT_TUNNEL + "-" + wayId)) continue;
                 Coordinate at = halfway(edge.fetchWayGeometry(FetchMode.ALL));

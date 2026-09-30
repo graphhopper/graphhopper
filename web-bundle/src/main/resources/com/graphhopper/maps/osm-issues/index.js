@@ -34,6 +34,14 @@ const ISSUES = {
         hint: 'a mapper confirmed that the road is lower than the legal default, so a truck router '
             + 'has to guess here. The sign has the number, replace below_default with it.'
     },
+    missing_maxheight_restrictor: {
+        color: '#f032e6', tag: 'maxheight',
+        title: 'height restrictor without maxheight',
+        hint: 'a barrier=height_restrictor node, so a bar is there for sure and only the number on '
+            + 'it is missing. The maxheight belongs on the node, not on the road.',
+        // the node comes first, it is the one that needs the tag
+        roles: ['the restrictor node, needs the tag', 'the road through it']
+    },
     missing_bridge: {
         color: '#4363d8', tag: 'bridge', warn: true,
         title: 'missing bridge tag',
@@ -75,9 +83,21 @@ const settings = {
 };
 
 const redirectUri = location.origin + location.pathname.replace(/\/?$/, '/');
-let pendingEdits = JSON.parse(localStorage.getItem('osm_pending') || '[]');
-// ways we uploaded ourselves. GraphHopper keeps reporting them until it is imported again
-let uploadedWays = JSON.parse(localStorage.getItem('osm_uploaded') || '[]');
+// every edit names its element by type ('way' or 'node') and id. Older lists only knew ways
+let pendingEdits = JSON.parse(localStorage.getItem('osm_pending') || '[]')
+    .map(e => e.type ? e : {type: 'way', id: e.wayId, name: e.name, changes: e.changes});
+// elements we uploaded ourselves, as keys like w123 or n456. GraphHopper keeps reporting them
+// until it is imported again
+let uploaded = JSON.parse(localStorage.getItem('osm_uploaded') || '[]')
+    .map(k => typeof k === 'number' ? 'w' + k : k);
+const elementKey = (type, id) => type[0] + id;
+/** the elements a marker is about: the restrictor node if there is one, and the way */
+function featureKeys(feature) {
+    const keys = [];
+    if (feature.get('node_id')) keys.push('n' + feature.get('node_id'));
+    keys.push('w' + feature.get('way_id'));
+    return keys;
+}
 let currentIssue = null, currentWay = null, selectedFeature = null;
 
 // ---------------------------------------------------------------- map + issues
@@ -85,12 +105,18 @@ let currentIssue = null, currentWay = null, selectedFeature = null;
 const issueSource = new ol.source.Vector();
 const waySource = new ol.source.Vector();
 
-// the way that is currently being edited, drawn below the markers with a white casing
+// the way (or node) that is currently being edited, drawn below the markers with a white casing
 const wayLayer = new ol.layer.Vector({
     source: waySource,
     style: [
-        new ol.style.Style({stroke: new ol.style.Stroke({color: '#fff', width: 11})}),
-        new ol.style.Style({stroke: new ol.style.Stroke({color: '#2d7dd2', width: 5})})
+        new ol.style.Style({
+            stroke: new ol.style.Stroke({color: '#fff', width: 11}),
+            image: new ol.style.Circle({radius: 13, fill: new ol.style.Fill({color: '#fff'})})
+        }),
+        new ol.style.Style({
+            stroke: new ol.style.Stroke({color: '#2d7dd2', width: 5}),
+            image: new ol.style.Circle({radius: 10, fill: new ol.style.Fill({color: '#2d7dd2'})})
+        })
     ]
 });
 
@@ -118,9 +144,9 @@ function scoreScale() {
 const issueLayer = new ol.layer.Vector({
     source: issueSource,
     style: feature => {
-        const wayId = feature.get('way_id');
-        const edited = pendingEdits.some(e => e.wayId === wayId);
-        const done = uploadedWays.includes(wayId);
+        const keys = featureKeys(feature);
+        const edited = pendingEdits.some(e => keys.includes(elementKey(e.type, e.id)));
+        const done = keys.some(k => uploaded.includes(k));
         // colour says what kind of issue it is, size says how likely a visit finds a sign here
         // rather than another maxheight=default. Without a score (the other issue types) they are
         // all the same size.
@@ -867,52 +893,64 @@ function openIssue(feature) {
         + pct + '%</b> chance of finding a sign' + (issues.signTarget === 'low' ? ' below 4 m' : '') + ' here.'
         + (NB[p.neighbours] ? ' ' + NB[p.neighbours] : '');
 
-    // for maxheight the way below the bridge comes first, it is the one that needs the tag
-    const ways = [{id: p.way_id, name: p.way_name, cls: p.road_class}];
-    if (p.other_way_id) ways.push({id: p.other_way_id, name: p.other_way_name, cls: p.other_road_class});
+    // for maxheight the way below the bridge comes first, it is the one that needs the tag. A
+    // height restrictor is a node, there the node comes first and the road through it second.
+    const elements = [];
+    if (p.node_id) elements.push({type: 'node', id: p.node_id, name: p.way_name, cls: p.road_class});
+    elements.push({type: 'way', id: p.way_id, name: p.way_name, cls: p.road_class});
+    if (p.other_way_id) elements.push({type: 'way', id: p.other_way_id, name: p.other_way_name, cls: p.other_road_class});
     const picker = $('way-picker');
-    const roles = (issue.roles || []).map(r => p.over === 'roof' ? r.replace('bridge', 'roof') : r);
-    picker.replaceChildren(...ways.map((way, i) => {
-        const label = (way.name || '(no name)') + ' [' + way.cls + ']'
+    const roles = p.node_id ? ISSUES.missing_maxheight_restrictor.roles
+        : (issue.roles || []).map(r => p.over === 'roof' ? r.replace('bridge', 'roof') : r);
+    picker.replaceChildren(...elements.map((element, i) => {
+        const label = (element.type === 'node' ? 'node ' + element.id + ' on ' : '')
+            + (element.name || '(no name)') + ' [' + element.cls + ']'
             + (roles[i] ? ' - ' + roles[i] : '');
         const button = el('button', label, i ? '' : 'selected');
         button.onclick = () => {
             [...picker.children].forEach(c => c.classList.remove('selected'));
             button.classList.add('selected');
-            loadWay(way.id);
+            loadElement(element);
         };
         return button;
     }));
-    loadWay(ways[0].id);
+    loadElement(elements[0]);
 }
 
-function loadWay(wayId) {
+/** loads a way or a node ({type, id, name}) from OSM into the edit fields */
+function loadElement(element) {
+    const type = element.type, id = element.id;
     keepChanges();
     currentWay = null;
     $('way-state').className = 'hint warn';
     $('way-state').textContent = '';
-    $('tags').textContent = 'loading way ' + wayId + ' ...';
+    $('tags').textContent = 'loading ' + type + ' ' + id + ' ...';
     EDITABLE.forEach(key => {
         tagInput(key).value = '';
         tagInput(key).disabled = true;
     });
     updateSaveButton();
-    // small link to the way itself, to look at it in OSM or fix something this app cannot do
-    $('way-links').innerHTML = '<a href="' + settings.api + '/way/' + wayId + '" target="_blank">way '
-        + wayId + '</a> &middot; <a href="' + settings.api + '/edit?editor=id&way=' + wayId
+    // small link to the element itself, to look at it in OSM or fix something this app cannot do
+    $('way-links').innerHTML = '<a href="' + settings.api + '/' + type + '/' + id + '" target="_blank">' + type + ' '
+        + id + '</a> &middot; <a href="' + settings.api + '/edit?editor=id&' + type + '=' + id
         + '#map=19/' + currentIssue.lat.toFixed(5) + '/' + currentIssue.lon.toFixed(5)
         + '" target="_blank">open in iD</a>';
 
-    // "full" gives us the nodes with their coordinates as well, so we can draw the way
-    osmRead('/api/0.6/way/' + wayId + '/full.json').then(json => {
-        const way = json.elements.find(e => e.type === 'way');
-        const line = geometryOf(json);
+    // "full" gives us the nodes of a way with their coordinates as well, so we can draw the way
+    const path = type === 'way' ? '/api/0.6/way/' + id + '/full.json' : '/api/0.6/node/' + id + '.json';
+    osmRead(path).then(json => {
+        const way = json.elements.find(e => e.type === type);
+        // a node without tags comes without the field
+        way.tags = way.tags || {};
+        const line = type === 'way' ? geometryOf(json) : null;
         waySource.clear();
-        waySource.addFeature(new ol.Feature(new ol.geom.LineString(line.map(c => ol.proj.fromLonLat(c)))));
+        waySource.addFeature(new ol.Feature(type === 'way'
+            ? new ol.geom.LineString(line.map(c => ol.proj.fromLonLat(c)))
+            : new ol.geom.Point(ol.proj.fromLonLat([way.lon, way.lat]))));
         // a photo of this issue has to be taken on this way, not on the one crossing it
         loadPhoto(currentIssue.lat, currentIssue.lon, line);
-        const pending = pendingEdits.find(e => e.wayId === wayId) || {changes: {}};
-        currentWay = {id: wayId, tags: Object.assign({}, way.tags)};
+        const pending = pendingEdits.find(e => e.type === type && e.id === id) || {changes: {}};
+        currentWay = {type: type, id: id, name: element.name || '', tags: Object.assign({}, way.tags)};
         const wanted = (ISSUES[currentIssue.type] || {}).tag;
         // for the below_default issue the value is the thing to replace, so it is not "done"
         // and not locked either
@@ -929,12 +967,14 @@ function loadWay(wayId) {
         });
         renderTags();
 
-        // the crossing has to sit on the way, otherwise OSM has moved on since the import
-        const offset = distanceToLine(currentIssue.lat, currentIssue.lon, line);
+        // the crossing has to sit on the way (the marker on the node), otherwise OSM has moved on
+        // since the import
+        const offset = type === 'way' ? distanceToLine(currentIssue.lat, currentIssue.lon, line)
+            : distance(currentIssue.lat, currentIssue.lon, way.lat, way.lon);
         if (offset > MAX_CROSSING_OFFSET) {
             $('way-state').className = 'hint warn';
-            $('way-state').textContent = 'this spot is ' + offset.toFixed(1) + ' m away from the way '
-                + 'as OSM has it now, so the imported data is out of date. Not editable here.';
+            $('way-state').textContent = 'this spot is ' + offset.toFixed(1) + ' m away from the ' + type
+                + ' as OSM has it now, so the imported data is out of date. Not editable here.';
             EDITABLE.forEach(key => tagInput(key).disabled = true);
             updateSaveButton();
             return;
@@ -953,7 +993,7 @@ function loadWay(wayId) {
     }).catch(err => {
         $('tags').textContent = '';
         waySource.clear();
-        $('way-state').textContent = 'could not load way ' + wayId + ' from ' + settings.api + ': ' + err.message
+        $('way-state').textContent = 'could not load ' + type + ' ' + id + ' from ' + settings.api + ': ' + err.message
             + (settings.isDevApi ? ' - the dev API has its own database, the real ways do not exist there' : '');
     });
 }
@@ -965,7 +1005,7 @@ function geometryOf(json) {
     return way.nodes.map(id => coords.get(id));
 }
 
-/** the current tags of the way, read only - just to see what is already mapped */
+/** the current tags of the way or node, read only - just to see what is already mapped */
 function renderTags() {
     const keys = currentWay ? Object.keys(currentWay.tags).sort() : [];
     $('tags').replaceChildren(...keys.map(key => {
@@ -973,7 +1013,7 @@ function renderTags() {
         row.append(el('span', key, 'key'), el('span', currentWay.tags[key]));
         return row;
     }));
-    if (!keys.length) $('tags').textContent = 'this way has no tags';
+    if (!keys.length) $('tags').textContent = 'this ' + (currentWay ? currentWay.type : 'way') + ' has no tags';
 }
 
 // Values OSM accepts without a number - they say "nothing to sign here", which is a statement too
@@ -1044,7 +1084,7 @@ function updateSaveButton() {
 
 EDITABLE.forEach(key => {
     const input = tagInput(key);
-    // a value OSM has already is locked, see loadWay
+    // a value OSM has already is locked, see loadElement
     input.onmousedown = input.ontouchstart = e => {
         if (!input.readOnly) return;
         e.preventDefault();
@@ -1068,11 +1108,11 @@ EDITABLE.forEach(key => {
 function keepChanges() {
     const changes = currentChanges();
     if (!Object.keys(changes).length) return;
-    const p = currentIssue.properties;
-    pendingEdits = pendingEdits.filter(e => e.wayId !== currentWay.id);
+    pendingEdits = pendingEdits.filter(e => !(e.type === currentWay.type && e.id === currentWay.id));
     pendingEdits.push({
-        wayId: currentWay.id,
-        name: (p.way_id === currentWay.id ? p.way_name : p.other_way_name) || '',
+        type: currentWay.type,
+        id: currentWay.id,
+        name: currentWay.name,
         changes: changes
     });
     currentWay = null; // taken over, do not add it a second time
@@ -1121,7 +1161,7 @@ function renderPending() {
     $('pending-list').replaceChildren(...pendingEdits.map(edit => {
         const item = el('div', '', 'pending-item');
         const title = el('div', '', 'pending-title');
-        title.append(el('span', (edit.name || '(no name)') + ' - way ' + edit.wayId));
+        title.append(el('span', (edit.name || '(no name)') + ' - ' + edit.type + ' ' + edit.id));
         const remove = el('a', 'remove from list');
         remove.onclick = () => {
             pendingEdits = pendingEdits.filter(e => e !== edit);
@@ -1138,23 +1178,29 @@ function xmlEscape(s) {
 }
 
 /**
- * The way as it comes from the API, with only the three allowed tags changed. The node references
- * are written back unchanged, so the geometry stays exactly as it is.
+ * The way or node as it comes from the API, with only the three allowed tags changed. The node
+ * references of a way and the coordinates of a node are written back unchanged, so the geometry
+ * stays exactly as it is.
  */
-function wayXml(way, changes, changesetId) {
-    const tags = Object.assign({}, way.tags);
+function elementXml(element, changes, changesetId) {
+    const before = element.tags || {};
+    const tags = Object.assign({}, before);
     Object.keys(changes).forEach(key => {
         if (!EDITABLE.includes(key)) throw new Error('refusing to change the tag ' + key);
         if (!changes[key]) throw new Error('refusing to write an empty value for ' + key);
         tags[key] = changes[key];
     });
-    if (Object.keys(tags).length < Object.keys(way.tags).length)
-        throw new Error('refusing to upload way ' + way.id + ', it would lose tags');
+    if (Object.keys(tags).length < Object.keys(before).length)
+        throw new Error('refusing to upload ' + element.type + ' ' + element.id + ', it would lose tags');
 
-    return '<way id="' + way.id + '" version="' + way.version + '" changeset="' + changesetId + '">'
-        + way.nodes.map(ref => '<nd ref="' + ref + '"/>').join('')
-        + Object.keys(tags).map(key =>
-            '<tag k="' + xmlEscape(key) + '" v="' + xmlEscape(tags[key]) + '"/>').join('')
+    const tagXml = Object.keys(tags).map(key =>
+        '<tag k="' + xmlEscape(key) + '" v="' + xmlEscape(tags[key]) + '"/>').join('');
+    const head = ' id="' + element.id + '" version="' + element.version + '" changeset="' + changesetId + '"';
+    if (element.type === 'node')
+        return '<node' + head + ' lat="' + element.lat + '" lon="' + element.lon + '">' + tagXml + '</node>';
+    return '<way' + head + '>'
+        + element.nodes.map(ref => '<nd ref="' + ref + '"/>').join('')
+        + tagXml
         + '</way>';
 }
 
@@ -1166,9 +1212,9 @@ $('upload').onclick = async () => {
         (comment ? $('source') : $('comment')).focus();
         return;
     }
-    if (!confirm('Upload ' + pendingEdits.length + ' way(s) to ' + settings.api
+    if (!confirm('Upload ' + pendingEdits.length + ' change(s) to ' + settings.api
         + (settings.isDevApi ? '' : ' (this changes the real OSM data!)') + '?\n\n'
-        + pendingEdits.map(e => 'way ' + e.wayId + ': ' + describe(e)).join('\n')))
+        + pendingEdits.map(e => e.type + ' ' + e.id + ': ' + describe(e)).join('\n')))
         return;
 
     const state = $('upload-state');
@@ -1177,12 +1223,13 @@ $('upload').onclick = async () => {
     $('upload').disabled = true;
     let changesetId = null;
     try {
-        // the ways may have been edited by somebody else in the meantime, so we apply our changes
-        // to the current version instead of the one we saw while editing
-        state.textContent = 'loading current way versions ...';
-        const ways = [];
+        // the elements may have been edited by somebody else in the meantime, so we apply our
+        // changes to the current version instead of the one we saw while editing
+        state.textContent = 'loading current versions ...';
+        const elements = [];
         for (const edit of pendingEdits)
-            ways.push({way: (await osmRead('/api/0.6/way/' + edit.wayId + '.json')).elements[0], changes: edit.changes});
+            elements.push({element: (await osmRead('/api/0.6/' + edit.type + '/' + edit.id + '.json')).elements[0],
+                changes: edit.changes});
 
         state.textContent = 'creating changeset ...';
         changesetId = await osmFetch('/api/0.6/changeset/create', {
@@ -1199,16 +1246,16 @@ $('upload').onclick = async () => {
             method: 'POST',
             headers: {'Content-Type': 'text/xml'},
             body: '<osmChange version="0.6" generator="GraphHopper osm-issues"><modify>'
-                + ways.map(w => wayXml(w.way, w.changes, changesetId)).join('') + '</modify></osmChange>'
+                + elements.map(e => elementXml(e.element, e.changes, changesetId)).join('') + '</modify></osmChange>'
         });
         await osmFetch('/api/0.6/changeset/' + changesetId + '/close', {method: 'PUT'});
 
         pendingEdits = [];
-        uploadedWays = [...new Set(uploadedWays.concat(ways.map(w => w.way.id)))];
-        localStorage.setItem('osm_uploaded', JSON.stringify(uploadedWays));
+        uploaded = [...new Set(uploaded.concat(elements.map(e => elementKey(e.element.type, e.element.id))))];
+        localStorage.setItem('osm_uploaded', JSON.stringify(uploaded));
         $('comment').value = DEFAULT_COMMENT;
         localStorage.setItem('changeset_source', source);
-        state.innerHTML = 'uploaded ' + ways.length + ' way(s) as <a href="' + settings.api
+        state.innerHTML = 'uploaded ' + elements.length + ' change(s) as <a href="' + settings.api
             + '/changeset/' + changesetId + '" target="_blank">changeset ' + changesetId + '</a>';
         justUploaded = true;
         savePending();

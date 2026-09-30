@@ -51,15 +51,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.json.Statement.Else;
 import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.GHUtility.readCountries;
-import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_SIGNED_TAG;
-import static com.graphhopper.util.Parameters.Details.MAX_HEIGHT_TAG;
-import static com.graphhopper.util.Parameters.Details.MAX_WEIGHT_TAG;
+import static com.graphhopper.util.Parameters.Details.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -1197,6 +1196,47 @@ public class OSMReaderTest {
         assertNull(edges.get(300).getValue(MAX_HEIGHT_TAG));
         assertNull(edges.get(300).getValue(MAX_HEIGHT_SIGNED_TAG));
         assertNull(edges.get(300).getValue(MAX_WEIGHT_TAG));
+    }
+
+    @Test
+    public void testHeightRestrictorKeyValues() {
+        GraphHopper hopper = new GraphHopperFacade("test-height-restrictor.xml").importOrLoad();
+        BaseGraph graph = hopper.getBaseGraph();
+        IntEncodedValue wayIdEnc = hopper.getEncodingManager().getIntEncodedValue(OSMWayID.KEY);
+
+        // every barrier node becomes an edge of its own, the one with distance 0
+        Map<Integer, EdgeIteratorState> barriers = new HashMap<>(), roads = new HashMap<>();
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            if (iter.getValue(BARRIER_TAG) != null) barriers.put(iter.get(wayIdEnc), iter.detach(false));
+            else roads.put(iter.get(wayIdEnc), iter.detach(false));
+        }
+        assertEquals(3, barriers.size());
+        assertEquals(3, roads.size());
+        for (EdgeIteratorState barrier : barriers.values()) {
+            assertEquals("height_restrictor", barrier.getValue(BARRIER_TAG));
+            assertTrue(barrier.getDistance() < 0.01);
+        }
+        // the road edges stay as they are, the barrier does not leak into them
+        for (EdgeIteratorState road : roads.values()) {
+            assertNull(road.getValue(BARRIER_TAG));
+            assertNull(road.getValue(OSM_NODE_ID_TAG));
+        }
+
+        // no maxheight anywhere: the gap is at the node, and the node id says which one
+        assertNull(barriers.get(100).getValue(MAX_HEIGHT_TAG));
+        assertEquals(15L, barriers.get(100).getValue(OSM_NODE_ID_TAG));
+        assertNull(roads.get(100).getValue(MAX_HEIGHT_TAG));
+
+        // the node carries the maxheight, so the barrier edge has it and the road does not
+        assertEquals("2.1", barriers.get(200).getValue(MAX_HEIGHT_TAG));
+        assertEquals(25L, barriers.get(200).getValue(OSM_NODE_ID_TAG));
+        assertNull(roads.get(200).getValue(MAX_HEIGHT_TAG));
+
+        // the way carries the maxheight, the barrier edge inherits it like every other edge of the way
+        assertEquals("3.8", barriers.get(300).getValue(MAX_HEIGHT_TAG));
+        assertEquals(35L, barriers.get(300).getValue(OSM_NODE_ID_TAG));
+        assertEquals("3.8", roads.get(300).getValue(MAX_HEIGHT_TAG));
     }
 
     class GraphHopperFacade extends GraphHopper {

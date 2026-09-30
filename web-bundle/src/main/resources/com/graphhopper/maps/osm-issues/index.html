@@ -46,6 +46,7 @@
                 <label title="shows roads under a bridge, railway, roof or similar that have no maxheight tag. Bigger marker: more likely a sign below 4 m"><input type="checkbox" data-type="missing_maxheight" checked><span class="key dot maxheight"></span> maxheight below bridge/roof</label>
                 <label title="shows roads in a tunnel or tagged covered=yes that have no maxheight tag"><input type="checkbox" data-type="missing_maxheight_tunnel" checked><span class="key dot tunnel"></span> maxheight in tunnel</label>
                 <label title="shows roads tagged maxheight=below_default. The restriction is confirmed, only the number is missing"><input type="checkbox" data-type="maxheight_below_default" checked><span class="key dot below-default"></span> below_default without number</label>
+                <label title="shows barrier=height_restrictor nodes without maxheight. The bar is there, only the number is missing"><input type="checkbox" data-type="missing_maxheight_restrictor" checked><span class="key dot restrictor"></span> height restrictor without number</label>
                 <label title="shows road bridges that have no maxweight tag"><input type="checkbox" data-type="missing_maxweight"><span class="key dot maxweight"></span> maxweight on bridge</label>
                 <label title="shows roads that cross without a junction and without a bridge or tunnel tag. Slow for large areas"><input type="checkbox" data-type="missing_bridge"><span class="key dot bridge"></span> bridge tag missing</label>
                 <div class="roads">
@@ -53,7 +54,7 @@
                     <label title="filters by the road that needs the tag"><input type="checkbox" class="road-group" value="motorway,trunk,primary"> motorway, trunk, primary</label>
                     <label><input type="checkbox" class="road-group" value="secondary,tertiary,residential" checked> secondary, tertiary, residential</label>
                     <label title="includes service roads, where most roofs are (petrol stations, parking)"><input type="checkbox" class="road-group" value="unclassified,service,road,track,living_street,busway,construction"> everything else (service, track, ...)</label>
-                    <div class="hint">maxheight: the road under the bridge or in the tunnel<br>maxweight: the bridge itself<br>bridge tag: both crossing ways</div>
+                    <div class="hint">maxheight: the road under the bridge, in the tunnel or through the restrictor<br>maxweight: the bridge itself<br>bridge tag: both crossing ways</div>
                 </div>
                 <div id="status">move the map to load issues</div>
 
@@ -68,7 +69,7 @@
         <h2 id="edit-title"></h2>
 
         <div id="edit-box" class="panel">
-            <div class="label">which way do you want to edit?</div>
+            <div class="label">what do you want to edit?</div>
             <div id="edit-hint" class="hint"></div>
             <div id="way-picker"></div>
             <div id="way-state" class="hint warn"></div>
@@ -96,7 +97,7 @@
             </div>
         </div>
         <details id="all-tags">
-            <summary>all tags of this way</summary>
+            <summary>all tags</summary>
             <div id="tags"></div>
         </details>
         <div id="way-links" class="hint"></div>

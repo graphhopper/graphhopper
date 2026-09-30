@@ -351,8 +351,9 @@ public class WaySegmentParser {
                         segment = new ArrayList<>();
                     }
 
-                    // mark barrier edge
+                    // mark barrier edge, and say which OSM node it stands for
                     way.setTag("gh:barrier_edge", true);
+                    way.setTag("gh:barrier_node_id", node.osmNodeId);
                     // a barrier edge has two identical endpoints, so its geometry alone is not
                     // enough to derive an orientation. Pass the coordinates of the surrounding
                     // way nodes as transient tags so OrientationCalculator can use them.
@@ -364,6 +365,7 @@ public class WaySegmentParser {
                     segment.add(barrierTo);
                     handleSegment(segment, way);
                     way.removeTag("gh:barrier_edge");
+                    way.removeTag("gh:barrier_node_id");
                     way.removeTag("gh:barrier_prev_point");
                     way.removeTag("gh:barrier_next_point");
 

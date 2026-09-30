@@ -192,6 +192,7 @@ button:disabled {
 .dot.maxheight { background: #e6194b; }
 .dot.tunnel { background: #911eb4; }
 .dot.below-default { background: #9a6324; }
+.dot.restrictor { background: #f032e6; }
 .dot.maxweight { background: #f58231; }
 .dot.bridge { background: #4363d8; }
 
