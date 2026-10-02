@@ -1,5 +1,6 @@
 ### 12.0 [not yet released]
 
+- WaySegmentParser throws an IllegalStateException if a way in the input files references a missing node. This happens if replication of differential OSM planet updates is somehow broken or a regional extract of a planet dump contains nodes within the clipping region only. You can override this exception by setting `graphhopper.datareader.accept_missing_nodes=true` in the configuration.
 - custom models: conditions accept only the binary operators ==, !=, <, >, <=, >=, &&, ||, +, -, *, / and %; bitwise and shift operators like &, |, ^, << and >> are rejected now
 - custom models: new `parameters` section with named numbers and booleans usable in conditions and value expressions (a parameter xy is referenced as p_xy); parameters can only be defined in the server-side custom model, optionally with an allowed value range; on merge the values are overridden per name, so a request can tweak the values of the server-side profile without repeating its statements (and without recompiling the custom model class); empty speed/priority/turn_penalty sections are no longer serialized
 - breaking: road_access now contains DESIGNATED and DISCOURAGED. All custom models using road_access == YES or road_access != YES need to consider this.

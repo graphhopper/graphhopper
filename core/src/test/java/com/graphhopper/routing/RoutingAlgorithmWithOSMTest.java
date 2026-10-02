@@ -531,6 +531,7 @@ public class RoutingAlgorithmWithOSMTest {
         Profile profile = TestProfiles.accessAndSpeed("car");
         profile.getCustomModel().setDistanceInfluence(1_000d);
         GraphHopper hopper = createHopper(DIR + "/campo-grande.osm.gz", profile);
+        hopper.getReaderConfig().setAcceptMissingNodes(true);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }

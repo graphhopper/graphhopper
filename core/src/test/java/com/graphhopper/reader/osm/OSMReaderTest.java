@@ -268,7 +268,7 @@ public class OSMReaderTest {
 
     @Test
     public void testWayReferencesNotExistingAdjNode_issue19() {
-        GraphHopper hopper = new GraphHopperFacade(file4).importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file4).enableAcceptMissingNodes().importOrLoad();
         Graph graph = hopper.getBaseGraph();
 
         assertEquals(2, graph.getNodes());
@@ -281,8 +281,21 @@ public class OSMReaderTest {
     }
 
     @Test
+    public void testMissingNodesEarlyFailure() {
+        // If a node is missing in the input file, GraphHopper should fail during import with a good message
+        // except requested otherwise.
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> new GraphHopperFacade(file4).importOrLoad());
+        Throwable cause = ex.getCause();
+        assertTrue(IllegalStateException.class.equals(cause.getClass()));
+        assertTrue(cause.getMessage().endsWith("but that node is missing in the input file."));
+    }
+
+    @Test
     public void testDoNotRejectEdgeIfFirstNodeIsMissing_issue2221() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm9.xml").setSortGraph(false).importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-osm9.xml")
+                .enableAcceptMissingNodes()
+                .setSortGraph(false)
+                .importOrLoad();
         BaseGraph graph = hopper.getBaseGraph();
         assertEquals(2, graph.getNodes());
         assertEquals(1, graph.getEdges());
@@ -302,7 +315,10 @@ public class OSMReaderTest {
 
     @Test
     public void test_edgeDistanceWhenFirstNodeIsMissing_issue2221() {
-        GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").setSortGraph(false).importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade("test-osm10.xml")
+                .enableAcceptMissingNodes()
+                .setSortGraph(false)
+                .importOrLoad();
         BaseGraph graph = hopper.getBaseGraph();
         assertEquals(3, graph.getNodes());
         assertEquals(3, graph.getEdges());
@@ -752,6 +768,7 @@ public class OSMReaderTest {
     public void testConditionalTurnRestriction() {
         String fileConditionalTurnRestrictions = "test-conditional-turn-restrictions.xml";
         GraphHopper hopper = new GraphHopperFacade(fileConditionalTurnRestrictions, "").
+                enableAcceptMissingNodes().
                 setMinNetworkSize(0).
                 importOrLoad();
 
@@ -944,7 +961,7 @@ public class OSMReaderTest {
         OSMParsers osmParsers = new OSMParsers();
         osmParsers.addWayTagParser(OSMRoadAccessParser.forCar(roadAccessEnc));
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig().setAcceptMissingNodes(true));
         reader.setAreaIndex(createCountryIndex());
         // there are two edges, both with highway=track, one in Berlin, one in Paris
         reader.setFile(new File(getClass().getResource("test-osm11.xml").getFile()));
@@ -976,7 +993,7 @@ public class OSMReaderTest {
         OSMParsers osmParsers = new OSMParsers()
                 .addWayTagParser(new CountryParser(countryEnc));
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig().setAcceptMissingNodes(true));
         reader.setAreaIndex(createCountryIndex());
         reader.setFile(new File(getClass().getResource("test-osm12.xml").getFile()));
         reader.readGraph();
@@ -1000,7 +1017,7 @@ public class OSMReaderTest {
                 .build();
         OSMParsers osmParsers = new OSMParsers();
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig().setAcceptMissingNodes(true));
         reader.setFile(new File(getClass().getResource("test-osm-street-name.xml").getFile()));
         reader.readGraph();
 
@@ -1067,6 +1084,11 @@ public class OSMReaderTest {
                     "car_access, car_average_speed, bike_access, bike_priority, bike_average_speed, ferry_speed");
             setProfiles(createProfiles());
             getReaderConfig().setPreferredLanguage(prefLang);
+        }
+
+        public GraphHopperFacade enableAcceptMissingNodes() {
+            getReaderConfig().setAcceptMissingNodes(true);
+            return this;
         }
 
         protected List<Profile> createProfiles() {

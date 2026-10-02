@@ -24,6 +24,7 @@ import java.util.List;
 public class OSMReaderConfig {
     private List<String> ignoredHighways = new ArrayList<>();
     private boolean parseWayNames = true;
+    private boolean acceptMissingNodes = false;
     private String preferredLanguage = "";
     private double maxWayPointDistance = 0.5;
     private double elevationMaxWayPointDistance = Double.MAX_VALUE;
@@ -76,6 +77,15 @@ public class OSMReaderConfig {
      */
     public OSMReaderConfig setParseWayNames(boolean parseWayNames) {
         this.parseWayNames = parseWayNames;
+        return this;
+    }
+
+    public boolean isAcceptMissingNodes() {
+        return acceptMissingNodes;
+    }
+
+    public OSMReaderConfig setAcceptMissingNodes(boolean acceptMissingNodes) {
+        this.acceptMissingNodes = acceptMissingNodes;
         return this;
     }
 
