@@ -6,8 +6,8 @@
 //      custom_model_files: [mtb.json]
 
 {
-  "parameters": { "power": { "value": 160, "min": 40, "max": 500 }, "mass": { "value": 90, "min": 25, "max": 300 },
-                  "max_mtb_rating": 6, "max_hike_rating": 4 },
+  "parameters": { "max_mtb_rating": 6, "max_hike_rating": 4,
+                  "power": { "value": 160, "min": 40, "max": 500 }, "mass": { "value": 90, "min": 25, "max": 300 } },
   "priority": [
     { "if": "true",  "multiply_by": "mtb_priority" },
     { "if": "bike_network == INTERNATIONAL || bike_network == NATIONAL || mtb_network == INTERNATIONAL || mtb_network == NATIONAL",  "multiply_by": "1.5" },

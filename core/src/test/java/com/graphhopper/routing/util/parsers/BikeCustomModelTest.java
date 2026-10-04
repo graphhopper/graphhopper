@@ -18,6 +18,8 @@ import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class BikeCustomModelTest {
@@ -44,6 +46,7 @@ public class BikeCustomModelTest {
                 add(Country.create()).
                 add(RoadClass.create()).
                 add(RoadEnvironment.create()).
+                add(AverageSlope.create()).
                 add(RouteNetwork.create(BikeNetwork.KEY)).
                 add(RouteNetwork.create(MtbNetwork.KEY)).
                 add(Roundabout.create()).
@@ -72,6 +75,16 @@ public class BikeCustomModelTest {
                 addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(em.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig, "mtb"));
     }
 
+    @Test
+    public void testParameterRanges() {
+        // the bike_speed_factor parameters need finite ranges, validated at their endpoints on startup
+        for (String model : List.of("bike.json", "bike_tc.json", "mtb.json", "racingbike.json"))
+            CustomModelParser.checkParameterRanges(GHUtility.loadCustomModelFromJar(model), em);
+    }
+
+    // on the flat bike_speed_factor scales the encoded speed to the rider of the custom model (riding sections only)
+    static final double BIKE = 18.68 / 18, MTB = 21.51 / 18;
+
     EdgeIteratorState createEdge(ReaderWay way, ReaderRelation... readerRelation) {
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1);
@@ -80,6 +93,8 @@ public class BikeCustomModelTest {
         if (readerRelation.length == 1)
             parsers.handleRelationTags(readerRelation[0], rel);
         parsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, rel);
+        // flat, otherwise the unset slope reads as the steepest descent
+        edge.set(em.getDecimalEncodedValue(AverageSlope.KEY), 0);
         return edge;
     }
 
@@ -115,7 +130,7 @@ public class BikeCustomModelTest {
         way.setTag("sac_scale", "mountain_hiking");
         edge = createEdge(way);
         assertEquals(0.0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(8.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(8 * BIKE, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.clearTags();
         way.setTag("highway", "tertiary");
@@ -160,7 +175,7 @@ public class BikeCustomModelTest {
         EdgeIteratorState edge = createEdge(way);
         CustomWeighting.Config p = CustomModelParser.createWeightingConfig(cm, em);
         assertEquals(1.1, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(10.0, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(10 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.setTag("mtb:scale", "3");
         edge = createEdge(way);
@@ -264,7 +279,7 @@ public class BikeCustomModelTest {
         way.setTag("lcn", "yes");
         edge = createEdge(way);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * BIKE, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // relation code is VERY_NICE
         ReaderRelation rel = new ReaderRelation(1);
@@ -273,30 +288,30 @@ public class BikeCustomModelTest {
         way.setTag("highway", "road");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * BIKE, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * BIKE, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // relation code is NICE
         rel.setTag("network", "rcn");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * BIKE, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // no "double boosting" due because way lcn=yes is only considered if no route relation
         way.setTag("lcn", "yes");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * BIKE, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // relation code is BEST
         rel.setTag("network", "ncn");
         edge = createEdge(way, rel);
         assertEquals(1.4, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * BIKE, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // PREFER relation, but tertiary road => no get off the bike but road wayTypeCode and faster
         way.clearTags();
@@ -305,20 +320,20 @@ public class BikeCustomModelTest {
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * BIKE, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.clearTags();
         way.clearTags();
         way.setTag("highway", "track");
         edge = createEdge(way, rel);
         assertEquals(1, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(12 * BIKE, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("route", "bicycle");
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * BIKE, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
     }
 
     @Test
@@ -332,24 +347,24 @@ public class BikeCustomModelTest {
         ReaderRelation rel = new ReaderRelation(1);
         EdgeIteratorState edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(12 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // relation code is PREFER
         rel.setTag("route", "bicycle");
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "rcn");
         edge = createEdge(way, rel);
         assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "ncn");
         edge = createEdge(way, rel);
         assertEquals(1.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // no pushing section but road wayTypeCode and faster
         way.clearTags();
@@ -358,30 +373,30 @@ public class BikeCustomModelTest {
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.43, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.clearTags();
         rel.clearTags();
         way.setTag("highway", "track");
         edge = createEdge(way, rel);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(12 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("route", "mtb");
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(12 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "rcn");
         edge = createEdge(way, rel);
         assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(12 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "ncn");
         edge = createEdge(way, rel);
         assertEquals(1.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(12, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(12 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.clearTags();
         way.setTag("highway", "tertiary");
@@ -390,7 +405,7 @@ public class BikeCustomModelTest {
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.43, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(18 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
     }
 
 }
