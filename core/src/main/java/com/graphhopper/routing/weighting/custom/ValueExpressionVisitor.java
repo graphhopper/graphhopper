@@ -98,7 +98,7 @@ public class ValueExpressionVisitor {
                 if (!(mi.arguments[i] instanceof Java.AmbiguousName n && n.identifiers.length == 1 && n.identifiers[0].startsWith(CustomModelParser.PARAM_PREFIX))
                         && !(mi.arguments[i] instanceof Java.IntegerLiteral || mi.arguments[i] instanceof Java.FloatingPointLiteral))
                     throw new IllegalArgumentException("argument " + (i + 1) + " of " + BIKE_SPEED_FACTOR + " must be a parameter or a positive number");
-            result.builtinFunction = true;
+            result.bikeSpeedFactor = true;
             StringBuilder args = new StringBuilder("value");
             for (Java.Rvalue arg : mi.arguments) args.append(", ").append(emit(arg));
             return BIKE_SPEED_FACTOR + "(" + args + ")";
@@ -162,9 +162,9 @@ public class ValueExpressionVisitor {
         Set<String> usedParameters = new LinkedHashSet<>(result.guessedVariables);
         usedParameters.removeAll(encodedValues);
         // the built-in function is finite and positive for every valid combination, so checking the range endpoints is still sufficient
-        if (usedParameters.size() > 1 && !result.builtinFunction)
+        if (usedParameters.size() > 1 && !result.bikeSpeedFactor)
             throw new IllegalArgumentException("Currently only a single parameter is allowed on the right-hand side, but was " + usedParameters.size() + ". Value expression: " + valueExpression);
-        if (usedParameters.size() == 1 && !result.builtinFunction) {
+        if (usedParameters.size() == 1 && !result.bikeSpeedFactor) {
             Matcher matcher = Pattern.compile("\\b" + usedParameters.iterator().next() + "\\b").matcher(valueExpression);
             matcher.find();
             if (matcher.find())
@@ -174,7 +174,7 @@ public class ValueExpressionVisitor {
         // TODO Nearly duplicate code as in findMinMax
         // the evaluator does not know the parameters, so replace them with their values
         String evalExpression = replaceParameters(valueExpression, parameters);
-        if (result.builtinFunction) evalExpression = evalExpression.replace("(value, ", "(Double.NaN, ");
+        if (result.bikeSpeedFactor) evalExpression = evalExpression.replace("(value, ", "(Double.NaN, ");
         double value;
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
@@ -238,7 +238,7 @@ public class ValueExpressionVisitor {
         // TODO Nearly duplicate as in findVariables
         // the evaluator does not know the parameters, so replace them with their values
         String evalExpression = replaceParameters(valueExpression, parameters);
-        if (result.builtinFunction) evalExpression = evalExpression.replace("(value, ", "(Double.NaN, ");
+        if (result.bikeSpeedFactor) evalExpression = evalExpression.replace("(value, ", "(Double.NaN, ");
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
             // We still call the parse() method before as it is only ~3x slower and might increase security slightly. Because certain

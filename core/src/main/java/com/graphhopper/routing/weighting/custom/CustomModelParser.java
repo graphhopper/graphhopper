@@ -739,7 +739,7 @@ public class CustomModelParser {
     private static ParseResult parseValue(Statement statement, String exceptionInfo, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
         ParseResult result = ValueExpressionVisitor.parseValue(statement.value(), parameters, lookup);
         // the function gets the running speed, which only exists in getSpeed and only makes sense as a factor
-        if (result.builtinFunction && (!exceptionInfo.startsWith("speed") || statement.operation() != Statement.Op.MULTIPLY))
+        if (result.bikeSpeedFactor && (!exceptionInfo.startsWith("speed") || statement.operation() != Statement.Op.MULTIPLY))
             throw new IllegalArgumentException(ValueExpressionVisitor.BIKE_SPEED_FACTOR + " can only be used with multiply_by under speed, but was: " + statement);
         return result;
     }
