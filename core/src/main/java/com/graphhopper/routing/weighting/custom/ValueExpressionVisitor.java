@@ -45,6 +45,10 @@ public class ValueExpressionVisitor {
     private static final Set<String> allowedMethodParents = Set.of("Math");
     // functions must be monotone in every argument (see findMinMax)
     private static final Set<String> allowedMethods = Set.of("sqrt", "min", "max");
+    // built-in function of CustomWeightingHelper, see BikeSpeed. It gets the running speed 'value' of the
+    // generated getSpeed as first argument, which the evaluator (findMinMax) replaces with NaN.
+    static final String BIKE_SPEED_FACTOR = "bike_speed_factor";
+    private static final String BIKE_SPEED_FACTOR_ARGS = "slope, power, mass, cda, crr, base_speed";
     private final ParseResult result;
     private final NameValidator variableValidator;
 
@@ -84,6 +88,20 @@ public class ValueExpressionVisitor {
             String operand = emit(uop.operand);
             // "- -x" must not become the decrement "--x"
             return operand.startsWith("-") ? "- " + operand : "-" + operand;
+        } else if (rv instanceof Java.MethodInvocation mi && mi.target == null && mi.methodName.equals(BIKE_SPEED_FACTOR)) {
+            if (mi.arguments.length != BIKE_SPEED_FACTOR_ARGS.split(",").length)
+                throw new IllegalArgumentException(BIKE_SPEED_FACTOR + " requires the arguments: " + BIKE_SPEED_FACTOR_ARGS);
+            if (!(mi.arguments[0] instanceof Java.AmbiguousName))
+                throw new IllegalArgumentException("the slope of " + BIKE_SPEED_FACTOR + " must be an encoded value like average_slope");
+            // the table is built from the values, so they must be constant per custom model
+            for (int i = 1; i < mi.arguments.length; i++)
+                if (!(mi.arguments[i] instanceof Java.AmbiguousName n && n.identifiers.length == 1 && n.identifiers[0].startsWith(CustomModelParser.PARAM_PREFIX))
+                        && !(mi.arguments[i] instanceof Java.IntegerLiteral || mi.arguments[i] instanceof Java.FloatingPointLiteral))
+                    throw new IllegalArgumentException("argument " + (i + 1) + " of " + BIKE_SPEED_FACTOR + " must be a parameter or a positive number");
+            result.builtinFunction = true;
+            StringBuilder args = new StringBuilder("value");
+            for (Java.Rvalue arg : mi.arguments) args.append(", ").append(emit(arg));
+            return BIKE_SPEED_FACTOR + "(" + args + ")";
         } else if (rv instanceof Java.MethodInvocation mi) {
             // Math.sqrt(x), Math.min(x, 10) => the target is [Math, sqrt]. Skips methods like this.in() or chained calls.
             // TODO unlike in ConditionalExpressionVisitor we don't support a call like road_class.ordinal()
@@ -143,9 +161,10 @@ public class ValueExpressionVisitor {
 
         Set<String> usedParameters = new LinkedHashSet<>(result.guessedVariables);
         usedParameters.removeAll(encodedValues);
-        if (usedParameters.size() > 1)
+        // the built-in function is finite and positive for every valid combination, so checking the range endpoints is still sufficient
+        if (usedParameters.size() > 1 && !result.builtinFunction)
             throw new IllegalArgumentException("Currently only a single parameter is allowed on the right-hand side, but was " + usedParameters.size() + ". Value expression: " + valueExpression);
-        if (usedParameters.size() == 1) {
+        if (usedParameters.size() == 1 && !result.builtinFunction) {
             Matcher matcher = Pattern.compile("\\b" + usedParameters.iterator().next() + "\\b").matcher(valueExpression);
             matcher.find();
             if (matcher.find())
@@ -155,6 +174,7 @@ public class ValueExpressionVisitor {
         // TODO Nearly duplicate code as in findMinMax
         // the evaluator does not know the parameters, so replace them with their values
         String evalExpression = replaceParameters(valueExpression, parameters);
+        if (result.builtinFunction) evalExpression = evalExpression.replace("(value, ", "(Double.NaN, ");
         double value;
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
@@ -165,7 +185,7 @@ public class ValueExpressionVisitor {
             evalExpression = Statement.toJavaExpression(evalExpression);
             try {
                 if (encodedValues.isEmpty()) { // without encoded values
-                    NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);
+                    NoArgEvaluator ee = createEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);
                     value = ee.evaluate();
                 } else if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right-hand side is the encoded value
                     EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
@@ -173,7 +193,7 @@ public class ValueExpressionVisitor {
                 } else {
                     // single encoded value
                     String var = encodedValues.iterator().next();
-                    SingleArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(evalExpression, SingleArgEvaluator.class, var);
+                    SingleArgEvaluator ee = createEvaluator().createFastEvaluator(evalExpression, SingleArgEvaluator.class, var);
                     EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
                     double max = getMax(enc);
                     double val1 = ee.evaluate(max);
@@ -218,6 +238,7 @@ public class ValueExpressionVisitor {
         // TODO Nearly duplicate as in findVariables
         // the evaluator does not know the parameters, so replace them with their values
         String evalExpression = replaceParameters(valueExpression, parameters);
+        if (result.builtinFunction) evalExpression = evalExpression.replace("(value, ", "(Double.NaN, ");
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
             // We still call the parse() method before as it is only ~3x slower and might increase security slightly. Because certain
@@ -230,7 +251,7 @@ public class ValueExpressionVisitor {
         evalExpression = Statement.toJavaExpression(evalExpression);
         try {
             if (encodedValues.isEmpty()) { // without encoded values
-                NoArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);
+                NoArgEvaluator ee = createEvaluator().createFastEvaluator(evalExpression, NoArgEvaluator.class);
                 double val = ee.evaluate();
                 return new MinMax(val, val);
             }
@@ -242,7 +263,7 @@ public class ValueExpressionVisitor {
             }
 
             String var = encodedValues.iterator().next();
-            SingleArgEvaluator ee = new ExpressionEvaluator().createFastEvaluator(evalExpression, SingleArgEvaluator.class, var);
+            SingleArgEvaluator ee = createEvaluator().createFastEvaluator(evalExpression, SingleArgEvaluator.class, var);
             EncodedValue enc = lookup.getEncodedValue(var, EncodedValue.class);
             double max = getMax(enc);
             double val1 = ee.evaluate(max);
@@ -273,6 +294,13 @@ public class ValueExpressionVisitor {
             expression = expression.replaceAll("\\b" + name + "\\b", literal);
         }
         return expression;
+    }
+
+    private static ExpressionEvaluator createEvaluator() {
+        ExpressionEvaluator ee = new ExpressionEvaluator();
+        // makes the built-in function bike_speed_factor available
+        ee.setExtendedClass(CustomWeightingHelper.class);
+        return ee;
     }
 
     static double getMin(EncodedValue enc) {

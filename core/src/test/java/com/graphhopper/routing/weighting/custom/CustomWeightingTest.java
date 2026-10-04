@@ -48,6 +48,7 @@ class CustomWeightingTest {
                 .add(RoadClass.create())
                 .add(RoadClassLink.create())
                 .add(new DecimalEncodedValueImpl("my_priority", 4, 0.05, false))
+                .add(AverageSlope.create())
                 .addTurnCostEncodedValue(turnRestrictionEnc)
                 .build();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
@@ -67,6 +68,55 @@ class CustomWeightingTest {
 
     private Weighting createWeighting(CustomModel vehicleModel) {
         return CustomModelParser.createWeighting(encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+    }
+
+    @Test
+    public void testBikeSpeedFactor() {
+        DecimalEncodedValue slopeEnc = encodingManager.getDecimalEncodedValue(AverageSlope.KEY);
+        EdgeIteratorState flat = graph.edge(0, 1).set(avSpeedEnc, 20, 20).set(slopeEnc, 0).setDistance(1000);
+        EdgeIteratorState climb = graph.edge(1, 2).set(avSpeedEnc, 20, 20).set(slopeEnc, 5).setDistance(1000);
+        EdgeIteratorState track = graph.edge(2, 3).set(avSpeedEnc, 10, 10).set(slopeEnc, 5).setDistance(1000);
+        EdgeIteratorState steps = graph.edge(3, 4).set(avSpeedEnc, 5, 5).set(slopeEnc, 10).setDistance(1000);
+
+        CustomModel customModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).
+                setParameter("power", Map.of("value", 100, "min", 40, "max", 500)).setParameter("mass", Map.of("value", 90, "min", 25, "max", 300)).
+                addToSpeed(If("true", MULTIPLY, "bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.008, 20)"));
+        Weighting w = createWeighting(customModel);
+        // the encoded speed is scaled relative to the base speed of 20 and limited by the power on climbs
+        assertEquals(18.68, 3.6 / w.calcEdgeMillis(flat, false) * 1000 * 1000, 0.01);
+        assertEquals(6.81, 3.6 / w.calcEdgeMillis(climb, false) * 1000 * 1000, 0.01);
+        assertEquals(6.81, 3.6 / w.calcEdgeMillis(track, false) * 1000 * 1000, 0.01);
+        assertEquals(3.76, 3.6 / w.calcEdgeMillis(steps, false) * 1000 * 1000, 0.01);
+        // the reverse direction descends, braking at 1.75 * flat speed, scaled by the surface, pushing sections stay
+        assertEquals(32.7, 3.6 / w.calcEdgeMillis(climb, true) * 1000 * 1000, 0.1);
+        assertEquals(32.7 / 2, 3.6 / w.calcEdgeMillis(track, true) * 1000 * 1000, 0.1);
+        assertEquals(5, 3.6 / w.calcEdgeMillis(steps, true) * 1000 * 1000, 0.01);
+        // the braking speed on the fastest road is the maximum of the weighting
+        assertEquals(32.7, 10 * 3.6 / w.calcMinWeightPerDistance(), 0.1);
+
+        // a request changes the rider, not the class
+        customModel.setParameter("power", 200);
+        w = createWeighting(customModel);
+        assertEquals(24.95, 3.6 / w.calcEdgeMillis(flat, false) * 1000 * 1000, 0.01);
+        assertEquals(12.67, 3.6 / w.calcEdgeMillis(climb, false) * 1000 * 1000, 0.01);
+        // pushing sections are walked, so the stronger rider is only no longer limited
+        assertEquals(5, 3.6 / w.calcEdgeMillis(steps, false) * 1000 * 1000, 0.01);
+
+        // parsing: arguments must be constant per custom model and slope an encoded value
+        for (String expr : new String[]{"bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.008)",
+                "bike_speed_factor(average_slope, p_power, max_speed, 0.74, 0.008, 20)",
+                "bike_speed_factor(5, p_power, p_mass, 0.74, 0.008, 20)",
+                "bike_speed_factor(average_slope, p_power, p_mass, -0.74, 0.008, 20)",
+                "bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.008, 0)",
+                "Math.bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.008, 20)"}) {
+            CustomModel cm = createSpeedCustomModel(avSpeedEnc).setParameter("power", 100).setParameter("mass", 90).
+                    addToSpeed(If("true", MULTIPLY, expr));
+            assertThrows(IllegalArgumentException.class, () -> createWeighting(cm), expr);
+        }
+        // only as a factor of the speed
+        String call = "bike_speed_factor(average_slope, 100, 90, 0.74, 0.008, 20)";
+        assertThrows(IllegalArgumentException.class, () -> createWeighting(createSpeedCustomModel(avSpeedEnc).addToSpeed(If("true", LIMIT, call))));
+        assertThrows(IllegalArgumentException.class, () -> createWeighting(createSpeedCustomModel(avSpeedEnc).addToPriority(If("true", MULTIPLY, call))));
     }
 
     @Test

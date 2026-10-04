@@ -1,0 +1,115 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+package com.graphhopper.routing.weighting.custom;
+
+/**
+ * Speed of a cyclist on a slope from the power balance
+ * <pre>power = (mass * g * (crr + slope / 100)) * v + 0.5 * rho * cda * v^3</pre>
+ * i.e. rolling resistance plus gravity plus air drag. On descents the speed is capped at
+ * {@link #MAX_SPEED_FACTOR} times the flat speed (braking). Steep climbs need no separate pushing
+ * model as the power balance already yields walking speeds there (100 W: 3 km/h at 12 %, 2 km/h at 20 %).
+ * <p>
+ * Used by the custom model via multiply_by {@link #factor}, see bike.json.
+ */
+public class BikeSpeed {
+    static final double G = 9.81, RHO = 1.226;
+    // riders brake on descents at roughly 1.75 times their flat speed, 32.7 km/h for the default bike rider
+    static final double MAX_SPEED_FACTOR = 1.75;
+    // covers the ±31.5 % of average_slope, beyond it the speed hardly changes
+    static final double MAX_SLOPE = 40, STEP = 0.5;
+    // encoded speeds up to this are pushing sections (steps 2, pushing 4, footway and path 6 km/h) and walked
+    static final double PUSHING_SPEED = 6;
+
+    private final double power, mass, cda, crr;
+    private final double flatSpeed;
+    private final double[] speeds = new double[(int) Math.round(2 * MAX_SLOPE / STEP) + 1];
+
+    /**
+     * @param power in W
+     * @param mass  of rider and bike in kg
+     * @param cda   drag coefficient times frontal area in m²
+     * @param crr   rolling resistance coefficient
+     */
+    public BikeSpeed(double power, double mass, double cda, double crr) {
+        if (!(power > 0) || !(mass > 0) || !(cda > 0) || !(crr >= 0))
+            throw new IllegalArgumentException("bike_speed: power, mass and cda must be positive and crr non-negative, but got "
+                    + power + ", " + mass + ", " + cda + ", " + crr);
+        this.power = power;
+        this.mass = mass;
+        this.cda = cda;
+        this.crr = crr;
+        double aero = 0.5 * RHO * cda, rolling = mass * G * crr, climb = mass * G / 100;
+        flatSpeed = solve(power, rolling, aero) * 3.6;
+        double maxSpeed = MAX_SPEED_FACTOR * flatSpeed;
+        for (int i = 0; i < speeds.length; i++) {
+            double slope = -MAX_SLOPE + i * STEP;
+            speeds[i] = Math.min(solve(power, rolling + climb * slope, aero) * 3.6, maxSpeed);
+        }
+    }
+
+    /**
+     * @return the speed in km/h on the slope in %, linearly interpolated and constant beyond ±MAX_SLOPE
+     */
+    public double speed(double slope) {
+        double pos = (Math.max(-MAX_SLOPE, Math.min(MAX_SLOPE, slope)) + MAX_SLOPE) / STEP;
+        int i = (int) pos;
+        if (i >= speeds.length - 1) return speeds[speeds.length - 1];
+        return speeds[i] + (pos - i) * (speeds[i + 1] - speeds[i]);
+    }
+
+    /**
+     * The factor for the running speed of the custom model: a riding section is scaled to the rider
+     * (flat speed relative to baseSpeed, the encoded speed of a flat asphalt road), on descents it gets
+     * the speed of the slope relative to baseSpeed instead, and climbs are limited by the power. So a bad
+     * surface limits the climb speed but is not multiplied with it. A pushing section is only limited.
+     *
+     * @param current the running speed in km/h, NaN returns the maximum over all current speeds
+     */
+    public double factor(double current, double slope, double baseSpeed) {
+        if (!(baseSpeed > 0))
+            throw new IllegalArgumentException("bike_speed_factor: base_speed must be positive, but got " + baseSpeed);
+        double v = speed(slope);
+        if (Double.isNaN(current)) return Math.max(1, Math.max(flatSpeed, v) / baseSpeed);
+        if (current <= 0) return 1;
+        double scale = current > PUSHING_SPEED ? Math.max(flatSpeed, v) / baseSpeed : 1;
+        return Math.min(scale, v / current);
+    }
+
+    public double getFlatSpeed() {
+        return flatSpeed;
+    }
+
+    public boolean hasArgs(double power, double mass, double cda, double crr) {
+        return this.power == power && this.mass == mass && this.cda == cda && this.crr == crr;
+    }
+
+    /**
+     * @param c the speed-proportional resistance, negative on descents
+     * @return the positive root v of aero * v^3 + c * v = power in m/s
+     */
+    static double solve(double power, double c, double aero) {
+        // start right of the root where the cubic is increasing and convex, so Newton descends monotonically to it
+        double v = Math.sqrt(Math.max(0, -c) / aero) + Math.cbrt(power / aero);
+        for (int i = 0; i < 50; i++) {
+            double next = v - (aero * v * v * v + c * v - power) / (3 * aero * v * v + c);
+            if (v - next < 1e-6) return next;
+            v = next;
+        }
+        return v;
+    }
+}

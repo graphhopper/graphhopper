@@ -87,7 +87,7 @@ public class RouteResourceCustomModelTest {
                         TestProfiles.accessSpeedAndPriority("bike"),
                         new Profile("bus").setCustomModel(null).putHint("custom_model_files", List.of("bus.json")),
                         new Profile("cargo_bike").setCustomModel(null).putHint("custom_model_files", List.of("cargo_bike.json")),
-                        new Profile("json_bike").setCustomModel(null).putHint("custom_model_files", List.of("bike.json", "bike_elevation.json")),
+                        new Profile("json_bike").setCustomModel(null).putHint("custom_model_files", List.of("bike.json")),
                         TestProfiles.accessSpeedAndPriority("foot_profile", "foot"),
                         new Profile("car_no_unclassified").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").getCustomModel().
                                 addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0"))),

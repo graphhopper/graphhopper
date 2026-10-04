@@ -706,7 +706,7 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), parameters, classHelper, lookup, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    ParseResult valueResult = ValueExpressionVisitor.parseValue(statement.value(), parameters, lookup);
+                    ParseResult valueResult = parseValue(statement, exceptionInfo, parameters, lookup);
                     createObjects.addAll(valueResult.guessedVariables);
                     expressions.append("else {").append(statement.operation().build(valueResult.converted)).append("; }\n");
                 }
@@ -725,7 +725,7 @@ public class CustomModelParser {
                     parseExpressions(expressions, nameInConditionValidator, exceptionInfo, createObjects, statement.doBlock(), parameters, classHelper, lookup, indentation + "  ");
                     expressions.append(indentation).append("}\n");
                 } else {
-                    ParseResult valueResult = ValueExpressionVisitor.parseValue(statement.value(), parameters, lookup);
+                    ParseResult valueResult = parseValue(statement, exceptionInfo, parameters, lookup);
                     createObjects.addAll(valueResult.guessedVariables);
                     expressions.append("if (").append(parseResult.converted).append(") {").
                             append(statement.operation().build(valueResult.converted)).append(";}\n");
@@ -734,6 +734,14 @@ public class CustomModelParser {
                 throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
             }
         }
+    }
+
+    private static ParseResult parseValue(Statement statement, String exceptionInfo, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+        ParseResult result = ValueExpressionVisitor.parseValue(statement.value(), parameters, lookup);
+        // the function gets the running speed, which only exists in getSpeed and only makes sense as a factor
+        if (result.builtinFunction && (!exceptionInfo.startsWith("speed") || statement.operation() != Statement.Op.MULTIPLY))
+            throw new IllegalArgumentException(ValueExpressionVisitor.BIKE_SPEED_FACTOR + " can only be used with multiply_by under speed, but was: " + statement);
+        return result;
     }
 
     /**

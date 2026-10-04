@@ -15,7 +15,7 @@ profiles:
   - name: car
     custom_model_files: [car.json]
   - name: my_bike
-    custom_model_files: [bike_elevation.json]
+    custom_model_files: [bike.json]
 ```
 
 By choosing a custom model file GraphHopper determines the accessibility and a default travel speed for the different road types.
@@ -58,8 +58,8 @@ profiles:
 
 And instead of the custom_model entry you can also set a path to a custom model file using the
 `custom_model_files` property with an optional `custom_models.directory`. This was used in the first
-example above to modify the speed based on the elevation changes using the internal custom
-model `bike_elevation.json`. You can find all internal custom models in the folder
+example above to use the internal custom model `bike.json`, which includes a physical model of the cyclist speed
+on slopes (see `bike_speed_factor` in the custom model documentation). You can find all internal custom models in the folder
 `core/src/main/resources/com/graphhopper/custom_models` like `hike.json`, `truck.json`, `bus.json`,
 `car4wd.json`, `motorcycle.json` or `curvature.json`.
 

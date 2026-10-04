@@ -689,6 +689,33 @@ The value of `limit_to` or `multiply_by` is usually only a number but can be mor
 or even something like `max_speed + 0.5`. In general one encoded value is accepted in combination with one or more 
 operations with a number and the operator `+`, `*` and `-`, and the methods `Math.sqrt`, `Math.min` and `Math.max`.
 
+For bicycles the built-in function `bike_speed_factor(slope, power, mass, cda, crr, base_speed)` calculates the
+speed of a cyclist on the `slope` (in %, e.g. `average_slope`) from the power balance
+`power = mass * g * (crr + slope/100) * v + 0.5 * rho * cda * v^3`, i.e. the sustained `power` in W works against
+rolling resistance (`crr`), gravity (`mass` of rider and bike in kg) and air drag (`cda` in m²). On descents the speed
+is capped at 1.75 times the flat speed. With the default rider of 100 W this is 18.7 km/h on the flat, 6.8 km/h at 5 %,
+3.8 km/h at 10 % and 32.7 km/h on steep descents.
+
+The function returns a factor for the speed of the preceding statements: a riding section is scaled to the rider
+(flat speed relative to `base_speed`, the encoded speed of a flat asphalt road), on descents it gets the speed of the
+slope relative to `base_speed` instead, and climbs are limited by the power. So a bad surface limits a climb but is
+not slowed down a second time. Pushing sections like steps or footways (encoded speed of at most 6 km/h) are walked
+and only limited. It can only be used with `multiply_by` under `speed` and should be the last statement there.
+Except for the slope the arguments must be parameters or numbers:
+
+```json
+{
+  "parameters": { "power": { "value": 100, "min": 40, "max": 500 }, "mass": { "value": 90, "min": 25, "max": 300 } },
+  "speed": [
+    { "if": "true", "limit_to": "bike_average_speed" },
+    { "if": "true", "multiply_by": "bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.008, 18)" }
+  ]
+}
+```
+
+A request can e.g. set `{"parameters": {"power": 200}}` to get a faster rider on every road (25 km/h on the flat),
+see `bike.json`.
+
 This can be useful to reduce the speed of the base profile to a dynamic value. See e.g. the following example:
 
 ```json
@@ -761,7 +788,8 @@ form `{"value": 0.8, "min": 0.5, "max": 1}` - requests must stay within `[min, m
 specify a range themselves. Without an explicit range `[0, Infinity)` is used. On startup the custom
 model is validated at both ends of every range, so e.g. a parameter used to increase the speed
 requires a finite `max`. A value expression can use at most one parameter and only once, so that
-checking the range endpoints is sufficient. Conditions can combine multiple parameters.
+checking the range endpoints is sufficient (`bike_speed_factor` is the exception as its result is always finite and
+positive). Conditions can combine multiple parameters.
 
 Note that for a profile prepared with landmarks (hybrid mode) a request can change a parameter value
 only if this cannot decrease any edge weight, as the landmark preparation is based on the server-side

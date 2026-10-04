@@ -38,6 +38,7 @@ public class CustomWeightingHelper {
 
     protected EncodedValueLookup lookup;
     protected CustomModel customModel;
+    private BikeSpeed bikeSpeed;
 
     protected CustomWeightingHelper() {
     }
@@ -80,6 +81,17 @@ public class CustomWeightingHelper {
         if (minMaxPriority.max < 0)
             throw new IllegalArgumentException("maximum priority has to be >=0 but was " + minMaxPriority.max);
         return minMaxPriority.max;
+    }
+
+    /**
+     * The built-in function bike_speed_factor of the value expression, see {@link BikeSpeed}. The parser
+     * injects the running speed as first argument. The rider arguments are constant per custom model, so
+     * the table is built on the first call.
+     */
+    protected double bike_speed_factor(double current, double slope, double power, double mass, double cda, double crr, double baseSpeed) {
+        if (bikeSpeed == null || !bikeSpeed.hasArgs(power, mass, cda, crr))
+            bikeSpeed = new BikeSpeed(power, mass, cda, crr);
+        return bikeSpeed.factor(current, slope, baseSpeed);
     }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {
