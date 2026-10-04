@@ -18,10 +18,12 @@ class BikeSpeedTest {
         assertEquals(12.07, kmh(BIKE, 2, 18), 0.01);
         assertEquals(6.81, kmh(BIKE, 5, 18), 0.01);
         assertEquals(3.76, kmh(BIKE, 10, 18), 0.01);
-        // steep: the power balance yields walking speeds, so no extra pushing model
+        // steep: the power balance yields walking speeds, the walking floor takes over from 20 % on
         assertEquals(3.18, kmh(BIKE, 12, 18), 0.01);
-        assertEquals(1.96, kmh(BIKE, 20, 18), 0.01);
-        assertEquals(1.33, kmh(BIKE, 30, 18), 0.01);
+        assertEquals(2.0, kmh(BIKE, 20, 18), 0.01);
+        assertEquals(1.41, kmh(BIKE, 30, 18), 0.01);
+        // a weak rider pushes at walking speed where riding would be slower
+        assertEquals(2.84, kmh(new BikeSpeed(60, 90, 0.74, 0.008), 10, 18), 0.01);
         // descents: gravity until braking at 1.75 * flat speed
         assertEquals(26.3, kmh(BIKE, -2, 18), 0.1);
         assertEquals(30.0, kmh(BIKE, -3, 18), 0.1);

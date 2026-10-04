@@ -21,8 +21,9 @@ package com.graphhopper.routing.weighting.custom;
  * Speed of a cyclist on a slope from the power balance
  * <pre>power = (mass * g * (crr + slope / 100)) * v + 0.5 * rho * cda * v^3</pre>
  * i.e. rolling resistance plus gravity plus air drag. On descents the speed is capped at
- * {@link #MAX_SPEED_FACTOR} times the flat speed (braking). Steep climbs need no separate pushing
- * model as the power balance already yields walking speeds there (100 W: 3 km/h at 12 %, 2 km/h at 20 %).
+ * {@link #MAX_SPEED_FACTOR} times the flat speed (braking) and never below the walking speed of a
+ * cyclist pushing the bike (0.8 * Tobler), which only matters for weak riders as the power balance of
+ * 100 W already yields walking speeds on steep climbs (3 km/h at 12 %, 2 km/h at 20 %).
  * <p>
  * Used by the custom model via multiply_by {@link #factor}, see bike.json.
  */
@@ -58,7 +59,8 @@ public class BikeSpeed {
         double maxSpeed = MAX_SPEED_FACTOR * flatSpeed;
         for (int i = 0; i < speeds.length; i++) {
             double slope = -MAX_SLOPE + i * STEP;
-            speeds[i] = Math.min(solve(power, rolling + climb * slope, aero) * 3.6, maxSpeed);
+            double walking = 0.8 * 6 * Math.exp(-3.5 * Math.abs(slope / 100 + 0.05)); // pushing the bike, 0.8 * Tobler
+            speeds[i] = Math.max(Math.min(solve(power, rolling + climb * slope, aero) * 3.6, maxSpeed), walking);
         }
     }
 

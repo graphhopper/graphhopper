@@ -320,7 +320,7 @@ public class RoutingAlgorithmWithOSMTest {
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.6km after BridgeTunnelTowerCorrection
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2562, 103));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4290, 246));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4212, 231));
         // 3.
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2830, 152));
         // 4.
@@ -330,7 +330,7 @@ public class RoutingAlgorithmWithOSMTest {
         // 1.
         queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2596, 119));
         queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4129, 194));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2845, 148));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2806, 145));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1901, 116));
         // tests here still assert that reverse oneways are excluded
