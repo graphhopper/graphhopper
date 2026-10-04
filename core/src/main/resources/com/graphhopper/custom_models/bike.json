@@ -26,7 +26,9 @@
     { "if": "bike_road_access == NO", "multiply_by": "0" },
     { "if": "!bike_access && (!backward_bike_access || roundabout)",  "multiply_by": "0" },
     { "else_if": "!bike_access && backward_bike_access",  "multiply_by": "0.2" },
-    { "if": "true", "multiply_by": "1 - p_hill_penalty * Math.max(average_slope - 3, 0)" }
+    { "if": "true", "multiply_by": "1 - p_hill_penalty * Math.max(average_slope - 3, 0)" },
+    // avoid steep downhill sections on bad surfaces
+    { "if": "average_slope < -8 && bike_average_speed < 18", "multiply_by": "1 - p_hill_penalty * Math.max(-average_slope - 8, 0)" }
   ],
   "speed": [
     { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
