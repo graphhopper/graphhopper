@@ -80,16 +80,38 @@ public class BikeSpeed {
      * the speed of the slope relative to baseSpeed instead, and climbs are limited by the power. So a bad
      * surface limits the climb speed but is not multiplied with it. A pushing section is only limited.
      *
-     * @param current the running speed in km/h, NaN returns the maximum over all current speeds
+     * @param current the running speed in km/h
      */
     public double factor(double current, double slope, double baseSpeed) {
-        if (!(baseSpeed > 0))
-            throw new IllegalArgumentException("bike_speed_factor: base_speed must be positive, but got " + baseSpeed);
+        checkBaseSpeed(baseSpeed);
+        if (current == 0) return 1; // blocked edge, CustomWeighting makes it infinite
+        if (current < 0 || Double.isNaN(current))
+            throw new IllegalArgumentException("bike_speed_factor: running speed must be a non-negative number, but was " + current);
         double v = speed(slope);
-        if (Double.isNaN(current)) return Math.max(1, Math.max(flatSpeed, v) / baseSpeed);
-        if (current <= 0) return 1;
         double scale = current > PUSHING_SPEED ? Math.max(flatSpeed, v) / baseSpeed : 1;
         return Math.min(scale, v / current);
+    }
+
+    /**
+     * The bound of {@link #factor} for the speed bounds of the custom model: the resulting speed
+     * <code>current * factor</code> is <code>min(scale * current, v)</code> for riding and <code>min(current, v)</code>
+     * for pushing sections, both increasing in the running speed, so the maximum over all running speeds up to
+     * currentMax is at currentMax and at PUSHING_SPEED.
+     *
+     * @param currentMax the maximum running speed in km/h before this statement
+     * @return the factor that currentMax * factor is not exceeded by any running speed up to currentMax
+     */
+    public double maxFactor(double currentMax, double slope, double baseSpeed) {
+        checkBaseSpeed(baseSpeed);
+        if (!(currentMax > 0)) return 1;
+        double v = speed(slope);
+        if (currentMax <= PUSHING_SPEED) return Math.min(1, v / currentMax);
+        return Math.max(Math.min(PUSHING_SPEED, v), Math.min(Math.max(flatSpeed, v) / baseSpeed * currentMax, v)) / currentMax;
+    }
+
+    private static void checkBaseSpeed(double baseSpeed) {
+        if (!(baseSpeed > 0))
+            throw new IllegalArgumentException("bike_speed_factor: base_speed must be positive, but got " + baseSpeed);
     }
 
     public double getFlatSpeed() {

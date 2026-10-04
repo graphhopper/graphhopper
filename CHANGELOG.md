@@ -1,5 +1,6 @@
 ### 12.0 [not yet released]
 
+- custom models for bike calculate the speed on slopes with a new built-in function `bike_speed_factor` from the power balance considering bad surfaces and sharp downhill sections. These profiles now require `average_slope` and therefore elevation, `bike_elevation.json` is removed. A request can change the rider via the parameters `power` and `mass`.
 - custom models: conditions accept only the binary operators ==, !=, <, >, <=, >=, &&, ||, +, -, *, / and %; bitwise and shift operators like &, |, ^, << and >> are rejected now
 - custom models: new `parameters` section with named numbers and booleans usable in conditions and value expressions (a parameter xy is referenced as p_xy); parameters can only be defined in the server-side custom model, optionally with an allowed value range; on merge the values are overridden per name, so a request can tweak the values of the server-side profile without repeating its statements (and without recompiling the custom model class); empty speed/priority/turn_penalty sections are no longer serialized
 - breaking: road_access now contains DESIGNATED and DISCOURAGED. All custom models using road_access == YES or road_access != YES need to consider this.

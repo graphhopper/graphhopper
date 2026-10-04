@@ -89,9 +89,21 @@ public class CustomWeightingHelper {
      * the table is built on the first call.
      */
     protected double bike_speed_factor(double current, double slope, double power, double mass, double cda, double crr, double baseSpeed) {
+        return bikeSpeed(power, mass, cda, crr).factor(current, slope, baseSpeed);
+    }
+
+    /**
+     * The bound of bike_speed_factor for the speed bounds, called by the evaluator of ValueExpressionVisitor
+     * with the maximum speed before the statement instead of the running speed, see {@link BikeSpeed#maxFactor}.
+     */
+    protected double bike_speed_factor_max(double currentMax, double slope, double power, double mass, double cda, double crr, double baseSpeed) {
+        return bikeSpeed(power, mass, cda, crr).maxFactor(currentMax, slope, baseSpeed);
+    }
+
+    private BikeSpeed bikeSpeed(double power, double mass, double cda, double crr) {
         if (bikeSpeed == null || !bikeSpeed.hasArgs(power, mass, cda, crr))
             bikeSpeed = new BikeSpeed(power, mass, cda, crr);
-        return bikeSpeed.factor(current, slope, baseSpeed);
+        return bikeSpeed;
     }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {

@@ -230,7 +230,7 @@ public class FindMinMax {
                 for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(first.doBlock())) findMinMaxForGroup(minMax, subGroup, parameters, lookup);
                 return;
             } else {
-                minMaxGroup = first.operation().apply(minMax, ValueExpressionVisitor.findMinMax(first.value(), parameters, lookup));
+                minMaxGroup = first.operation().apply(minMax, ValueExpressionVisitor.findMinMax(first.value(), parameters, lookup, minMax.max));
                 if (minMaxGroup.max < 0)
                     throw new IllegalArgumentException("statement resulted in negative value: " + first);
             }
@@ -244,7 +244,7 @@ public class FindMinMax {
                     tmp = new MinMax(minMax.min, minMax.max);
                     for (List<Statement> subGroup : CustomModelParser.splitIntoGroup(s.doBlock())) findMinMaxForGroup(tmp, subGroup, parameters, lookup);
                 } else {
-                    tmp = s.operation().apply(minMax, ValueExpressionVisitor.findMinMax(s.value(), parameters, lookup));
+                    tmp = s.operation().apply(minMax, ValueExpressionVisitor.findMinMax(s.value(), parameters, lookup, minMax.max));
                     if (tmp.max < 0)
                         throw new IllegalArgumentException("statement resulted in negative value: " + s);
                 }

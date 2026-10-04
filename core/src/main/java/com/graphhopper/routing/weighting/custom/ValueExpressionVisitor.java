@@ -46,7 +46,8 @@ public class ValueExpressionVisitor {
     // functions must be monotone in every argument (see findMinMax)
     private static final Set<String> allowedMethods = Set.of("sqrt", "min", "max");
     // built-in function of CustomWeightingHelper, see BikeSpeed. It gets the running speed 'value' of the
-    // generated getSpeed as first argument, which the evaluator (findMinMax) replaces with NaN.
+    // generated getSpeed as first argument. The evaluator (parseValue, findMinMax) calls the bound
+    // bike_speed_factor_max with the maximum speed before the statement instead, see boundExpression.
     static final String BIKE_SPEED_FACTOR = "bike_speed_factor";
     private static final String BIKE_SPEED_FACTOR_ARGS = "slope, power, mass, cda, crr, base_speed";
     private final ParseResult result;
@@ -173,8 +174,7 @@ public class ValueExpressionVisitor {
 
         // TODO Nearly duplicate code as in findMinMax
         // the evaluator does not know the parameters, so replace them with their values
-        String evalExpression = replaceParameters(valueExpression, parameters);
-        if (result.bikeSpeedFactor) evalExpression = evalExpression.replace("(value, ", "(Double.NaN, ");
+        String evalExpression = boundExpression(replaceParameters(valueExpression, parameters), result, CustomWeightingHelper.GLOBAL_MAX_SPEED);
         double value;
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
@@ -227,6 +227,13 @@ public class ValueExpressionVisitor {
     }
 
     static MinMax findMinMax(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
+        return findMinMax(valueExpression, parameters, lookup, CustomWeightingHelper.GLOBAL_MAX_SPEED);
+    }
+
+    /**
+     * @param currentMax the maximum value before the statement, the bound of bike_speed_factor depends on it
+     */
+    static MinMax findMinMax(String valueExpression, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup, double currentMax) {
         ParseResult result = parseOrThrow(valueExpression, parameters, lookup);
         // from here on use only the text built from the parsed value
         valueExpression = result.converted;
@@ -237,8 +244,7 @@ public class ValueExpressionVisitor {
 
         // TODO Nearly duplicate as in findVariables
         // the evaluator does not know the parameters, so replace them with their values
-        String evalExpression = replaceParameters(valueExpression, parameters);
-        if (result.bikeSpeedFactor) evalExpression = evalExpression.replace("(value, ", "(Double.NaN, ");
+        String evalExpression = boundExpression(replaceParameters(valueExpression, parameters), result, currentMax);
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
             // We still call the parse() method before as it is only ~3x slower and might increase security slightly. Because certain
@@ -294,6 +300,15 @@ public class ValueExpressionVisitor {
             expression = expression.replaceAll("\\b" + name + "\\b", literal);
         }
         return expression;
+    }
+
+    /**
+     * @return the expression for the evaluator: the running speed 'value' of a bike_speed_factor call only exists
+     * in the generated getSpeed, so the bound bike_speed_factor_max is called with the maximum before the statement
+     */
+    private static String boundExpression(String evalExpression, ParseResult result, double currentMax) {
+        if (!result.bikeSpeedFactor) return evalExpression;
+        return evalExpression.replace(BIKE_SPEED_FACTOR + "(value, ", BIKE_SPEED_FACTOR + "_max(" + currentMax + ", ");
     }
 
     private static ExpressionEvaluator createEvaluator() {
