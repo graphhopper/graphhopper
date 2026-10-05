@@ -24,12 +24,14 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -2838,6 +2840,49 @@ public class GraphHopperTest {
         assertEquals(1, p.get(1).getFirst());
         assertEquals(1, p.get(1).getLast());
         assertEquals(0.0, (double) p.get(1).getValue(), 1.e-3);
+    }
+
+    @Test
+    public void testRerunAfterFailedPreparationLoadsTheImport() {
+        String profile = "profile";
+        GraphHopper failing = new GraphHopper() {
+            @Override
+            protected Map<String, PrepareContractionHierarchies.Result> prepareCH(boolean closeEarly, List<CHConfig> configsToPrepare) {
+                throw new IllegalStateException("CH preparation failed");
+            }
+        };
+        configureForRerunTest(failing, profile);
+        assertThrows(IllegalStateException.class, failing::importAndClose);
+        failing.close();
+
+        GraphHopper rerun = new GraphHopper() {
+            @Override
+            protected void importOSM() {
+                fail("the graph flushed by the failed run should have been loaded");
+            }
+        };
+        configureForRerunTest(rerun, profile);
+        rerun.importAndClose();
+
+        GraphHopper loaded = configureForRerunTest(new GraphHopper(), profile);
+        assertTrue(loaded.load());
+        assertFalse(loaded.getProperties().get("graph.profiles.ch." + profile + ".version").isEmpty());
+        GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).setProfile(profile);
+        GHResponse rsp = loaded.route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertTrue(rsp.getHints().getLong("visited_nodes.sum", 0) < 155);
+        loaded.close();
+    }
+
+    private static GraphHopper configureForRerunTest(GraphHopper hopper, String profile) {
+        hopper.setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed").
+                setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
+                setMinNetworkSize(0).
+                setFileBacked(true);
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
+        return hopper;
     }
 
 }

@@ -60,13 +60,13 @@ public class ConditionalExpressionVisitorTest {
         assertEquals("[toll]", result.guessedVariables.toString());
 
         assertEquals("road_class == Hello.PRIMARY",
-                parse("road_class == PRIMARY", validVariable, k -> "Hello").converted.toString());
-        assertEquals("toll == Toll.NO", parse("toll == NO", validVariable, k -> "Toll").converted.toString());
-        assertEquals("toll == Toll.NO || road_class == RoadClass.NO", parse("toll == NO || road_class == NO", validVariable, k -> k.equals("toll") ? "Toll" : "RoadClass").converted.toString());
+                parse("road_class == PRIMARY", validVariable, k -> "Hello").converted);
+        assertEquals("toll == Toll.NO", parse("toll == NO", validVariable, k -> "Toll").converted);
+        assertEquals("toll == Toll.NO || road_class == RoadClass.NO", parse("toll == NO || road_class == NO", validVariable, k -> k.equals("toll") ? "Toll" : "RoadClass").converted);
 
         // convert in_area variable to function call:
         assertEquals(CustomWeightingHelper.class.getSimpleName() + ".in(this.in_custom_1, edge)",
-                parse("in_custom_1", validVariable, k -> "").converted.toString());
+                parse("in_custom_1", validVariable, k -> "").converted);
 
         // no need to inject:
         assertNull(parse("toll == Toll.NO", validVariable, k -> "").converted);
@@ -146,5 +146,39 @@ public class ConditionalExpressionVisitorTest {
         result = parse("Math.sqrt(-2)", (var) -> false, k -> "");
         assertTrue(result.ok);
         assertTrue(result.guessedVariables.isEmpty());
+
+        // two unary minus must not become the decrement operator
+        assertEquals("- -average_slope > -0.5", parse("- -average_slope > -0.5", "average_slope"::equals, k -> "").converted);
+        assertEquals("!!car_access", parse("! !car_access", "car_access"::equals, k -> "").converted);
+    }
+
+    private static final NameValidator VALIDATOR = s -> s.equals("PRIMARY")
+            || s.equals("road_class") || s.equals("street_name") || s.equals("prev_street_name");
+
+    @Test
+    public void testNoShiftedReplacement() {
+        // line breaks, tabs and unicode escapes must not shift the enum or area replacement into the string
+        String area = CustomWeightingHelper.class.getSimpleName() + ".in(this.in_area_1, edge)";
+        for (String sep : Arrays.asList("\n", "\r", "\r\n", "\t", "\\u000a")) {
+            assertEquals("street_name.equals(\"; attack(); \") || road_class == RoadClass.PRIMARY",
+                    parse("street_name.equals(" + sep + "\"; attack(); \") || road_class == PRIMARY", VALIDATOR, k -> "RoadClass").converted);
+            assertEquals("street_name.equals(\"; attack(); \") || " + area,
+                    parse("street_name.equals(" + sep + "\"; attack(); \") || in_area_1", VALIDATOR, k -> "").converted);
+        }
+    }
+
+    @Test
+    public void testLiteralsAndOperators() {
+        assertEquals("road_class == RoadClass.PRIMARY && prev_street_name.equals('x' + \"A 4\")",
+                parse("road_class == PRIMARY && prev_street_name.equals('x' + \"A 4\")", VALIDATOR, k -> "RoadClass").converted);
+        assertTrue(parse("prev_street_name.equals(street_name)", VALIDATOR, k -> "").ok);
+
+        // enum value is validated too
+        assertEquals("'FOO' not available", parse("road_class == FOO", VALIDATOR, k -> "RoadClass").invalidMessage);
+
+        ParseResult result = parse("road_class.ordinal() & 1", VALIDATOR, k -> "");
+        assertFalse(result.ok);
+        assertNull(result.converted);
+        assertEquals("operator & not allowed", result.invalidMessage);
     }
 }

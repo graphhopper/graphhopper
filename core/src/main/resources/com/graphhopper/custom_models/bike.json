@@ -24,7 +24,7 @@
     { "if": "hike_rating > p_max_hike_rating",  "multiply_by": "0" },
     { "if": "bike_road_access == NO", "multiply_by": "0" },
     { "if": "!bike_access && (!backward_bike_access || roundabout)",  "multiply_by": "0" },
-    { "else_if": "!bike_access && backward_bike_access",  "multiply_by": "0.2" }
+    { "else_if": "!bike_access && backward_bike_access",  "multiply_by": "0.5" }
   ],
   "speed": [
     { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
