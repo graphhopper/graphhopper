@@ -206,17 +206,18 @@ public class CustomModelParser {
 
     private static void checkSpeedPriorityAndTurnPenalty(CustomModel customModel, Map<String, CustomModel.Parameter> parameters, EncodedValueLookup lookup) {
         MinMax speed = FindMinMax.findMinMax(new MinMax(0, CustomWeightingHelper.GLOBAL_MAX_SPEED), customModel.getSpeed(), parameters, lookup);
-        if (speed.min < 0)
+        // NaN e.g. from 0 * Infinity or Math.sqrt of a negative value
+        if (!Double.isFinite(speed.max))
+            throw new IllegalArgumentException("maximum speed has to be finite but was " + speed.max + ". Specify a 'max' for the parameter");
+        if (!(speed.min >= 0)) // negated to catch NaN
             throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + speed.min + ")");
         if (speed.max <= 0)
             throw new IllegalArgumentException("maximum speed has to be >0 but was " + speed.max);
-        if (!Double.isFinite(speed.max))
-            throw new IllegalArgumentException("maximum speed has to be finite. Specify a 'max' for the parameter");
         MinMax priority = FindMinMax.findMinMax(new MinMax(0, CustomWeightingHelper.GLOBAL_PRIORITY), customModel.getPriority(), parameters, lookup);
-        if (priority.min < 0)
-            throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + priority.min + ")");
         if (!Double.isFinite(priority.max))
-            throw new IllegalArgumentException("maximum priority has to be finite. Specify a 'max' for the parameter");
+            throw new IllegalArgumentException("maximum priority has to be finite but was " + priority.max + ". Specify a 'max' for the parameter");
+        if (!(priority.min >= 0))
+            throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + priority.min + ")");
         MinMax turnPenalty = FindMinMax.findMinMax(new MinMax(0, 0), customModel.getTurnPenalty(), parameters, lookup);
         if (!(turnPenalty.min >= 0)) // negated to catch NaN, e.g. from 0 * Infinity
             throw new IllegalArgumentException("turn penalty has to be >=0 but can be negative (" + turnPenalty.min + ")");

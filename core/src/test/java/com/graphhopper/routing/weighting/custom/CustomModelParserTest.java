@@ -63,7 +63,7 @@ class CustomModelParserTest {
         countryEnc = Country.create();
         stateEnc = State.create();
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc).add(new EnumEncodedValue<>("bus", MyBus.class))
-                .add(stateEnc).add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).add(RoadClass.create()).add(RoadEnvironment.create()).build();
+                .add(stateEnc).add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).add(RoadClass.create()).add(RoadEnvironment.create()).add(AverageSlope.create()).build();
         graph = new BaseGraph.Builder(encodingManager).create();
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         maxSpeed = 140;
@@ -82,6 +82,17 @@ class CustomModelParserTest {
 
         assertEquals(0.5, priorityMapping.get(edge1, false), 1.e-6);
         assertEquals(1.0, priorityMapping.get(edge2, false), 1.e-6);
+    }
+
+    @Test
+    void rejectNaNSpeed() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("true", LIMIT, "Math.sqrt(average_slope)"));
+        // NaN at the slope minimum, the per-request check in CustomWeightingHelper and the startup check must reject it
+        String msg = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeightingConfig(customModel, encodingManager).getMaxSpeedCalc().calcMax()).getMessage();
+        assertTrue(msg.contains("speed has to be >=0"), msg);
+        msg = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.checkParameterRanges(customModel.setParameter("x", 1), encodingManager)).getMessage();
+        assertTrue(msg.contains("finite but was NaN"), msg);
     }
 
     @Test

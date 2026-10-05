@@ -63,7 +63,7 @@ public class CustomWeightingHelper {
     public final double calcMaxSpeed() {
         MinMax minMaxSpeed = new MinMax(0, GLOBAL_MAX_SPEED);
         FindMinMax.findMinMax(minMaxSpeed, customModel.getSpeed(), customModel.getParameters(), lookup);
-        if (minMaxSpeed.min < 0)
+        if (!(minMaxSpeed.min >= 0)) // negated to catch NaN
             throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
         if (minMaxSpeed.max <= 0)
             throw new IllegalArgumentException("maximum speed has to be >0 but was " + minMaxSpeed.max);
@@ -76,7 +76,7 @@ public class CustomWeightingHelper {
     public final double calcMaxPriority() {
         MinMax minMaxPriority = new MinMax(0, GLOBAL_PRIORITY);
         FindMinMax.findMinMax(minMaxPriority, customModel.getPriority(), customModel.getParameters(), lookup);
-        if (minMaxPriority.min < 0)
+        if (!(minMaxPriority.min >= 0))
             throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + minMaxPriority.min + ")");
         if (minMaxPriority.max < 0)
             throw new IllegalArgumentException("maximum priority has to be >=0 but was " + minMaxPriority.max);

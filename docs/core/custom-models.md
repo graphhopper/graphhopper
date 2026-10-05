@@ -713,8 +713,8 @@ Except for the slope the arguments must be parameters or numbers:
 }
 ```
 
-A request can e.g. set `{"parameters": {"power": 200}}` to get a faster rider on every road (25 km/h on the flat),
-see `bike.json`.
+A request can e.g. set `{"parameters": {"power": 200}}` for a stronger rider: 25 instead of 18.7 km/h on the flat,
+and all riding sections scale with it (pushing sections are not sped up), see `bike.json`.
 
 This can be useful to reduce the speed of the base profile to a dynamic value. See e.g. the following example:
 

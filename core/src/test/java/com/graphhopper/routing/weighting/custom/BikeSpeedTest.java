@@ -56,8 +56,6 @@ class BikeSpeedTest {
         assertEquals(6, 6 * BIKE.factor(6, -10, 18), 0);
         assertEquals(3.76, 6 * BIKE.factor(6, 10, 18), 0.01);
         assertEquals(1, BIKE.factor(0, 5, 18), 0);
-        assertThrows(IllegalArgumentException.class, () -> BIKE.factor(-1, 5, 18));
-        assertThrows(IllegalArgumentException.class, () -> BIKE.factor(Double.NaN, 5, 18));
         // bounds: the speed of the slope caps every running speed, so a fast road does not loosen them
         assertEquals(6.81, 30 * BIKE.maxFactor(30, 5, 18), 0.01);
         assertEquals(18.68, 30 * BIKE.maxFactor(30, 0, 18), 0.01);

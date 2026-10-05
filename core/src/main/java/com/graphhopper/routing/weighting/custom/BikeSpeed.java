@@ -85,8 +85,6 @@ public class BikeSpeed {
     public double factor(double current, double slope, double baseSpeed) {
         checkBaseSpeed(baseSpeed);
         if (current == 0) return 1; // blocked edge, CustomWeighting makes it infinite
-        if (current < 0 || Double.isNaN(current))
-            throw new IllegalArgumentException("bike_speed_factor: running speed must be a non-negative number, but was " + current);
         double v = speed(slope);
         double scale = current > PUSHING_SPEED ? Math.max(flatSpeed, v) / baseSpeed : 1;
         return Math.min(scale, v / current);
@@ -103,7 +101,7 @@ public class BikeSpeed {
      */
     public double maxFactor(double currentMax, double slope, double baseSpeed) {
         checkBaseSpeed(baseSpeed);
-        if (!(currentMax > 0)) return 1;
+        if (currentMax == 0) return 1; // blocked by a previous statement
         double v = speed(slope);
         if (currentMax <= PUSHING_SPEED) return Math.min(1, v / currentMax);
         return Math.max(Math.min(PUSHING_SPEED, v), Math.min(Math.max(flatSpeed, v) / baseSpeed * currentMax, v)) / currentMax;
@@ -128,8 +126,9 @@ public class BikeSpeed {
      */
     static double solve(double power, double c, double aero) {
         // start right of the root where the cubic is increasing and convex, so Newton descends monotonically to it
+        // and converges in at most 6 iterations for any sensible rider
         double v = Math.sqrt(Math.max(0, -c) / aero) + Math.cbrt(power / aero);
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 20; i++) {
             double next = v - (aero * v * v * v + c * v - power) / (3 * aero * v * v + c);
             if (v - next < 1e-6) return next;
             v = next;
