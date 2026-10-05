@@ -235,7 +235,7 @@ public class Router {
         StopWatch sw = new StopWatch().start();
         DirectedEdgeFilter directedEdgeFilter = solver.createDirectedEdgeFilter();
         List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.createSnapFilter(), locationIndex,
-                request.getSnapPreventions(), request.getPointHints(), directedEdgeFilter, request.getHeadings());
+                request.getSnapPreventions(), request.getPointHints(), directedEdgeFilter, request.getHeadings(), request.getLevels());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         QueryGraph queryGraph = QueryGraph.create(graph, snaps);
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
@@ -268,7 +268,7 @@ public class Router {
         StopWatch sw = new StopWatch().start();
         DirectedEdgeFilter directedEdgeFilter = solver.createDirectedEdgeFilter();
         List<Snap> snaps = ViaRouting.lookup(encodingManager, request.getPoints(), solver.createSnapFilter(), locationIndex,
-                request.getSnapPreventions(), request.getPointHints(), directedEdgeFilter, request.getHeadings());
+                request.getSnapPreventions(), request.getPointHints(), directedEdgeFilter, request.getHeadings(), request.getLevels());
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator

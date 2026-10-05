@@ -45,6 +45,7 @@ public class GHRequest {
     private List<String> curbsides = new ArrayList<>();
     private List<String> snapPreventions;
     private List<String> pathDetails = new ArrayList<>();
+    private List<Double> levels = new ArrayList<>();
     private String algo = "";
     private Locale locale = Locale.US;
     private CustomModel customModel;
@@ -230,6 +231,27 @@ public class GHRequest {
 
     public List<String> getPathDetails() {
         return this.pathDetails;
+    }
+
+    /**
+     * Sets the levels, i.e. the level the route should leave the starting point and the levels the route
+     * should arrive from at the via-points and the end point. Levels are given as a decimal number,
+     * or NaN or null if no level shall be specified.
+     * <p>
+     * The number of levels must be zero (default), one (for the start point) or equal to the number of points
+     * when sending the request.
+     */
+    public GHRequest setLevels(List<Double> levels) {
+        this.levels = levels == null 
+            ? new ArrayList<>() 
+            : levels.stream()
+                .map(d -> d == null ? Double.NaN : d)
+                .collect(Collectors.toList());
+        return this;
+    }
+
+    public List<Double> getLevels() {
+        return this.levels;
     }
 
     @Override
