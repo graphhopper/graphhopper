@@ -96,7 +96,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         // note that this factor reduces the speed but only until MIN_SPEED
         setSmoothnessSpeedFactor(Smoothness.MISSING, 1.0d);
         setSmoothnessSpeedFactor(Smoothness.OTHER, 0.7d);
-        setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.1d);
+        setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.0d);
         setSmoothnessSpeedFactor(Smoothness.GOOD, 1.0d);
         setSmoothnessSpeedFactor(Smoothness.INTERMEDIATE, 0.9d);
         setSmoothnessSpeedFactor(Smoothness.BAD, 0.7d);

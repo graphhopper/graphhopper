@@ -15,15 +15,15 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
                                            EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
         super(speedEnc, smoothnessEnc, bikeRouteEnc);
 
-        setTrackTypeSpeed("grade1", 24); // paved
+        setTrackTypeSpeed("grade1", 28); // paved
         setTrackTypeSpeed("grade2", 10); // now unpaved ...
         setTrackTypeSpeed("grade3", PUSHING_SECTION_SPEED);
         setTrackTypeSpeed("grade4", PUSHING_SECTION_SPEED);
         setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED);
 
-        setSurfaceSpeed("paved", 24);
-        setSurfaceSpeed("asphalt", 24);
-        setSurfaceSpeed("concrete", 24);
+        setSurfaceSpeed("paved", 28);
+        setSurfaceSpeed("asphalt", 28);
+        setSurfaceSpeed("concrete", 28);
         setSurfaceSpeed("concrete:lanes", 20);
         setSurfaceSpeed("concrete:plates", 20);
         setSurfaceSpeed("unpaved", MIN_SPEED);
@@ -45,20 +45,20 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setSurfaceSpeed("sand", MIN_SPEED);
         setHighwaySpeed("track", MIN_SPEED); // assume unpaved
 
-        setHighwaySpeed("trunk", 24);
-        setHighwaySpeed("trunk_link", 24);
-        setHighwaySpeed("primary", 24);
-        setHighwaySpeed("primary_link", 24);
-        setHighwaySpeed("secondary", 24);
-        setHighwaySpeed("secondary_link", 24);
-        setHighwaySpeed("tertiary", 24);
-        setHighwaySpeed("tertiary_link", 24);
-        setHighwaySpeed("cycleway", 24);
-        setHighwaySpeed("residential", 24);
-        setHighwaySpeed("unclassified", 24);
+        setHighwaySpeed("trunk", 28);
+        setHighwaySpeed("trunk_link", 28);
+        setHighwaySpeed("primary", 28);
+        setHighwaySpeed("primary_link", 28);
+        setHighwaySpeed("secondary", 28);
+        setHighwaySpeed("secondary_link", 28);
+        setHighwaySpeed("tertiary", 28);
+        setHighwaySpeed("tertiary_link", 28);
+        setHighwaySpeed("cycleway", 28);
+        setHighwaySpeed("residential", 28);
+        setHighwaySpeed("unclassified", 28);
 
         // overwrite map from BikeCommon
-        setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.2d);
+        setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.0d);
         setSmoothnessSpeedFactor(Smoothness.VERY_BAD, 0.1);
         setSmoothnessSpeedFactor(Smoothness.HORRIBLE, 0.1);
         setSmoothnessSpeedFactor(Smoothness.VERY_HORRIBLE, 0.1);
