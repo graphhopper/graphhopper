@@ -1,6 +1,6 @@
 ### 12.0 [not yet released]
 
-- mtb: base speed on paved roads is 20km/h instead of 18 (matches the flat speed of a 160W cyclist on an mtb)
+- mtb: base speed on paved roads is 20km/h instead of 18 (matches the flat speed of a 140W cyclist on an mtb)
 - racingbike: base speed on paved roads is 28km/h instead of 24 (matches the flat speed of a 160W cyclist); smoothness=excellent no longer increases the speed for bike, mtb and racingbike (the physical gain of 1-2% is below the 2km/h resolution)
 - custom models: conditions accept only the binary operators ==, !=, <, >, <=, >=, &&, ||, +, -, *, / and %; bitwise and shift operators like &, |, ^, << and >> are rejected now
 - custom models: new `parameters` section with named numbers and booleans usable in conditions and value expressions (a parameter xy is referenced as p_xy); parameters can only be defined in the server-side custom model, optionally with an allowed value range; on merge the values are overridden per name, so a request can tweak the values of the server-side profile without repeating its statements (and without recompiling the custom model class); empty speed/priority/turn_penalty sections are no longer serialized
