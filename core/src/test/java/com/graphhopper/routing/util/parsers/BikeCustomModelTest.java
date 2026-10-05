@@ -339,17 +339,17 @@ public class BikeCustomModelTest {
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(20, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "rcn");
         edge = createEdge(way, rel);
         assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(20, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "ncn");
         edge = createEdge(way, rel);
         assertEquals(1.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(20, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // no pushing section but road wayTypeCode and faster
         way.clearTags();
@@ -358,7 +358,7 @@ public class BikeCustomModelTest {
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.43, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(20, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.clearTags();
         rel.clearTags();
@@ -390,7 +390,7 @@ public class BikeCustomModelTest {
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.43, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(20, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
     }
 
 }

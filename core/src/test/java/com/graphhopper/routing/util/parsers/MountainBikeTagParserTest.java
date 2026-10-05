@@ -64,10 +64,10 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testSpeedAndPriority() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        assertPriorityAndSpeed(BAD, 18, way);
+        assertPriorityAndSpeed(BAD, 20, way);
 
         way.setTag("highway", "residential");
-        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 20, way);
 
         // Test pushing section speeds
         way.setTag("highway", "footway");
@@ -84,10 +84,10 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("tracktype", "grade3");
         assertPriorityAndSpeed(VERY_NICE, 12, way);
         way.setTag("tracktype", "grade1");
-        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 20, way);
 
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(SLIGHT_PREFER, 18, way);
+        assertPriorityAndSpeed(SLIGHT_PREFER, 20, way);
 
         way.clearTags();
         way.setTag("highway", "path");
@@ -100,16 +100,16 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("smoothness", "excellent");
-        assertEquals(18, getSpeedFromFlags(way), 0.01);
+        assertEquals(20, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(12, getSpeedFromFlags(way), 0.01);
+        assertEquals(14, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
         assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "unknown");
-        assertEquals(12, getSpeedFromFlags(way), 0.01);
+        assertEquals(14, getSpeedFromFlags(way), 0.01);
 
         way.clearTags();
         way.setTag("highway", "residential");
@@ -118,7 +118,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         // pick smallest of highway, tracktype, and applied smoothness speed
         way.setTag("smoothness", "bad");
-        assertEquals(12, getSpeedFromFlags(way), 0.01);
+        assertEquals(14, getSpeedFromFlags(way), 0.01);
 
         way.clearTags();
         way.setTag("highway", "track");
