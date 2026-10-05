@@ -7,7 +7,7 @@
 
 {
   "parameters": { "max_mtb_rating": 6, "max_hike_rating": 4,
-                  "power": { "value": 160, "min": 40, "max": 500 }, "mass": { "value": 90, "min": 25, "max": 300 } },
+                  "power": { "value": 140, "min": 40, "max": 500 }, "mass": { "value": 90, "min": 25, "max": 300 } },
   "priority": [
     { "if": "true",  "multiply_by": "mtb_priority" },
     { "if": "bike_network == INTERNATIONAL || bike_network == NATIONAL || mtb_network == INTERNATIONAL || mtb_network == NATIONAL",  "multiply_by": "1.5" },
@@ -18,7 +18,7 @@
     { "if": "hike_rating > p_max_hike_rating",  "multiply_by": "0" },
     { "if": "bike_road_access == NO", "multiply_by": "0" },
     { "if": "!mtb_access && (!backward_mtb_access || roundabout)",  "multiply_by": "0" },
-    { "else_if": "!mtb_access && backward_mtb_access",  "multiply_by": "0.2" }
+    { "else_if": "!mtb_access && backward_mtb_access",  "multiply_by": "0.5" }
   ],
   "speed": [
     { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
@@ -26,7 +26,7 @@
       { "if": "true", "limit_to": "mtb_average_speed" },
       { "if": "mtb_rating > 3",  "limit_to": "4" },
       { "if": "!mtb_access && backward_mtb_access", "limit_to": "6" },
-      { "if": "true", "multiply_by": "bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.012, 18)" }
+      { "if": "true", "multiply_by": "bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.012, 20)" }
     ]}
   ]
 }

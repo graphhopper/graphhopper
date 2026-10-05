@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BikeSpeedTest {
-    // default riders: bike 100 W, mtb and racingbike 160 W, 90 kg including the bike
+    // default riders: bike 100 W, mtb 140 W, racingbike 160 W, 90 kg including the bike
     static final BikeSpeed BIKE = new BikeSpeed(100, 90, 0.74, 0.008);
 
     @Test
@@ -26,8 +26,9 @@ class BikeSpeedTest {
         assertEquals(32.7, BIKE.speed(-5), 0.1);
         assertEquals(32.7, BIKE.speed(-30), 0.1);
 
+        // the default mtb and racingbike riders ride the encoded 20 and 28 km/h on flat asphalt
         assertEquals(28.25, new BikeSpeed(160, 90, 0.4, 0.006).speed(0), 0.01);
-        assertEquals(21.51, new BikeSpeed(160, 90, 0.74, 0.012).speed(0), 0.01);
+        assertEquals(20.23, new BikeSpeed(140, 90, 0.74, 0.012).speed(0), 0.01);
         // stronger rider: faster everywhere
         BikeSpeed strong = new BikeSpeed(200, 90, 0.74, 0.008);
         assertEquals(24.95, strong.speed(0), 0.01);

@@ -798,7 +798,7 @@ public class GraphHopper {
      * Imports and processes data, storing it to disk when complete.
      */
     public void importAndClose() {
-        if (!load()) {
+        if (!load(true)) {
             printInfo();
             process(true);
         } else {
@@ -839,12 +839,15 @@ public class GraphHopper {
             importOSM();
             postImportOSM();
             cleanUp();
+            baseGraph.freeze();
 
             properties.put("profiles", getProfilesString());
             writeEncodingManagerToProperties();
+            calcChecksums();
 
-            postProcessing(closeEarly);
             flush();
+            postProcessing(closeEarly);
+            setFullyLoaded();
         } finally {
             if (lock != null)
                 lock.release();
@@ -1184,6 +1187,10 @@ public class GraphHopper {
      * Load from existing graph folder.
      */
     public boolean load() {
+        return load(false);
+    }
+
+    private boolean load(boolean closeEarly) {
         if (isEmpty(ghLocation))
             throw new IllegalStateException("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before");
 
@@ -1252,8 +1259,9 @@ public class GraphHopper {
                                 + "\nChange this profile to match the stored one or delete " + baseGraph.getDirectory().getLocation());
                 });
             }
-            postProcessing(false);
-            directory.loadMMap();
+            postProcessing(closeEarly);
+            if (!closeEarly)
+                directory.loadMMap();
             setFullyLoaded();
             return true;
         } finally {
@@ -1372,7 +1380,6 @@ public class GraphHopper {
      * @param closeEarly release resources as early as possible
      */
     protected void postProcessing(boolean closeEarly) {
-        calcChecksums();
         initLocationIndex();
         importPublicTransit();
 
@@ -1381,7 +1388,7 @@ public class GraphHopper {
             if (!includesCustomProfiles)
                 // when there are custom profiles we must not close way geometry or KVStorage, because
                 // they might be needed to evaluate the custom weightings for the following preparations
-                baseGraph.closeGeometryAndNameStorage(fileBacked);
+                baseGraph.closeGeometryAndNameStorage();
         }
 
         if (lmPreparationHandler.isEnabled())
@@ -1535,6 +1542,8 @@ public class GraphHopper {
         // we load ch graphs that already exist and prepare the other ones
         List<CHConfig> chConfigs = createCHConfigs(chPreparationHandler.getCHProfiles());
         Map<String, RoutingCHGraph> loaded = chPreparationHandler.load(baseGraph.getBaseGraph(), chConfigs);
+        if (closeEarly)
+            loaded.values().forEach(RoutingCHGraph::close);
         List<CHConfig> configsToPrepare = chConfigs.stream().filter(c -> !loaded.containsKey(c.getName())).collect(Collectors.toList());
         Map<String, PrepareContractionHierarchies.Result> prepared = prepareCH(closeEarly, configsToPrepare);
 
@@ -1552,6 +1561,8 @@ public class GraphHopper {
             } else
                 throw new IllegalStateException("CH graph should be either loaded or prepared: " + profile.getProfile());
         }
+        if (fileBacked && !prepared.isEmpty())
+            properties.flush();
         chGraphs.forEach((name, ch) -> {
             CHStorage store = ((RoutingCHGraphImpl) ch).getCHStorage();
             logger.info("CH available for profile {}, {}MB, {}, ({}MB)", name, Helper.nf(store.getCapacity() / Helper.MB), store.toDetailsString(), store.getMB());
@@ -1578,6 +1589,8 @@ public class GraphHopper {
         // we load landmark storages that already exist and prepare the other ones
         List<LMConfig> lmConfigs = createLMConfigs(lmPreparationHandler.getLMProfiles());
         List<LandmarkStorage> loaded = lmPreparationHandler.load(lmConfigs, baseGraph, encodingManager);
+        if (closeEarly)
+            loaded.forEach(LandmarkStorage::close);
         List<LMConfig> loadedConfigs = loaded.stream().map(LandmarkStorage::getLMConfig).toList();
         List<LMConfig> configsToPrepare = lmConfigs.stream().filter(c -> !loadedConfigs.contains(c)).collect(Collectors.toList());
         List<PrepareLandmarks> prepared = prepareLM(closeEarly, configsToPrepare);
@@ -1597,6 +1610,8 @@ public class GraphHopper {
             } else
                 loadedLMS.ifPresent(landmarkStorage -> landmarks.put(lmp.getProfile(), landmarkStorage));
         }
+        if (fileBacked && !prepared.isEmpty())
+            properties.flush();
     }
 
     protected List<PrepareLandmarks> prepareLM(boolean closeEarly, List<LMConfig> configsToPrepare) {
@@ -1636,7 +1651,6 @@ public class GraphHopper {
             properties.flush();
             logger.info("flushed graph " + getMemInfo() + ")");
         }
-        setFullyLoaded();
     }
 
     /**

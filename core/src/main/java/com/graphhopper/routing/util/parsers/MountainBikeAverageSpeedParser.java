@@ -14,7 +14,7 @@ public class MountainBikeAverageSpeedParser extends BikeCommonAverageSpeedParser
                                              EnumEncodedValue<Smoothness> smoothnessEnc,
                                              EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
         super(speedEnc, smoothnessEnc, bikeRouteEnc);
-        setTrackTypeSpeed("grade1", 18); // paved
+        setTrackTypeSpeed("grade1", 20); // paved
         setTrackTypeSpeed("grade2", 16); // now unpaved ...
         setTrackTypeSpeed("grade3", 12);
         setTrackTypeSpeed("grade4", 8);
@@ -30,5 +30,21 @@ public class MountainBikeAverageSpeedParser extends BikeCommonAverageSpeedParser
         setSurfaceSpeed("compacted", 16);
         setSurfaceSpeed("grass", 12);
         setSurfaceSpeed("grass_paver", 12);
+
+        // 20km/h on paved roads matches the flat speed of a 160W cyclist on an mtb
+        setSurfaceSpeed("paved", 20);
+        setSurfaceSpeed("asphalt", 20);
+        setSurfaceSpeed("concrete", 20);
+        setHighwaySpeed("trunk", 20);
+        setHighwaySpeed("trunk_link", 20);
+        setHighwaySpeed("primary", 20);
+        setHighwaySpeed("primary_link", 20);
+        setHighwaySpeed("secondary", 20);
+        setHighwaySpeed("secondary_link", 20);
+        setHighwaySpeed("tertiary", 20);
+        setHighwaySpeed("tertiary_link", 20);
+        setHighwaySpeed("cycleway", 20);
+        setHighwaySpeed("residential", 20);
+        setHighwaySpeed("unclassified", 20);
     }
 }

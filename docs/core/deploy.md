@@ -71,17 +71,8 @@ Adding or modifying profiles is not possible and you need to run a new import in
 
 Avoid swapping e.g. on linux via `vm.swappiness=0` in /etc/sysctl.conf. See some tuning discussion in the answers [here](http://stackoverflow.com/q/38905739/194609).
 
-When using the MMAP setting (default for elevation data), then ensure `/proc/sys/vm/max_map_count` is enough or set it via `sysctl -w vm.max_map_count=500000`. see also https://github.com/graphhopper/graphhopper/issues/1866.
+#### MMAP or PMTiles Elevation Data
 
-### Elevation Data
+Ensure `/proc/sys/vm/max_map_count` is enough or set it via `sysctl -w vm.max_map_count=4194304`. 
+For MMAP see #1866 and for pmtiles elevation data see #3391.
 
-If you want to use elevation data you need to increase the allowed number of open files. Under linux this works as follows:
-
- * sudo vi /etc/security/limits.conf
- * add: `* - nofile 100000`
-   which means set hard and soft limit of "number of open files" for all users to 100K
- * sudo vi /etc/sysctl.conf
- * add: `fs.file-max = 90000`
- * reboot now (or sudo sysctl -p; and re-login)
- * afterwards `ulimit -Hn` and `ulimit -Sn` should give you 100000
- 

@@ -83,7 +83,7 @@ public class BikeCustomModelTest {
     }
 
     // on the flat bike_speed_factor scales the encoded speed to the rider of the custom model (riding sections only)
-    static final double BIKE = 18.68 / 18, MTB = 21.51 / 18;
+    static final double BIKE = 18.68 / 18, MTB = 20.23 / 20;
 
     EdgeIteratorState createEdge(ReaderWay way, ReaderRelation... readerRelation) {
         BaseGraph graph = new BaseGraph.Builder(em).create();
@@ -354,17 +354,17 @@ public class BikeCustomModelTest {
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(20 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "rcn");
         edge = createEdge(way, rel);
         assertEquals(1.56, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(20 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         rel.setTag("network", "ncn");
         edge = createEdge(way, rel);
         assertEquals(1.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(20 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         // no pushing section but road wayTypeCode and faster
         way.clearTags();
@@ -373,7 +373,7 @@ public class BikeCustomModelTest {
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.43, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(20 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
         way.clearTags();
         rel.clearTags();
@@ -405,7 +405,7 @@ public class BikeCustomModelTest {
         rel.setTag("network", "lcn");
         edge = createEdge(way, rel);
         assertEquals(1.43, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
-        assertEquals(18 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
+        assertEquals(20 * MTB, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
     }
 
 }

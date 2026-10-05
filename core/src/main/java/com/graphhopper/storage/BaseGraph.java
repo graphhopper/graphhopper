@@ -206,15 +206,9 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     /**
-     * Frees the resources not needed for post-processing (way geometries and KVStorage for edges),
-     * optionally persisting them to disc first.
+     * Frees the resources not needed for post-processing (way geometries and KVStorage for edges).
      */
-    public void closeGeometryAndNameStorage(boolean flush) {
-        if (flush) {
-            setWayGeometryHeader();
-            wayGeometry.flush();
-            edgeKVStorage.flush();
-        }
+    public void closeGeometryAndNameStorage() {
         wayGeometry.close();
         edgeKVStorage.close();
     }
