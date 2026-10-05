@@ -86,7 +86,7 @@ public class CustomWeightingHelper {
     /**
      * The built-in function bike_speed_factor of the value expression, see {@link BikeSpeed}. The parser
      * injects the running speed as first argument. The rider arguments are constant per custom model, so
-     * the table is built on the first call.
+     * the table is built on the first call (a second call with a different rider is not supported).
      */
     protected double bike_speed_factor(double current, double slope, double power, double mass, double cda, double crr, double baseSpeed) {
         return bikeSpeed(power, mass, cda, crr).factor(current, slope, baseSpeed);
@@ -101,8 +101,7 @@ public class CustomWeightingHelper {
     }
 
     private BikeSpeed bikeSpeed(double power, double mass, double cda, double crr) {
-        if (bikeSpeed == null || !bikeSpeed.hasArgs(power, mass, cda, crr))
-            bikeSpeed = new BikeSpeed(power, mass, cda, crr);
+        if (bikeSpeed == null) bikeSpeed = new BikeSpeed(power, mass, cda, crr);
         return bikeSpeed;
     }
 

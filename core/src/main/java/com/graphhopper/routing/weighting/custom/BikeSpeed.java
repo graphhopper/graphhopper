@@ -36,7 +36,6 @@ public class BikeSpeed {
     // encoded speeds up to this are pushing sections (steps 2, pushing 4, footway and path 6 km/h) and walked
     static final double PUSHING_SPEED = 6;
 
-    private final double power, mass, cda, crr;
     private final double flatSpeed;
     private final double[] speeds = new double[(int) Math.round(2 * MAX_SLOPE / STEP) + 1];
 
@@ -50,10 +49,6 @@ public class BikeSpeed {
         if (!(power > 0) || !(mass > 0) || !(cda > 0) || !(crr >= 0))
             throw new IllegalArgumentException("bike_speed: power, mass and cda must be positive and crr non-negative, but got "
                     + power + ", " + mass + ", " + cda + ", " + crr);
-        this.power = power;
-        this.mass = mass;
-        this.cda = cda;
-        this.crr = crr;
         double aero = 0.5 * RHO * cda, rolling = mass * G * crr, climb = mass * G / 100;
         flatSpeed = solve(power, rolling, aero) * 3.6;
         double maxSpeed = MAX_SPEED_FACTOR * flatSpeed;
@@ -114,10 +109,6 @@ public class BikeSpeed {
 
     public double getFlatSpeed() {
         return flatSpeed;
-    }
-
-    public boolean hasArgs(double power, double mass, double cda, double crr) {
-        return this.power == power && this.mass == mass && this.cda == cda && this.crr == crr;
     }
 
     /**

@@ -700,7 +700,7 @@ The function returns a factor for the speed of the preceding statements: a ridin
 (flat speed relative to `base_speed`, the encoded speed of a flat asphalt road), on descents it gets the speed of the
 slope relative to `base_speed` instead, and climbs are limited by the power. So a bad surface limits a climb but is
 not slowed down a second time. Pushing sections like steps or footways (encoded speed of at most 6 km/h) are walked
-and only limited. It can only be used with `multiply_by` under `speed` and should be the last statement there.
+and only limited. It can only be used with `multiply_by` under `speed`, once, and should be the last statement there.
 Except for the slope the arguments must be parameters or numbers:
 
 ```json
