@@ -73,7 +73,7 @@ graphhopper:
 #   Edit avoid_turns.json or create your own JSON file and put it into the "custom_models.directory". See also bike_tc.yml.
 #
 #   Other custom models not listed here are: car4wd.json, motorcycle.json, truck.json or cargo-bike.json. You might need to modify and test them before production usage.
-#   See ./core/src/main/resources/com/graphhopper/custom_models and let us know if you customize them, improve them or create new onces!
+#   See ./core/src/main/resources/com/graphhopper/custom_models and let us know if you customize them, improve them or create new ones!
 #   Also there is the curvature.json custom model which might be useful for a motorcyle profile or the opposite for a truck profile.
 #   Then specify a folder where to find your own custom model files:
 #  custom_models.directory: custom_models

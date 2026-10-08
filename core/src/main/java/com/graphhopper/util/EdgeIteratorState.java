@@ -245,7 +245,7 @@ public interface EdgeIteratorState {
      * This stores the specified key-value pairs in the storage of this EdgeIteratorState. This is more flexible
      * compared to the mechanism of flags and EncodedValue and allows storing sparse key value pairs more efficient.
      * But it might be slow and more inefficient on retrieval. Call this setKeyValues method only once per
-     * EdgeIteratorState as it allocates new space everytime this method is called.
+     * EdgeIteratorState as it allocates new space every time this method is called.
      */
     EdgeIteratorState setKeyValues(Map<String, KVStorage.KValue> map);
 
