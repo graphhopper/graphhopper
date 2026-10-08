@@ -90,6 +90,19 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private double prevInstructionPrevOrientation = Double.NaN;
     private Instruction prevInstruction;
     private boolean prevInRoundabout;
+    /*
+     * Signed heading change along the roundabout itself (pillar points and the turns between
+     * consecutive roundabout edges). Positive is a leftward sweep. This is deliberately not
+     * prevOrientation: that value stays the entrance heading used for deltaInOut.
+     * The approach and departure segments are never added.
+     */
+    private double roundaboutRotation;
+    private double roundaboutHeading;
+    private boolean roundaboutHeadingSet;
+    private double roundaboutPrevLat, roundaboutPrevLon;
+    private boolean roundaboutHasPoint;
+    // Entrance turn, used only when the traversed geometry has no usable curvature. NaN if the route starts on the roundabout.
+    private double roundaboutEntranceDelta = Double.NaN;
     private String prevDestinationAndRef;
     private String prevName;
     private RoadEnvironment prevRoadEnv;
@@ -225,6 +238,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // remark: names and annotations within roundabout are ignored
             if (!prevInRoundabout) //just entered roundabout
             {
+                resetRoundaboutRotation();
                 RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(Instruction.ROUNDABOUT_USE, name,
                         new PointList(10, nodeAccess.is3D()));
                 prevInstructionPrevOrientation = prevOrientation;
@@ -241,12 +255,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     // previous orientation is last orientation before entering roundabout
                     prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
 
-                    // calculate direction of entrance turn to determine direction of rotation
-                    // right turn == counterclockwise and vice versa
+                    // Entrance turn is kept as fallback evidence. Right turn == counterclockwise.
+                    // The instruction direction is deferred until the roundabout geometry is known.
                     double orientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
                     orientation = AngleCalc.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
-                    double delta = (orientation - prevOrientation);
-                    roundaboutInstruction.setDirOfRotation(delta);
+                    roundaboutEntranceDelta = orientation - prevOrientation;
 
                 } else // first instructions is roundabout instruction
                 {
@@ -258,6 +271,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 prevInstruction = roundaboutInstruction;
                 ways.add(prevInstruction);
             }
+
+            accumulateRoundaboutRotation(wayGeo);
 
             // once in roundabout, deferred fallback should not leak into roundabout instructions
             prevInstructionNeedsNameFallback = false;
@@ -286,14 +301,15 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
             double deltaInOut = (orientation - prevOrientation);
 
-            // calculate direction of exit turn to determine direction of rotation
-            // right turn == counterclockwise and vice versa
+            // Exit turn is fallback evidence when the roundabout geometry has no usable curvature.
+            // Right turn == counterclockwise and vice versa.
             double recentOrientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(recentOrientation, orientation);
             double deltaOut = (orientation - recentOrientation);
 
             RoundaboutInstruction rInstr = (RoundaboutInstruction) prevInstruction;
-            rInstr.setRadian(deltaInOut).setDirOfRotation(deltaOut);
+            rInstr.setRadian(deltaInOut);
+            applyRoundaboutDirection(rInstr, deltaOut);
 
             // we use an exit that is not considered as it has no car or base access (#3081)
             if (rInstr.getExitNumber() == 0) rInstr.increaseExitNumber();
@@ -424,7 +440,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             double orientation = AngleCalc.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
             double delta = (orientation - prevOrientation);
-            ((RoundaboutInstruction) prevInstruction).setRadian(delta);
+            RoundaboutInstruction roundaboutInstruction = (RoundaboutInstruction) prevInstruction;
+            roundaboutInstruction.setRadian(delta);
+            // no departure turn; direction comes from the geometry, or the entrance evidence
+            applyRoundaboutDirection(roundaboutInstruction, Double.NaN);
         }
 
         Instruction finishInstruction = new FinishInstruction(nodeAccess, prevEdge.getAdjNode());
@@ -560,6 +579,63 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevInstruction.setTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdge.getEdge()) + prevInstruction.getTime());
         else
             prevInstruction.setTime(weighting.calcEdgeMillis(edge, false) + prevInstruction.getTime());
+    }
+
+    private void resetRoundaboutRotation() {
+        roundaboutRotation = 0;
+        roundaboutHeadingSet = false;
+        roundaboutHasPoint = false;
+        roundaboutEntranceDelta = Double.NaN;
+    }
+
+    /**
+     * Add the signed, aligned heading change of this roundabout edge. Duplicate coordinates,
+     * including the shared tower between consecutive edges, are skipped so they do not invent a heading.
+     */
+    private void accumulateRoundaboutRotation(PointList geometry) {
+        for (int i = 0; i < geometry.size(); i++) {
+            double lat = geometry.getLat(i);
+            double lon = geometry.getLon(i);
+            if (roundaboutHasPoint && lat == roundaboutPrevLat && lon == roundaboutPrevLon)
+                continue;
+
+            if (!roundaboutHasPoint) {
+                roundaboutPrevLat = lat;
+                roundaboutPrevLon = lon;
+                roundaboutHasPoint = true;
+                continue;
+            }
+
+            double heading = AngleCalc.ANGLE_CALC.calcOrientation(roundaboutPrevLat, roundaboutPrevLon, lat, lon);
+            if (roundaboutHeadingSet) {
+                double aligned = AngleCalc.ANGLE_CALC.alignOrientation(roundaboutHeading, heading);
+                roundaboutRotation += aligned - roundaboutHeading;
+                // store the normalized heading; alignOrientation only folds once, which is enough while the base stays in [-pi, pi]
+                roundaboutHeading = heading;
+            } else {
+                roundaboutHeading = heading;
+                roundaboutHeadingSet = true;
+            }
+            roundaboutPrevLat = lat;
+            roundaboutPrevLon = lon;
+        }
+    }
+
+    /**
+     * Nonzero finite curvature selects the direction. Its sign is negated because a leftward sweep is
+     * counterclockwise, while {@link RoundaboutInstruction#setDirOfRotation} treats a positive value as clockwise.
+     * With no such curvature the entrance and exit turns are applied unchanged, so a straight edge can still
+     * disagree with itself and leave the angle undefined.
+     */
+    private void applyRoundaboutDirection(RoundaboutInstruction instruction, double exitDelta) {
+        if (Double.isFinite(roundaboutRotation) && roundaboutRotation != 0) {
+            instruction.setDirOfRotation(-roundaboutRotation);
+            return;
+        }
+        if (!Double.isNaN(roundaboutEntranceDelta))
+            instruction.setDirOfRotation(roundaboutEntranceDelta);
+        if (!Double.isNaN(exitDelta))
+            instruction.setDirOfRotation(exitDelta);
     }
 
     private boolean isLinkRoad(EdgeIteratorState edge) {
