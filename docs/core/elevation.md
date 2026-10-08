@@ -1,7 +1,7 @@
 # Elevation
 
 Per default elevation is `srtm` and if you remove the config line you
-automatically disable it and reduce storange and RAM usage a bit.
+automatically disable it and reduce storage and RAM usage a bit.
 You can also change it to `graph.elevation.provider: cgiar`. Or use other possibilities `srtm`, `gmted`, `sonny`,
 `multi` (combined cgiar and gmted), `multi3` (combined cgiar, gmted and sonny) or `pmtiles`.
 

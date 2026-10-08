@@ -34,7 +34,7 @@ virtual node x and virtual edges A-x, x-B for every query point located on an ed
 /                \
 ```
 
-But we need to decouple requests from each other and therefor we create a very lightweight graph called 
+But we need to decouple requests from each other and therefore we create a very lightweight graph called 
 `QueryGraph` for every request which handles also stuff like two query points on the same edge.
 
 The virtual nodes and edges have a higher `int` ID than `graph.getNodes()` or `allEdges.length()`

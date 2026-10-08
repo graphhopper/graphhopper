@@ -129,7 +129,7 @@ with a separate route hint (icon below the route distance).
 
 # max_slope
 
-Is now a signed value. To get the previous behavious use:
+Is now a signed value. To get the previous behaviour use:
 
 ```
 Math.abs(max_slope)

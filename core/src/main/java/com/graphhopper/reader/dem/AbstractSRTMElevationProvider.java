@@ -163,7 +163,7 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
         }
     }
 
-    // we need big endianess to read the SRTM files
+    // we need big endianness to read the SRTM files
     final short toShort(byte[] b, int offset) {
         return (short) ((b[offset] & 0xFF) << 8 | (b[offset + 1] & 0xFF));
     }
