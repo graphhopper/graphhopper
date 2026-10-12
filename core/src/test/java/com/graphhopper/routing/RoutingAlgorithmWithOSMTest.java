@@ -318,17 +318,17 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoBike3D() {
         List<Query> queries = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.6km after BridgeTunnelTowerCorrection
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2562, 103));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2665, 118));
         // 2.
         queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4212, 231));
         // 3.
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2830, 152));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2839, 145));
         // 4.
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1567, 83));
 
         // try reverse direction
         // 1.
-        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2596, 119));
+        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 1901, 93));
         queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4129, 194));
         queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2806, 145));
         // 4. avoid tunnel(s)!
@@ -337,7 +337,7 @@ public class RoutingAlgorithmWithOSMTest {
         GraphHopper hopper = createHopper(MONACO,
                 new Profile("bike").setCustomModel(getCustomModel("bike.json").
                         addToPriority(If("!bike_access", MULTIPLY, "0"))));
-        hopper.setEncodedValuesString("average_slope, max_slope, " + hopper.getEncodedValuesString());
+        hopper.setEncodedValuesString("average_slope, max_slope, urban_density, " + hopper.getEncodedValuesString());
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -592,7 +592,7 @@ public class RoutingAlgorithmWithOSMTest {
 
         GraphHopper hopper = createHopper(BAYREUTH, new Profile("bike").setCustomModel(
                 getCustomModel("bike.json")));
-        hopper.setEncodedValuesString("average_slope, max_slope, " + hopper.getEncodedValuesString());
+        hopper.setEncodedValuesString("average_slope, max_slope, urban_density, " + hopper.getEncodedValuesString());
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, list);
