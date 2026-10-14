@@ -337,7 +337,7 @@ public class RoutingAlgorithmWithOSMTest {
         GraphHopper hopper = createHopper(MONACO,
                 new Profile("bike").setCustomModel(getCustomModel("bike.json").
                         addToPriority(If("!bike_access", MULTIPLY, "0"))));
-        hopper.setEncodedValuesString("average_slope, max_slope, urban_density, " + hopper.getEncodedValuesString());
+        hopper.setEncodedValuesString("average_slope, max_slope, " + hopper.getEncodedValuesString());
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -592,7 +592,7 @@ public class RoutingAlgorithmWithOSMTest {
 
         GraphHopper hopper = createHopper(BAYREUTH, new Profile("bike").setCustomModel(
                 getCustomModel("bike.json")));
-        hopper.setEncodedValuesString("average_slope, max_slope, urban_density, " + hopper.getEncodedValuesString());
+        hopper.setEncodedValuesString("average_slope, max_slope, " + hopper.getEncodedValuesString());
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, list);

@@ -886,6 +886,9 @@ public class GraphHopper {
 
         if (urbanDensityCalculationThreads > 0)
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
+        else if (encodedValuesWithProps.containsKey(UrbanDensity.KEY))
+            throw new IllegalArgumentException("The encoded value " + UrbanDensity.KEY + " is calculated after the import and requires "
+                    + "graph.urban_density.threads >= 1. Set it in the config (and graph.urban_density.city_radius: 0 if city areas are not needed)");
         if (maxSpeedCalculator != null)
             encodedValuesWithProps.put(MaxSpeedEstimated.KEY, new PMap());
 
@@ -1148,7 +1151,7 @@ public class GraphHopper {
             EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
             BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
             UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc,
-                    roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, Math.max(1, urbanDensityCalculationThreads));
+                    roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
         }
     }
 

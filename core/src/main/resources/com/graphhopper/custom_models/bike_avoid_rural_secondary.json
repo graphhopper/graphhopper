@@ -1,0 +1,21 @@
+// Optional addition to bike.json: avoid secondary roads outside of built-up areas. They carry fast traffic and
+// usually have no cycle infrastructure. Use it after bike.json:
+//
+// profiles:
+//    - name: bike
+//      custom_model_files: [bike.json, bike_avoid_rural_secondary.json]
+//
+// This needs the encoded value urban_density, which is calculated after the import. Enable it with at least one
+// thread, which also adds urban_density to the encoded values:
+//
+// graph.urban_density.threads: 8
+//
+// Only RURAL is used here, so the slow city classification can be skipped, which speeds up the import a lot:
+//
+// graph.urban_density.city_radius: 0
+
+{
+  "priority": [
+    { "if": "road_class == SECONDARY && urban_density == RURAL", "multiply_by": "0.82" }
+  ]
+}

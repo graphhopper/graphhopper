@@ -45,7 +45,6 @@ public class BikeCustomModelTest {
                 add(FerrySpeed.create()).
                 add(Country.create()).
                 add(RoadClass.create()).
-                add(UrbanDensity.create()).
                 add(RoadEnvironment.create()).
                 add(AverageSlope.create()).
                 add(RouteNetwork.create(BikeNetwork.KEY)).
