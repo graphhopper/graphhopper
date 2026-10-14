@@ -16,6 +16,6 @@
 
 {
   "priority": [
-    { "if": "road_class == SECONDARY && urban_density == RURAL", "multiply_by": "0.82" }
+    { "if": "road_class == SECONDARY && urban_density == RURAL", "multiply_by": "0.85" }
   ]
 }
