@@ -91,8 +91,14 @@ public class FootPriorityParser implements TagParser {
             PriorityCode priorityCode = avoidHighwayTags.get(highway);
             if (way.hasTag("sidewalk", sidewalksNoValues))
                 weightToPrioMap.put(40d, priorityCode == null ? BAD : priorityCode);
+            else if (priorityCode == null)
+                weightToPrioMap.put(40d, AVOID);
             else
-                weightToPrioMap.put(40d, priorityCode == null ? AVOID : priorityCode.better().better());
+                weightToPrioMap.put(40d, switch (priorityCode) { // two steps on the old coarse scale
+                    case REACH_DESTINATION -> BAD;
+                    case BAD -> AVOID;
+                    default -> UNCHANGED;
+                });
         } else if (way.hasTag("sidewalk", sidewalksNoValues))
             weightToPrioMap.put(40d, AVOID);
 
