@@ -6,7 +6,8 @@
 //      custom_model_files: [racingbike.json]
 
 {
-  "parameters": { "power": { "value": 160, "min": 40, "max": 500 }, "mass": { "value": 90, "min": 25, "max": 300 } },
+  "parameters": { "power": { "value": 160, "min": 40, "max": 500 }, "total_weight": { "value": 90, "min": 25, "max": 300 },
+                  "air_drag_area": { "value": 0.4, "min": 0.2, "max": 1.2 }, "rolling_resistance": { "value": 0.006, "min": 0.002, "max": 0.03 } },
   "priority": [
     { "if": "true",  "multiply_by": "racingbike_priority" },
     { "if": "bike_network == INTERNATIONAL || bike_network == NATIONAL",  "multiply_by": "1.2" },
@@ -24,7 +25,7 @@
     { "else": "", "do": [
       { "if": "true", "limit_to": "racingbike_average_speed" },
       { "if": "!racingbike_access && backward_racingbike_access", "limit_to": "5" },
-      { "if": "true", "multiply_by": "bike_speed_factor(average_slope, p_power, p_mass, 0.4, 0.006, 28)" }
+      { "if": "true", "multiply_by": "bike_speed_factor(average_slope, p_power, p_total_weight, p_air_drag_area, p_rolling_resistance, 28)" }
     ]}
   ]
 }

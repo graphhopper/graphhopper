@@ -704,14 +704,16 @@ The function returns a factor for the speed of the preceding statements: a ridin
 slope relative to `base_speed` instead, and climbs are limited by the power. So a bad surface limits a climb but is
 not slowed down a second time. Pushing sections like steps or footways (encoded speed of at most 6 km/h) are walked
 and only limited. It can only be used with `multiply_by` under `speed`, once, and should be the last statement there.
-Except for the slope the arguments must be parameters or numbers:
+Except for the slope the arguments must be parameters or numbers. The bike profiles define all rider values as
+parameters, so a request can change them:
 
 ```json
 {
-  "parameters": { "power": { "value": 100, "min": 40, "max": 500 }, "mass": { "value": 90, "min": 25, "max": 300 } },
+  "parameters": { "power": { "value": 100, "min": 40, "max": 500 }, "total_weight": { "value": 90, "min": 25, "max": 300 },
+                  "air_drag_area": { "value": 0.74, "min": 0.2, "max": 1.2 }, "rolling_resistance": { "value": 0.008, "min": 0.002, "max": 0.03 } },
   "speed": [
     { "if": "true", "limit_to": "bike_average_speed" },
-    { "if": "true", "multiply_by": "bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.008, 18)" }
+    { "if": "true", "multiply_by": "bike_speed_factor(average_slope, p_power, p_total_weight, p_air_drag_area, p_rolling_resistance, 18)" }
   ]
 }
 ```

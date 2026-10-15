@@ -17,7 +17,8 @@
   // small distance term: avoids long detours, e.g. for small differences in priority
   "distance_influence": 5,
   "parameters": { "max_mtb_rating": 2, "max_hike_rating": 1,
-                  "power": { "value": 100, "min": 40, "max": 500 }, "mass": { "value": 90, "min": 25, "max": 300 }, "hill_penalty": { "value": 0, "min": 0, "max": 0.03 } },
+                  "power": { "value": 100, "min": 40, "max": 500 }, "total_weight": { "value": 90, "min": 25, "max": 300 },
+                  "air_drag_area": { "value": 0.74, "min": 0.2, "max": 1.2 }, "rolling_resistance": { "value": 0.008, "min": 0.002, "max": 0.03 }, "hill_penalty": { "value": 0, "min": 0, "max": 0.03 } },
   "priority": [
     { "if": "true",  "multiply_by": "bike_priority" },
     { "if": "bike_network == INTERNATIONAL || bike_network == NATIONAL",  "multiply_by": "1.4" },
@@ -37,7 +38,7 @@
     { "else": "", "do": [
       { "if": "true", "limit_to": "bike_average_speed" },
       { "if": "!bike_access && backward_bike_access", "limit_to": "6" },
-      { "if": "true", "multiply_by": "bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.008, 18)" }
+      { "if": "true", "multiply_by": "bike_speed_factor(average_slope, p_power, p_total_weight, p_air_drag_area, p_rolling_resistance, 18)" }
     ]}
   ]
 }

@@ -80,8 +80,8 @@ class CustomWeightingTest {
         graph.edge(4, 5).set(avSpeedEnc, 60, 60).set(slopeEnc, 0).setDistance(1000);
 
         CustomModel customModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).
-                setParameter("power", Map.of("value", 100, "min", 40, "max", 500)).setParameter("mass", Map.of("value", 90, "min", 25, "max", 300)).
-                addToSpeed(If("true", MULTIPLY, "bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.008, 20)"));
+                setParameter("power", Map.of("value", 100, "min", 40, "max", 500)).setParameter("total_weight", Map.of("value", 90, "min", 25, "max", 300)).
+                addToSpeed(If("true", MULTIPLY, "bike_speed_factor(average_slope, p_power, p_total_weight, 0.74, 0.008, 20)"));
         Weighting w = createWeighting(customModel);
         // the running speed is injected (base speed 20) and the slope flips in the reverse direction, see BikeSpeedTest for the model
         assertEquals(18.68, 3.6 / w.calcEdgeMillis(flat, false) * 1000 * 1000, 0.01);
@@ -98,13 +98,13 @@ class CustomWeightingTest {
         assertEquals(43.7, 10 * 3.6 / w.calcMinWeightPerDistance(), 0.1);
 
         // parsing: arguments must be constant per custom model and slope an encoded value
-        for (String expr : new String[]{"bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.008)",
+        for (String expr : new String[]{"bike_speed_factor(average_slope, p_power, p_total_weight, 0.74, 0.008)",
                 "bike_speed_factor(average_slope, p_power, max_speed, 0.74, 0.008, 20)",
-                "bike_speed_factor(5, p_power, p_mass, 0.74, 0.008, 20)",
-                "bike_speed_factor(average_slope, p_power, p_mass, -0.74, 0.008, 20)",
-                "bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.008, 0)",
-                "Math.bike_speed_factor(average_slope, p_power, p_mass, 0.74, 0.008, 20)"}) {
-            CustomModel cm = createSpeedCustomModel(avSpeedEnc).setParameter("power", 100).setParameter("mass", 90).
+                "bike_speed_factor(5, p_power, p_total_weight, 0.74, 0.008, 20)",
+                "bike_speed_factor(average_slope, p_power, p_total_weight, -0.74, 0.008, 20)",
+                "bike_speed_factor(average_slope, p_power, p_total_weight, 0.74, 0.008, 0)",
+                "Math.bike_speed_factor(average_slope, p_power, p_total_weight, 0.74, 0.008, 20)"}) {
+            CustomModel cm = createSpeedCustomModel(avSpeedEnc).setParameter("power", 100).setParameter("total_weight", 90).
                     addToSpeed(If("true", MULTIPLY, expr));
             assertThrows(IllegalArgumentException.class, () -> createWeighting(cm), expr);
         }
