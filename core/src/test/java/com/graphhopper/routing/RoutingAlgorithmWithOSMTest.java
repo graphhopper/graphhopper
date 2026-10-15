@@ -320,7 +320,7 @@ public class RoutingAlgorithmWithOSMTest {
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.6km after BridgeTunnelTowerCorrection
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2665, 118));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4212, 231));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3787, 186));
         // 3.
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2839, 145));
         // 4.
@@ -713,7 +713,7 @@ public class RoutingAlgorithmWithOSMTest {
                         "bike_access, bike_priority, bike_average_speed, bike_network, roundabout, " +
                         "mtb_access, mtb_priority, mtb_average_speed, mtb_rating, " +
                         "racingbike_access, racingbike_priority, racingbike_average_speed, " +
-                        "foot_road_access, bike_road_access, country, road_class, road_environment, ferry_speed").
+                        "foot_road_access, sidewalk, bike_road_access, country, road_class, road_environment, ferry_speed").
                 setGraphHopperLocation(GH_LOCATION);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.setMinNetworkSize(0);

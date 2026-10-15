@@ -423,6 +423,10 @@ public class FootTagParserTest {
         assertPriority(PriorityCode.REACH_DESTINATION, way);
         way.setTag("sidewalk", "none");
         assertPriority(PriorityCode.REACH_DESTINATION, way);
+        way.removeTag("sidewalk");
+        way.setTag("sidewalk:left", "no");
+        way.setTag("sidewalk:right", "separate");
+        assertPriority(PriorityCode.REACH_DESTINATION, way);
 
         way.clearTags();
         way.setTag("highway", "residential");

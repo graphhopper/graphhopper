@@ -321,7 +321,7 @@ public abstract class AbstractBikeTagParserTester {
 
         osmWay.setTag("highway", "secondary");
         osmWay.setTag("tunnel", "yes");
-        assertPriority(BAD, osmWay);
+        assertPriority(AVOID_MORE, osmWay);
 
         osmWay.setTag("bicycle", "designated");
         assertPriority(PREFER, osmWay);

@@ -114,7 +114,10 @@ There are also some that take on a numeric value, like:
 - horse_rating: a number from 0 to 6 for the `horse_scale` in OSM, e.g. 0 means "missing", 1 means "common", 2 means "demanding", 3 means difficult, 4 means critical, 5 means dangerous, and 6 means impossible
 - lanes: number of lanes
 - max_slope: a signed decimal for the maximum slope (100 * "elevation change / distance_i") of an edge with `sum(distance_i)=edge_distance`. Important for longer road segments where ups (or downs) can be much bigger than the average_slope. It changes the sign in reverse direction.
-- max_speed: the speed limit from a sign or from local default speed limits (km/h)
+- max_speed: the speed limit from a sign or from local default speed limits (km/h). Without both it is Infinity.
+- max_speed_estimated: true if max_speed comes from local default speed limits (direction dependent, e.g. if only
+  `maxspeed:forward` is tagged). E.g. to exclude only roads with a signed limit above 70km/h use
+  `max_speed > 70 && max_speed < 10000 && !max_speed_estimated`
 - max_height (meter), max_width (meter), max_length (meter)
 - max_weight (tonne), max_axle_load (tonne)
 - with postfix `_average_speed` contains the average speed (km/h) for a specific vehicle

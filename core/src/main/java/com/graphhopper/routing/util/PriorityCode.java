@@ -29,15 +29,19 @@ import java.util.TreeMap;
 public enum PriorityCode {
     EXCLUDE(0),
     REACH_DESTINATION(1),
+    AVOID_AT_ALL_COSTS(2),
     VERY_BAD(3),
+    QUITE_BAD(4),
     BAD(5),
     AVOID_MORE(6),
+    QUITE_AVOID(7),
     AVOID(8),
     SLIGHT_AVOID(9),
     UNCHANGED(10),
     SLIGHT_PREFER(11),
     PREFER(12),
     VERY_NICE(13),
+    EXCELLENT(14),
     BEST(15);
 
     private final int value;

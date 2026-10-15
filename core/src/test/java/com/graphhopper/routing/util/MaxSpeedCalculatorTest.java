@@ -179,29 +179,32 @@ class MaxSpeedCalculatorTest {
     }
 
     @Test
-    public void testUrbanMotorwayForAllCountries() {
-        // ensure for every country and state that the urban motorway estimate is never absurdly
-        // below the rural one, see https://github.com/westnordost/osm-legal-default-speeds/discussions/17
-        List<String> regions = new ArrayList<>();
-        List<EdgeIteratorState> urbanEdges = new ArrayList<>(), ruralEdges = new ArrayList<>();
+    public void testAllRegions() {
+        // for every country and state: the urban motorway estimate is never absurdly below the rural one, see
+        // https://github.com/westnordost/osm-legal-default-speeds/discussions/17, and the urban residential estimate is
+        // not a rural fallback (88km/h for US-NY), i.e. not above the highest legal urban default (80km/h, THA) or the rural one
+        Map<String, EdgeIteratorState[]> edges = new HashMap<>();
         for (Country country : Country.values()) {
             if (country == Country.MISSING) continue;
-            ReaderWay way = new ReaderWay(0L);
-            way.setTag("country", country);
-            way.setTag("highway", "motorway");
-            List<State> states = country.getStates().isEmpty() ? List.of(State.MISSING) : country.getStates();
-            for (State state : states) {
+            for (State state : country.getStates().isEmpty() ? List.of(State.MISSING) : country.getStates()) {
+                ReaderWay way = new ReaderWay(0L);
+                way.setTag("country", country);
                 if (state != State.MISSING) way.setTag("country_state", state);
-                regions.add(country + "|" + state);
-                urbanEdges.add(createEdge(way).set(urbanDensity, CITY));
-                ruralEdges.add(createEdge(way).set(urbanDensity, RURAL));
+                way.setTag("highway", "motorway");
+                EdgeIteratorState urbanMotorway = createEdge(way).set(urbanDensity, CITY), ruralMotorway = createEdge(way).set(urbanDensity, RURAL);
+                way.setTag("highway", "residential");
+                EdgeIteratorState urban = createEdge(way).set(urbanDensity, CITY);
+                way.setTag("highway", "primary");
+                edges.put(country + "|" + state, new EdgeIteratorState[]{urbanMotorway, ruralMotorway, urban, createEdge(way).set(urbanDensity, RURAL)});
             }
         }
         calc.fillMaxSpeed(graph, em);
-        for (int i = 0; i < regions.size(); i++) {
-            double urban = urbanEdges.get(i).get(maxSpeedEnc), rural = ruralEdges.get(i).get(maxSpeedEnc);
-            assertTrue(urban >= Math.min(80, rural), regions.get(i) + ": urban " + urban + ", rural " + rural);
-        }
+        edges.forEach((region, e) -> {
+            double urbanMotorway = e[0].get(maxSpeedEnc), ruralMotorway = e[1].get(maxSpeedEnc);
+            assertTrue(urbanMotorway >= Math.min(80, ruralMotorway), region + ": urban motorway " + urbanMotorway + ", rural " + ruralMotorway);
+            double urban = e[2].get(maxSpeedEnc), rural = e[3].get(maxSpeedEnc);
+            assertTrue(urban == MAXSPEED_MISSING || urban <= 80 && urban <= rural, region + ": urban " + urban + ", rural " + rural);
+        });
     }
 
     @Test
@@ -304,6 +307,8 @@ class MaxSpeedCalculatorTest {
         calc.fillMaxSpeed(graph, em);
         assertEquals(50, edge.get(maxSpeedEnc), 1);
         assertEquals(100, edge.getReverse(maxSpeedEnc), 1);
+        assertFalse(edge.get(maxSpeedEstEnc));
+        assertTrue(edge.getReverse(maxSpeedEstEnc));
     }
 
     @Test
@@ -361,6 +366,36 @@ class MaxSpeedCalculatorTest {
         edge = createEdge(way).set(urbanDensity, RURAL);
         calc.fillMaxSpeed(graph, em);
         assertEquals(114, edge.get(maxSpeedEnc), 1);
+    }
+
+    @Test
+    public void testUrbanFallback() {
+        // US-NY has only a statewide 55mph. Without urban entry this rural value must not be used for urban roads.
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("country", Country.USA);
+        way.setTag("country_state", State.US_NY);
+        way.setTag("highway", "residential");
+        EdgeIteratorState urban = createEdge(way).set(urbanDensity, CITY);
+        EdgeIteratorState rural = createEdge(way).set(urbanDensity, RURAL);
+        way.setTag("highway", "motorway");
+        EdgeIteratorState urbanMotorway = createEdge(way).set(urbanDensity, CITY);
+        // states with urban entry are unchanged
+        way.setTag("highway", "residential");
+        way.setTag("country_state", State.US_TX);
+        EdgeIteratorState urbanTX = createEdge(way).set(urbanDensity, CITY);
+        // a low fallback is kept, e.g. for city states
+        way = new ReaderWay(0L);
+        way.setTag("country", Country.HKG);
+        way.setTag("highway", "primary");
+        EdgeIteratorState hkg = createEdge(way).set(urbanDensity, CITY);
+        calc.fillMaxSpeed(graph, em);
+
+        assertEquals(MAXSPEED_MISSING, urban.get(maxSpeedEnc));
+        assertFalse(urban.get(maxSpeedEstEnc));
+        assertEquals(90, rural.get(maxSpeedEnc));
+        assertEquals(90, urbanMotorway.get(maxSpeedEnc));
+        assertEquals(48, urbanTX.get(maxSpeedEnc));
+        assertEquals(50, hkg.get(maxSpeedEnc));
     }
 
     @Test

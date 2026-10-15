@@ -1,6 +1,6 @@
 // to use this custom model you need to set the following option in the config.yml
 // graph.elevation.provider: srtm   # enables elevation
-// graph.encoded_values: foot_access, foot_priority, foot_average_speed, foot_road_access, hike_rating, mtb_rating, average_slope, country, road_class, ferry_speed
+// graph.encoded_values: foot_access, foot_priority, foot_average_speed, foot_road_access, sidewalk, hike_rating, mtb_rating, average_slope, country, road_class, ferry_speed
 // profiles:
 //    - name: foot
 //      custom_model_files: [foot.json, foot_avoid_private_node.json, foot_elevation.json]
@@ -11,6 +11,8 @@
     { "else": "", "multiply_by": "foot_priority"},
     { "if": "foot_road_access == USE_SIDEPATH", "multiply_by": "0.5" },
     { "else_if": "foot_road_access == NO", "multiply_by": "0" },
+    // a mapped sidewalk on either side makes an otherwise avoided road (e.g. primary) acceptable
+    { "if": "(sidewalk == YES || backward_sidewalk == YES) && foot_priority < 1", "multiply_by": "1.1" },
     // note that mtb_rating=0 is the default and mtb_rating=1 corresponds to mtb:scale=0 and so on
     { "if": "mtb_rating > 3", "multiply_by": "0.7" },
     { "if": "road_environment == FERRY", "multiply_by": "0.5" }

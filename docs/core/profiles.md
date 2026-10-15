@@ -70,10 +70,10 @@ All details about the custom model specification are explained in [the custom mo
 ### Setting up Encoded Values
 
 As explained [in the custom model documentation](./custom-models.md), custom models make use of
-encoded values, which are often derived from the OSM way tags. All built-in encoded values are defined in
-[`DefaultEncodedValueFactory.java`](../../core/src/main/java/com/graphhopper/routing/ev/DefaultEncodedValueFactory.java)
-but only encoded values specified in the `graph.encoded_values` field in the `config.yml` will be available in the graph
-storage.
+encoded values, which are often derived from the OSM way tags. The available encoded values are specified
+with the `graph.encoded_values` field in `config.yml`. Unless you further customize GraphHopper, the possible
+encoded values are the built-in ones defined in
+[`DefaultImportRegistry.java`](../../core/src/main/java/com/graphhopper/routing/ev/DefaultImportRegistry.java).
 
 ## Speed and Hybrid Mode
 
