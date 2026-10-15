@@ -163,7 +163,7 @@ public class MaxSpeedCalculator {
                     iter.set(maxSpeedEnc,
                             fwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING ? maxSpeed : fwdMaxSpeedPureOSM,
                             bwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING ? maxSpeed : bwdMaxSpeedPureOSM);
-                    iter.set(maxSpeedEstEnc, true);
+                    iter.set(maxSpeedEstEnc, fwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING, bwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING);
                 }
             }
         }
