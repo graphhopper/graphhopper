@@ -69,6 +69,12 @@ public class FootPriorityParser implements TagParser {
         }
     }
 
+    // like USE_SIDEPATH in OSMRoadAccessParser.forFoot also the directional keys count
+    boolean noSidewalk(ReaderWay way) {
+        return way.hasTag("sidewalk", sidewalksNoValues) || way.hasTag("sidewalk:both", sidewalksNoValues)
+                || way.hasTag("sidewalk:left", sidewalksNoValues) && way.hasTag("sidewalk:right", sidewalksNoValues);
+    }
+
     /**
      * @param weightToPrioMap associate a weight with every priority. This sorted map allows
      *                        subclasses to 'insert' more important priorities as well as overwrite determined priorities.
@@ -82,14 +88,14 @@ public class FootPriorityParser implements TagParser {
         if (safeHighwayTags.contains(highway) || maxSpeed <= 20) {
             weightToPrioMap.put(40d, PREFER);
             if (way.hasTag("tunnel", INTENDED)) {
-                if (way.hasTag("sidewalk", sidewalksNoValues))
+                if (noSidewalk(way))
                     weightToPrioMap.put(40d, AVOID);
                 else
                     weightToPrioMap.put(40d, UNCHANGED);
             }
         } else if ((maxSpeed != MaxSpeed.MAXSPEED_MISSING && maxSpeed > 50) || avoidHighwayTags.containsKey(highway)) {
             PriorityCode priorityCode = avoidHighwayTags.get(highway);
-            if (way.hasTag("sidewalk", sidewalksNoValues))
+            if (noSidewalk(way))
                 weightToPrioMap.put(40d, priorityCode == null ? BAD : priorityCode);
             else if (priorityCode == null)
                 weightToPrioMap.put(40d, AVOID);
@@ -99,7 +105,7 @@ public class FootPriorityParser implements TagParser {
                     case BAD -> AVOID;
                     default -> UNCHANGED;
                 });
-        } else if (way.hasTag("sidewalk", sidewalksNoValues))
+        } else if (noSidewalk(way))
             weightToPrioMap.put(40d, AVOID);
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))

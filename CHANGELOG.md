@@ -1,6 +1,6 @@
 ### 12.0 [not yet released]
 
-- foot.json: a mapped sidewalk increases the priority of otherwise avoided roads like primary by 10%, add `sidewalk` to graph.encoded_values
+- foot.json: a mapped sidewalk increases the priority of otherwise avoided roads like primary by 10%, add `sidewalk` to graph.encoded_values; foot_priority now also reads sidewalk:both and sidewalk:left+right for no/none/separate, as foot_road_access does
 - max_speed_calculator: a country-wide fallback above 50km/h is no longer used for urban roads, e.g. 55mph for US-NY where the wiki has no urban entry. Such roads keep max_speed=Infinity, use max_speed_estimated to detect this. max_speed_estimated is now stored per direction (requires reimport)
 - mtb: base speed on paved roads is 20km/h instead of 18 (matches the flat speed of a 140W cyclist on an mtb)
 - racingbike: base speed on paved roads is 28km/h instead of 24 (matches the flat speed of a 160W cyclist); smoothness=excellent no longer increases the speed for bike, mtb and racingbike (the physical gain of 1-2% is below the 2km/h resolution)
