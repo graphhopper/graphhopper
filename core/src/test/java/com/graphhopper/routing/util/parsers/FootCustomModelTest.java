@@ -38,9 +38,11 @@ public class FootCustomModelTest {
         parsers.handleWayTags(edge.getEdge(), graph.getEdgeAccess(), way, em.createRelationFlags());
         assertEquals(0.8, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
-        way.setTag("sidewalk", "both");
+        // a sidewalk on one side counts for both directions
+        way.setTag("sidewalk", "left");
         edge = graph.edge(1, 2);
         parsers.handleWayTags(edge.getEdge(), graph.getEdgeAccess(), way, em.createRelationFlags());
         assertEquals(0.88, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
+        assertEquals(0.88, p.getEdgeToPriorityMapping().get(edge, true), 0.01);
     }
 }
