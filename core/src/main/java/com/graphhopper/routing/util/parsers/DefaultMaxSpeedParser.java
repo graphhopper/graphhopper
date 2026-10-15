@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
+import de.westnordost.osm_legal_default_speeds.Certitude;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 
 import java.util.Collections;
@@ -68,6 +69,10 @@ public class DefaultMaxSpeedParser implements TagParser {
                             internRes.urban = parseInt(tmpResult.getTags().get("maxspeed"));
                             if (internRes.urban == null && "130".equals(tmpResult.getTags().get("maxspeed:advisory")))
                                 internRes.urban = (int) MAXSPEED_150;
+                            // no urban entry matched, so the fallback is likely the rural limit (e.g. 55mph in US-NY) and
+                            // we skip it, except for low values like the 50km/h in HK that are plausible for urban roads
+                            if (tmpResult.getCertitude() == Certitude.Fallback && internRes.urban != null && internRes.urban > 50)
+                                internRes.urban = null;
                         }
                     }
                     return internRes;

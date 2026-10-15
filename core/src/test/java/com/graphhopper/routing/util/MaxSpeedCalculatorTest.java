@@ -364,6 +364,36 @@ class MaxSpeedCalculatorTest {
     }
 
     @Test
+    public void testUrbanFallback() {
+        // US-NY has only a statewide 55mph. Without urban entry this rural value must not be used for urban roads.
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("country", Country.USA);
+        way.setTag("country_state", State.US_NY);
+        way.setTag("highway", "residential");
+        EdgeIteratorState urban = createEdge(way).set(urbanDensity, CITY);
+        EdgeIteratorState rural = createEdge(way).set(urbanDensity, RURAL);
+        way.setTag("highway", "motorway");
+        EdgeIteratorState urbanMotorway = createEdge(way).set(urbanDensity, CITY);
+        // states with urban entry are unchanged
+        way.setTag("highway", "residential");
+        way.setTag("country_state", State.US_TX);
+        EdgeIteratorState urbanTX = createEdge(way).set(urbanDensity, CITY);
+        // a low fallback is kept, e.g. for city states
+        way = new ReaderWay(0L);
+        way.setTag("country", Country.HKG);
+        way.setTag("highway", "primary");
+        EdgeIteratorState hkg = createEdge(way).set(urbanDensity, CITY);
+        calc.fillMaxSpeed(graph, em);
+
+        assertEquals(MAXSPEED_MISSING, urban.get(maxSpeedEnc));
+        assertFalse(urban.get(maxSpeedEstEnc));
+        assertEquals(90, rural.get(maxSpeedEnc));
+        assertEquals(90, urbanMotorway.get(maxSpeedEnc));
+        assertEquals(48, urbanTX.get(maxSpeedEnc));
+        assertEquals(50, hkg.get(maxSpeedEnc));
+    }
+
+    @Test
     public void testUnsupportedCountry() {
         ReaderWay way = new ReaderWay(0L);
         way.setTag("country", Country.AIA);

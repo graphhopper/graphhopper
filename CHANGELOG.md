@@ -1,5 +1,6 @@
 ### 12.0 [not yet released]
 
+- max_speed_calculator: a country-wide fallback above 50km/h is no longer used for urban roads, e.g. 55mph for US-NY where the wiki has no urban entry. Such roads keep max_speed=Infinity, use max_speed_estimated to detect this
 - mtb: base speed on paved roads is 20km/h instead of 18 (matches the flat speed of a 140W cyclist on an mtb)
 - racingbike: base speed on paved roads is 28km/h instead of 24 (matches the flat speed of a 160W cyclist); smoothness=excellent no longer increases the speed for bike, mtb and racingbike (the physical gain of 1-2% is below the 2km/h resolution)
 - custom models: conditions accept only the binary operators ==, !=, <, >, <=, >=, &&, ||, +, -, *, / and %; bitwise and shift operators like &, |, ^, << and >> are rejected now
