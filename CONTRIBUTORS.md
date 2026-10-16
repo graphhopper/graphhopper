@@ -35,6 +35,7 @@ Here is an overview:
  * florent-morel, improvements regarding fords, #320
  * fredao, translations 
  * gberaudo, improvements regarding elevation
+ * geographybuff, typo fixes in docs and comments
  * GProbo, fixes like #2241
  * gulbalasalamov, fix for instruction generation when unnamed link roads continue onto named major roads (#3337) 
  * HarelM, improvements regarding elevation

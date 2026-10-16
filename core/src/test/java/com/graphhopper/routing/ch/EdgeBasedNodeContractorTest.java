@@ -129,7 +129,7 @@ public class EdgeBasedNodeContractorTest {
                 // from contracting node 0: need a shortcut because of turn restriction
                 createShortcut(3, 6, e6to0, e0to3, 90, false, true),
                 // from contracting node 3: two shortcuts:
-                // 1) in case we come from 1->6 (cant turn left)
+                // 1) in case we come from 1->6 (can't turn left)
                 // 2) in case we come from 2->6 (going via node 0 would be more expensive)
                 createShortcut(5, 6, e6to0.getEdgeKey(), e3to5.getEdgeKey(), 7, e3to5.getEdge(), 110, false, true),
                 createShortcut(5, 6, e6to3, e3to5, 30, false, true)

@@ -46,7 +46,7 @@ using `ch.disable=true`
 
 #### With Heading: Start and End Direction
 
-For all via or end points we can also specify a prefered heading. Especially at the end point it must be noted that we
+For all via or end points we can also specify a preferred heading. Especially at the end point it must be noted that we
 still need to define the direction as `heading towards`. In this case, we want to prefer `coming from north`, but we
 need to specify it with `heading towards south` (180 degree), although we know that the route ends here
 

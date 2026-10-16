@@ -307,7 +307,7 @@ public class NameSimilarityEdgeFilterTest {
         assertFalse(filter.accept(denison));
         assertTrue(filter.accept(doubtfire));
 
-        // but also using a smaller radius should work, because the inner way geomerty of Doubtfire Crescent comes very
+        // but also using a smaller radius should work, because the inner way geometry of Doubtfire Crescent comes very
         // close to the marker even though the tower nodes are rather far away
         filter = new NameSimilarityEdgeFilter(EdgeFilter.ALL_EDGES, "doubtfire", new GHPoint(qlat, qLon), 100);
         assertFalse(filter.accept(golden));

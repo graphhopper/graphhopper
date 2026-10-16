@@ -318,7 +318,7 @@ public class NavigateResponseConverter {
      * pointIndexFrom and pointIndexTo.
      * <p>
      * Next job is to eliminate intersections colocated in the same point
-     * since Mapbox chokes on geometries with intersections laying ontop of
+     * since Mapbox chokes on geometries with intersections laying on top of
      * each other.
      * <p>
      * These type of intersections is used for barrier nodes
@@ -427,7 +427,7 @@ public class NavigateResponseConverter {
             // Duplicate the last point in the arrival instruction, which has only one point
             pointList.add(pointList.getLat(0), pointList.getLon(0), pointList.getEle(0));
 
-            // Add an arrival intersection with only one enty
+            // Add an arrival intersection with only one entry
             ObjectNode intersection = intersections.addObject();
             ArrayNode entryArray = intersection.putArray("entry");
             entryArray.add(true);

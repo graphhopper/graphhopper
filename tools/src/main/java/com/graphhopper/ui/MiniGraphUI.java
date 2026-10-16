@@ -292,7 +292,7 @@ public class MiniGraphUI {
 
         if (debug) {
             // disable double buffering to see graphic changes while debugging. E.g. to set a break point in the
-            // algorithm its updateBest method and see the shortest path tree increasing everytime the program continues.
+            // algorithm its updateBest method and see the shortest path tree increasing every time the program continues.
             RepaintManager repaintManager = RepaintManager.currentManager(mainPanel);
             repaintManager.setDoubleBufferingEnabled(false);
             mainPanel.setBuffering(false);

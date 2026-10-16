@@ -199,22 +199,22 @@ public class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+        throw new UnsupportedOperationException(toString() + " does not support byte based access. Use RAMDataAccess instead");
     }
 
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+        throw new UnsupportedOperationException(toString() + " does not support byte based access. Use RAMDataAccess instead");
     }
 
     @Override
     public byte getByte(long bytePos) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+        throw new UnsupportedOperationException(toString() + " does not support byte based access. Use RAMDataAccess instead");
     }
 
     @Override
     public void setByte(long bytePos, byte value) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+        throw new UnsupportedOperationException(toString() + " does not support byte based access. Use RAMDataAccess instead");
     }
 
     @Override
