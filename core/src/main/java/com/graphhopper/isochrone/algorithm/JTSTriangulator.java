@@ -25,6 +25,7 @@ import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
+import org.locationtech.jts.algorithm.ConvexHull;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -35,6 +36,8 @@ import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.ToDoubleFunction;
 
 public class JTSTriangulator implements Triangulator {
@@ -83,10 +86,32 @@ public class JTSTriangulator implements Triangulator {
         // But that's okay, the triangulator de-dupes by itself, and it keeps the first z-value it sees, which is
         // what we want.
 
+        // Pre-thin the sites to the requested tolerance before triangulating. Before 11.0 the
+        // ConformingDelaunayTriangulator snapped vertices within 'tolerance' at insertion time,
+        // so the effective triangulation size was bounded by the output resolution.
+        // DelaunayTriangulationBuilder's setTolerance also snaps at insertion, but through a much
+        // slower code path, and only after the full site set was deep-copied. Keeping the first
+        // site per tolerance-sized grid cell (the SPT emits labels in ascending time, so first ==
+        // minimum time) restores the pre-11.0 cost model.
+        Collection<Coordinate> thinnedSites = sites;
+        if (tolerance > 0) {
+            Map<Long, Coordinate> cells = new LinkedHashMap<>();
+            for (Coordinate site : sites) {
+                long cx = Math.round(site.x / tolerance);
+                long cy = Math.round(site.y / tolerance);
+                cells.putIfAbsent((cx << 32) ^ (cy & 0xffffffffL), site);
+            }
+            thinnedSites = cells.values();
+        }
+
         DelaunayTriangulationBuilder triangulationBuilder = new DelaunayTriangulationBuilder();
-        triangulationBuilder.setSites(sites);
+        triangulationBuilder.setSites(thinnedSites);
         triangulationBuilder.setTolerance(tolerance);
-        Geometry convexHull = triangulationBuilder.getEdges(new GeometryFactory()).convexHull();
+        // The convex hull of a Delaunay triangulation equals the convex hull of its sites.
+        // Computing it from the sites avoids materializing every triangulation edge as JTS
+        // geometry via getEdges() (gigabytes of transient objects on metro-scale point sets).
+        Geometry convexHull = new ConvexHull(thinnedSites.toArray(new Coordinate[0]),
+                new GeometryFactory()).getConvexHull();
 
         // If there's only one site (and presumably also if the convex hull is otherwise degenerated),
         // the triangulation only contains the frame, and not the site within the frame. Not sure if I agree with that.
