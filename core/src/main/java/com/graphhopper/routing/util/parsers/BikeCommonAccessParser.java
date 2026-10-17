@@ -95,7 +95,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         // handle oneways. The value -1 means it is a oneway but for reverse direction of stored geometry.
         // The tagging oneway:bicycle=no or cycleway:right:oneway=no or cycleway:left:oneway=no lifts the generic oneway restriction of the way for bike.
         // cycleway:*:oneway describes the cycle facility, not the carriageway, so it does not by itself make the road oneway for bikes.
-        // cycleway:*:oneway=-1 on a oneway road is a contraflow facility and lifts the restriction too (carriageway forward, facility backward).
+        // cycleway:*:oneway=-1 on a oneway road is a contraflow cycleway and lifts the restriction too (carriageway forward, cycleway backward).
         boolean isOneway = way.hasTag("oneway", ONEWAYS) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", allowedValues)
                 || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", allowedValues)
                 || way.hasTag("oneway:bicycle", ONEWAYS)

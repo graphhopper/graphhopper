@@ -622,10 +622,12 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("cycleway:both", "no");
         assertAccess(way, true, false);
 
-        // cycleway:both=separate describes separately mapped cycleways, not a contraflow exception, see #3416
+        // cycleways on both sides of a oneway road go with the traffic unless cycleway:*:oneway or oneway:bicycle say otherwise, see #3416
         way.clearTags();
         way.setTag("highway", "secondary");
         way.setTag("oneway", "yes");
+        way.setTag("cycleway:both", "lane");
+        assertAccess(way, true, false);
         way.setTag("cycleway:both", "separate");
         assertAccess(way, true, false);
     }
