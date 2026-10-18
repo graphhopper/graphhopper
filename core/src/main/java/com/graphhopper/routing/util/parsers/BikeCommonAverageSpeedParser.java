@@ -37,8 +37,10 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED); // like sand
 
         setSurfaceSpeed("paved", 18);
+        setSurfaceSpeed("chipseal", 18);
         setSurfaceSpeed("asphalt", 18);
         setSurfaceSpeed("cobblestone", 8);
+        setSurfaceSpeed("unhewn_cobblestone", 10);
         setSurfaceSpeed("cobblestone:flattened", 10);
         setSurfaceSpeed("sett", 12);
         setSurfaceSpeed("concrete", 18);
@@ -57,13 +59,17 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setSurfaceSpeed("gravel", 12);
         setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", 10);
+        setSurfaceSpeed("metal_grid", 10);
         setSurfaceSpeed("mud", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("clay", 8); // dry and passable much of the year, but rougher than dirt
         setSurfaceSpeed("laterite", 6); // as clay, but with a slippery near-frictionless phase when wet
+        setSurfaceSpeed("rock", 8);
         setSurfaceSpeed("pebblestone", 14);
+        setSurfaceSpeed("stepping_stones", 6);
         setSurfaceSpeed("salt", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("sand", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("wood", 16);
+        setSurfaceSpeed("woodchips", 14);
 
         setHighwaySpeed("steps", MIN_SPEED);
 
