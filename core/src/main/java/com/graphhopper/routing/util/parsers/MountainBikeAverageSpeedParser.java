@@ -27,7 +27,9 @@ public class MountainBikeAverageSpeedParser extends BikeCommonAverageSpeedParser
         setSurfaceSpeed("fine_gravel", 16);
         setSurfaceSpeed("gravel", 16);
         setSurfaceSpeed("pebblestone", 16);
+        setSurfaceSpeed("unhewn_cobblestone", 16);
         setSurfaceSpeed("compacted", 16);
+        setSurfaceSpeed("woodchips", 16);
         setSurfaceSpeed("grass", 12);
         setSurfaceSpeed("grass_paver", 12);
 
@@ -35,6 +37,7 @@ public class MountainBikeAverageSpeedParser extends BikeCommonAverageSpeedParser
         setSurfaceSpeed("paved", 20);
         setSurfaceSpeed("asphalt", 20);
         setSurfaceSpeed("concrete", 20);
+        setSurfaceSpeed("chipseal", 20);
         setHighwaySpeed("trunk", 20);
         setHighwaySpeed("trunk_link", 20);
         setHighwaySpeed("primary", 20);
