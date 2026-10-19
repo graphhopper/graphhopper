@@ -30,6 +30,7 @@ import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.resources.*;
+import com.graphhopper.routing.matrix.MatrixEngine;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
@@ -46,6 +47,21 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConfiguration> {
+
+    static class MatrixEngineFactory implements Factory<MatrixEngine> {
+
+        @Inject
+        GraphHopper graphHopper;
+
+        @Override
+        public MatrixEngine provide() {
+            return new MatrixEngine(graphHopper);
+        }
+
+        @Override
+        public void dispose(MatrixEngine instance) {
+        }
+    }
 
     static class TranslationMapFactory implements Factory<TranslationMap> {
 
@@ -288,6 +304,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bindFactory(GHRequestTransformerFactory.class).to(GHRequestTransformer.class);
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
+                bindFactory(MatrixEngineFactory.class).to(MatrixEngine.class).in(Singleton.class);
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
                 bindFactory(BaseGraphFactory.class).to(BaseGraph.class);
@@ -298,6 +315,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(MVTResource.class);
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
+        environment.jersey().register(MatrixResource.class);
         environment.jersey().register(IsochroneResource.class);
         environment.jersey().register(MapMatchingResource.class);
 

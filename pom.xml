@@ -17,6 +17,9 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <maven.compiler.target>17</maven.compiler.target>
+        <!-- Keep upstream defaults; opt-in regional diagnostics/benchmarks can raise these. -->
+        <test.heap.max>190m</test.heap.max>
+        <test.heap.min>190m</test.heap.min>
 
         <!-- We always had this disabled as it is disabled by default in debian JDK builds, but when we
              switched to another JDK on travis it was enabled implicitly. Our javadocs are not ready for this
@@ -194,7 +197,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.22.2</version>
                     <configuration>
-                        <argLine>-Xmx190m -Xms190m -Duser.language=en</argLine>
+                        <argLine>-Xmx${test.heap.max} -Xms${test.heap.min} -Duser.language=en</argLine>
                     </configuration>
                 </plugin>
 
