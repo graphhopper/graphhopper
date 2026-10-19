@@ -627,6 +627,7 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("highway", "secondary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway:both", "lane");
+        // this tagging combination does not appear often in the field without an additional oneway:bicycle=no, see #3418.
         assertAccess(way, true, false);
         way.setTag("cycleway:both", "separate");
         assertAccess(way, true, false);
