@@ -1,6 +1,7 @@
 """Bind a CH follow-on artifact to its tested production bytes and separately retained evidence."""
 import argparse
 from datetime import datetime, timezone
+import errno
 import hashlib
 import json
 import math
@@ -40,9 +41,13 @@ def validate_live_smoke(smoke, artifact_sha, source_commit, config_sha):
     require(smoke['config'] == {'path': 'docs/matrix/config-matrix.yml', 'sha256': config_sha}, 'Smoke config binding differs')
     require(all(smoke['ports_closed'].get(str(port)) is True for port in (8997, 8998)), 'Isolated smoke ports are not confirmed closed')
     cases = smoke['cases']
-    required = {'foot_experimental', 'foot_flexible', 'foot_auto', 'car_experimental', 'car_flexible', 'invalid_snap', 'fail_fast'}
+    required = {'foot_experimental', 'foot_flexible', 'foot_auto', 'car_experimental', 'car_flexible', 'invalid_snap', 'fail_fast', 'unsupported_request'}
     require(required <= cases.keys(), 'Live smoke is missing required cases')
-    for name, case in cases.items():
+    captured = dict(cases)
+    if 'existing_route' in smoke:
+        captured['existing_route'] = smoke['existing_route']
+        require(smoke['existing_route']['http_status'] == 200 and smoke['existing_route']['response'].get('paths'), 'Captured existing route endpoint failed')
+    for name, case in captured.items():
         raw_response = Path(case['raw_response_file'])
         require(sha256(raw_response) == case['raw_response_sha256'], 'Captured raw response changed: ' + name)
         require(json.loads(raw_response.read_text(encoding='utf-8')) == case['response'], 'Parsed live response differs from its raw capture: ' + name)
@@ -74,6 +79,8 @@ def validate_live_smoke(smoke, artifact_sha, source_commit, config_sha):
                 values = {metric: body[metric][row][column] for metric in metrics}
                 if name == 'invalid_snap' and row == 1:
                     require(all(value is None for value in values.values()), 'Invalid source row is not entirely null')
+                elif profile == 'car' and (row, column) == (1, 1):
+                    require(all(value is None for value in values.values()), 'Expected car B-to-A disconnection is not consistently null')
                 else:
                     require(all(type(value) in (int, float) and math.isfinite(value) and value >= 0 for value in values.values()), 'Invalid finite/reachable live metric: ' + name)
                     require(type(values['times']) is type(values['times_ms']) is int and values['times'] == values['times_ms'] // 1000, 'Live time units/rounding differ')
@@ -94,6 +101,10 @@ def validate_live_smoke(smoke, artifact_sha, source_commit, config_sha):
                 require('fallback_reason' not in info, 'Unexpected live fallback')
         if name == 'invalid_snap':
             require(any(hint.get('details') == 'INVALID_SNAP' and hint.get('invalid_from_points') == [1] for hint in body['hints']), 'Invalid snap hint/index is absent')
+        if profile == 'car':
+            require(len(body['hints']) == 1 and body['hints'][0].get('details') == 'CONNECTION_NOT_FOUND'
+                    and body['hints'][0].get('point_pairs') == [[1, 1]], 'Exact car fixture disconnection hint differs')
+            require(all(body[metric][0][0] > 0 for metric in metrics), 'Known car cross-cell is not reachable')
     for actual, expected in (('foot_experimental', 'foot_flexible'), ('foot_auto', 'foot_flexible'), ('car_experimental', 'car_flexible')):
         for field in (*metrics, 'hints'):
             require(cases[actual]['response'][field] == cases[expected]['response'][field], 'Live certificate/fallback differs from flexible: ' + actual + '/' + field)
@@ -101,6 +112,14 @@ def validate_live_smoke(smoke, artifact_sha, source_commit, config_sha):
     expected_request = dict(cases['invalid_snap']['request'], fail_fast=True)
     require(failed['request'] == expected_request and failed['http_status'] == 400, 'Unexpected fail-fast request/status')
     require(any(hint.get('details') == 'INVALID_SNAP' for hint in failed['response']['hints']), 'Fail-fast did not return INVALID_SNAP')
+    unsupported = cases['unsupported_request']
+    require(unsupported['request'] == dict(cases['foot_experimental']['request'], headings=[0, 0, 0])
+            and unsupported['http_status'] == 400, 'Unexpected unsupported-option request/status')
+    require(any(hint.get('details') == 'INVALID_REQUEST' for hint in unsupported['response']['hints']), 'Unsupported option did not return INVALID_REQUEST')
+    require(not any(metric in error['response'] for error in (failed, unsupported) for metric in metrics), 'Live error returned a partial matrix')
+    for port in ('8997', '8998'):
+        attempts = smoke['server_stop_confirmation']['port_checks'][port]
+        require(attempts and all(row['connection_refused'] is True and row['connect_ex'] in (errno.ECONNREFUSED, 10061) for row in attempts), 'Stopped-port evidence lacks actual connection refusal: ' + port)
     return {'captured_cases_checked': sorted(required), 'public_metric_equality': 'exact_arrays_and_hints',
             'experimental_selection': True, 'auto_stays_flexible': True, 'car_fallback': 'TURN_COST_PROFILE_UNSUPPORTED',
             'duplicate_axes_and_same_point_zero': True, 'invalid_snap_nulls_and_fail_fast': True,
@@ -113,7 +132,7 @@ def main():
     parser.add_argument('--artifact', default='web/target/graphhopper-web-11.0-SNAPSHOT.jar')
     parser.add_argument('--verification', default='docs/matrix/ch-matrix-full-verification.json')
     parser.add_argument('--analysis', default='docs/matrix/ch-matrix-benchmark-analysis.json')
-    parser.add_argument('--live-smoke', default='docs/matrix/ch-matrix-live-smoke.json')
+    parser.add_argument('--live-smoke', default='docs/matrix/ch-matrix-live-smoke-final.json')
     parser.add_argument('--output', default='docs/matrix/ch-matrix-release.json')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -169,6 +188,7 @@ def main():
     review = json.loads(review_path.read_text(encoding='utf-8'))
     smoke_path = root / args.live_smoke
     smoke = json.loads(smoke_path.read_text(encoding='utf-8'))
+    require(smoke['script_sha256'] == sha256(root / 'scripts/smoke-ch-matrix-release.py'), 'Smoke was not recorded with the current evidence helper')
     artifact = root / args.artifact
     artifact_sha = sha256(artifact)
     smoke_checks = validate_live_smoke(smoke, artifact_sha, source_commit, sha256(root / 'docs/matrix/config-matrix.yml'))
@@ -315,7 +335,22 @@ def main():
     evidence_names = [args.verification, args.analysis, args.live_smoke, 'docs/matrix/ch-matrix-review.json',
                       'docs/matrix/ch-matrix-benchmark-report.md', 'docs/matrix/ch-matrix-benchmark-results.csv',
                       'docs/matrix/ch-matrix-validation.md', 'docs/matrix/ch-matrix-design.md',
-                      'docs/matrix/ch-matrix-fixture-validation-final.json']
+                      'docs/matrix/ch-matrix-fixture-validation-final.json',
+                      'docs/matrix/ch-matrix-precision-diagnostics-final.json',
+                      'docs/matrix/ch-matrix-packaging-rejection.json',
+                      'docs/matrix/ch-matrix-client-validation.json', 'docs/matrix/ch-matrix-client-smoke.json',
+                      'docs/matrix/ch-matrix-client-flexible-smoke.json', 'docs/matrix/ch-matrix-client-smoke.csv',
+                      'scripts/smoke-ch-matrix-release.py', 'scripts/record-ch-matrix-release.py',
+                      'scripts/snapshot-matrix-verification.py']
+    raw_cases = list(smoke['cases'].values()) + ([smoke['existing_route']] if 'existing_route' in smoke else [])
+    for case in raw_cases:
+        for key in ('raw_request_file', 'raw_response_file'):
+            if key in case:
+                evidence_names.append(Path(case[key]).resolve().relative_to(root).as_posix())
+    evidence_names = sorted(set(evidence_names))
+    evidence_commit = git('rev-parse', 'HEAD')
+    require(not git('diff', '--name-only', evidence_commit, '--', *evidence_names), 'Finalize and commit the evidence inputs before recording release provenance')
+    require(not git('ls-files', '--others', '--', *evidence_names), 'Evidence inputs are not all committed at the recording HEAD')
     evidence = [{'path': name, 'sha256': sha256(root / name), 'bytes': (root / name).stat().st_size}
                 for name in evidence_names]
     sidecar = artifact.with_suffix(artifact.suffix + '.sha256')
@@ -323,7 +358,9 @@ def main():
     record = {'status': 'PASS_WITH_SCOPED_LIMITATIONS', 'created_utc': datetime.now(timezone.utc).isoformat(),
               'repository': 'https://github.com/hulsiejames/graphhopper', 'pr_base': 'matrix-base-11.1',
               'upstream_base_commit': 'ebb578f4e94db72e82f2f8d3bc69417758e16e1c',
-              'source_commit': source_commit, 'head_at_recording': git('rev-parse', 'HEAD'),
+              'source_commit': source_commit, 'head_at_recording': evidence_commit,
+              'evidence_input_commit': evidence_commit, 'evidence_inputs_equal_commit': True,
+              'evidence_identity_note': 'The evidence commit binds current Python tools, final documents and captured request/response bytes separately from the clean compiled-artifact source commit. The release record itself is written afterward.',
               'worktree_status': git('status', '--short'), 'artifact': args.artifact,
               'artifact_size_bytes': artifact.stat().st_size, 'artifact_sha256': artifact_sha,
               'artifact_crc': 'PASS', 'graphhopper_artifact_identity': graphhopper_identity,

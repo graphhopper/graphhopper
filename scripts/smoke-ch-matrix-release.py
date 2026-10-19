@@ -131,6 +131,7 @@ def number(value):
 
 def matrix_checks(case, expected_commit, invalid=False):
     name = case["name"]
+    car = case["request"]["profile"] == "car"
     require(case["http_status"] == 200, f"{name}: expected HTTP 200")
     body = case["response"]
     for metric in ARRAYS:
@@ -149,8 +150,17 @@ def matrix_checks(case, expected_commit, invalid=False):
         require(body[metric][0][1] == 0, f"{name}: valid zero-length cell differs from zero")
         if invalid:
             require(body[metric][1] == [None, None, None], f"{name}: invalid row must be all null")
-        else:
+        elif not car:
             require(all(value is not None for row in body[metric] for value in row), f"{name}: fixture points should connect")
+    if car:
+        expected_nulls = [[1, 1]]
+        for metric in ARRAYS:
+            require([[row, column] for row in range(3) for column in range(3) if body[metric][row][column] is None]
+                    == expected_nulls, f"{name}: car fixture null cells differ")
+        hints = body.get("hints", [])
+        require(len(hints) == 1 and hints[0].get("details") == "CONNECTION_NOT_FOUND"
+                and hints[0].get("point_pairs") == expected_nulls, f"{name}: exact car disconnection hint differs")
+        require(all(body[metric][0][0] > 0 for metric in ARRAYS), f"{name}: known car cross-cell is not reachable")
     info = body.get("info", {}).get("local_matrix", {})
     require(info.get("build_commit") == expected_commit, f"{name}: wrong/dirty build commit: {info.get('build_commit')}")
     require(info.get("contract_version") == "1.0" and info.get("units") == UNITS, f"{name}: contract/units differ")
@@ -251,7 +261,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source-commit", required=True, help="Complete source commit embedded in the final clean GraphHopper JAR")
     parser.add_argument("--jar", type=Path, default=repository / "web/target/graphhopper-web-11.0-SNAPSHOT.jar")
-    parser.add_argument("--output", type=Path, default=repository / "docs/matrix/ch-matrix-live-smoke.json")
+    parser.add_argument("--output", type=Path, default=repository / "docs/matrix/ch-matrix-live-smoke-final.json")
     parser.add_argument("--url", default="http://localhost:8997")
     parser.add_argument("--timeout", type=float, default=60)
     parser.add_argument("--check-route", action="store_true", help="Also capture an existing prepared-CH /route response")

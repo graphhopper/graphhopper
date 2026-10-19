@@ -89,6 +89,16 @@ Those artifact/runtime identities belong to the earlier core release. A new CH
 artifact and evidence identity is recorded separately in
 [ch-matrix-release.json](ch-matrix-release.json).
 
+The accepted CH build uses committed source
+`a9102e2039b079a43dcb1494d77619e4e989acaa`. Its full reactor passed 3,071 tests,
+with 232 skipped and zero failures/errors. The
+[final live smoke](ch-matrix-live-smoke-final.json) checks the packaged server's
+duplicate axes, CH selection, exact flexible equality, car fallback, nulls and
+strict errors, then confirms both ports closed. The
+[client check](ch-matrix-client-validation.json) also verifies six output cells
+and their CSV round trip. The rejected stale packaging attempt and the first
+smoke's incorrect all-connected car-fixture assumption remain separate evidence.
+
 The follow-on [comparison report](ch-matrix-benchmark-report.md) includes 600 fresh
 in-process measurements across Monaco and Manchester. Monaco is the small bundled
 map extract; a case is one origin/destination comparison, not a production incident.

@@ -10,6 +10,16 @@ are recorded in [ch-matrix-validation.md](ch-matrix-validation.md) and the
 The fork is `hulsiejames/graphhopper`, PR base `matrix-base-11.1`; official upstream pushes
 are disabled. The review PR is intended for the user to review and merge.
 
+The accepted artifact's source commit is `a9102e2039b079a43dcb1494d77619e4e989acaa`.
+Final full verification reports 3,303 cases: 3,071 passed, 232 skipped and zero
+failures/errors. The packaged-JAR smoke passed 54 matrix cells, two strict errors
+and an existing route endpoint; the CLI's six cells exactly match flexible and
+round-trip through CSV. The owned server stopped gracefully and both ports were
+confirmed closed. A stale shaded artifact and a first smoke's incorrect car
+connectivity assumption remain preserved as rejected attempts. Final source,
+artifact and evidence identities are recorded separately in
+[ch-matrix-release.json](ch-matrix-release.json).
+
 - G0–G3: **PASS**. G4: **PASS_WITH_SCOPED_LIMITATIONS**, following the explicit SHA-bound [final review](final-review.json).
 - Pack: all files read; 26 checksum entries, 7 JSON files, 25 toy cells, 4 turn cases and 10 starter-verifier tests passed.
 - The untouched wider upstream baseline retains its PT cache-startup failure. Its cache-cleared isolated replay passed 11 methods; feature PT fixtures use owned per-run UUID caches and stop before best-effort cleanup. Mapped files may linger until JVM exit.

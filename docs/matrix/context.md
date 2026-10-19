@@ -80,8 +80,22 @@ diagnosed separately from CH preparation precision.
 Preserve the old core-release JSON and JAR snapshot under outer `audit/core-release-before-ch`.
 Do not interpret its older build/proof identity as certification of the new artifact.
 
+The final full build from source `a9102e2039b079a43dcb1494d77619e4e989acaa`
+passed 3,071 cases, skipped 232 and had zero failures/errors. A repeat-build
+shade defect was caught by the artifact identity check and corrected by forcing
+fresh web thin-JAR creation; its rejected artifact and earlier passing test run
+remain preserved separately. Test reports now default to target directories.
+
+The accepted live smoke checks 54 matrix cells across six requests, two strict
+HTTP errors and an existing route endpoint. The known car B-to-A cell is null
+with an exact connection hint; a first helper's incorrect all-connected
+assumption remains preserved as a failed evidence attempt. The corrected helper
+also rejects missing, extra or partial nulls. Both server ports were confirmed
+closed after graceful shutdown. The Python client's six cells exactly match
+flexible routing and round-trip through CSV.
+
 Release gates and artifact details are in `ch-matrix-validation.md`,
-`ch-matrix-full-verification.json`, `ch-matrix-live-smoke.json` and
+`ch-matrix-full-verification.json`, `ch-matrix-live-smoke-final.json` and
 `ch-matrix-release.json`. Preserve the old core-release files as separate evidence.
 The review PR must target the user's fork, with base `matrix-base-11.1`; leave it
 unmerged for the user. Official upstream pushes remain disabled.
