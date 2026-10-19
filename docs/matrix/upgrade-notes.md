@@ -35,7 +35,7 @@ Run a new full gate and freeze its reports before opt-in tests can replace
 Surefire XML. Choose new output names to preserve approved evidence:
 
 ```bat
-mvn -B verify -Dmatrix.fixture.report=../docs/matrix/ch-matrix-fixture-recheck.json
+mvn -B verify -Dmatrix.fixture.report=../docs/matrix/ch-matrix-fixture-recheck.json -Dmatrix.diagnostic.output=../docs/matrix/ch-matrix-precision-recheck.json
 python scripts\snapshot-matrix-verification.py --help
 mvn -B -pl core -am test -Dtest=MatrixCHMatrixBenchmarkTest -Dsurefire.failIfNoSpecifiedTests=false -Dmatrix.ch.benchmark=true -Dmatrix.ch.benchmark.dataset=monaco -Dmatrix.ch.benchmark.output=target/ch-monaco-recheck -Dtest.heap.max=2g
 ```
@@ -47,6 +47,31 @@ measurement exceeds those defaults. Current-thread allocated bytes measure
 allocation volume, not retained heap or process RSS. Recheck source/class/model
 hashes, actual JVM flags, unchanged cache bytes, raw candidates, fresh expanded
 path proofs and final-JAR HTTP behavior before issuing another release record.
+
+## Shaded artifact identity and repeat builds
+
+The prepackage full reactor at source `9d9208a15ceca110111d45f0777eccc94be717a4`
+passed 3,071 tests with 232 skipped, but its packaged web JAR retained the older
+`ebb578f4e94db72e82f2f8d3bc69417758e16e1c` dirty identity. The release smoke
+helper rejected the artifact before HTTP requests. The preserved
+[prepackage snapshot](ch-matrix-full-verification-prepackage.json) proves the
+test run, not the stale packaged artifact's source identity.
+
+The log shows the JAR plugin skipping creation of a thin web JAR and shade then
+reading its previous fat-JAR output as input, including 651 overlapping core
+classes. Web's `maven-jar-plugin` now sets `forceCreation: true` so each shade
+pass starts with a new thin JAR. This is the documented remedy for
+[post-processing by shade](https://maven.apache.org/plugins/maven-jar-plugin/jar-mojo.html#forceCreation).
+Retain this setting when updating the build plugins, and inspect the actual
+`com/graphhopper/gitinfo` in the final fat JAR against the clean source commit.
+Fresh core `target/classes` resources and a successful reactor do not establish
+the shaded JAR's identity. The final source/class/model and live-smoke checks
+must all pass before recording release provenance.
+
+`MatrixSplitDiagnosticsTest` now writes to `target/matrix-precision-diagnostics.json`
+by default. Use `matrix.diagnostic.output` for a fresh named evidence file;
+ordinary test runs must not replace historical `precision-diagnostics.json`.
+The shared, hash-bound `MatrixPrecisionDiagnostics` helper is unchanged.
 
 Rebase from the recorded commit after preserving local changes. Reinspect Dijkstra,
 AbstractRoutingAlgorithm, TraversalMode, QueryGraph/QueryGraphWeighting, ViaRouting,

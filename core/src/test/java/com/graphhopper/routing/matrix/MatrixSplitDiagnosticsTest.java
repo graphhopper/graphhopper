@@ -45,7 +45,7 @@ class MatrixSplitDiagnosticsTest {
             report.put("point_count", points.size());
             report.put("status", first.explained() ? "EXPLAINED" : "UNEXPLAINED");
             report.put("cases", evidence);
-            Path destination = Path.of(System.getProperty("matrix.diagnostic.output", "../docs/matrix/precision-diagnostics.json"));
+            Path destination = Path.of(System.getProperty("matrix.diagnostic.output", "target/matrix-precision-diagnostics.json"));
             Files.createDirectories(destination.toAbsolutePath().getParent());
             new ObjectMapper().writerWithDefaultPrettyPrinter().writeValue(destination.toFile(), report);
             assertTrue(first.explained(), first.details().toString());

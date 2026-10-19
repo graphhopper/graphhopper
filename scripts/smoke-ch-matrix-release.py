@@ -212,7 +212,7 @@ def closed_ports():
                      in socket.getaddrinfo("localhost", port, type=socket.SOCK_STREAM)}
         for family, kind, protocol, address in sorted(addresses, key=str):
             with socket.socket(family, kind, protocol) as connection:
-                connection.settimeout(1)
+                connection.settimeout(5)
                 try:
                     result = connection.connect_ex(address)
                 except OSError as error:
