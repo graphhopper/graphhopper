@@ -1,0 +1,139 @@
+{
+  "scope": "HTTP_SMOKE_ONLY_NOT_RELEASE_CERTIFICATION",
+  "created_utc": "2026-10-19T19:06:06.647495+00:00",
+  "status": "SMOKE_PASS",
+  "seed": 20261019,
+  "requested_sample": 0,
+  "matrix_url": "http://localhost:8999",
+  "reference_url": "http://localhost:8999",
+  "request": {
+    "profile": "car",
+    "from_points": [
+      [
+        -2.2484402619868145,
+        53.480900460291885
+      ]
+    ],
+    "to_points": [
+      [
+        -2.2481742719273683,
+        53.48057948222779
+      ]
+    ],
+    "out_arrays": [
+      "times",
+      "times_ms",
+      "distances",
+      "weights"
+    ],
+    "fail_fast": false,
+    "local": {
+      "algorithm": "flexible"
+    }
+  },
+  "request_sha256": "7aff91bbdc3b404c48f4bb2fc1337c1ef56ccb77048dd20869b7f51759bc8f98",
+  "total_cells": 1,
+  "checked_cells": 1,
+  "failed_cells": 0,
+  "failures": [],
+  "same_data_and_profile_identity": "Must be independently verified from deployment provenance",
+  "tolerances": {
+    "weight_abs": 1e-06,
+    "weight_rel": 1e-09,
+    "distance_m_abs": 0.002,
+    "distance_rel": 1e-09,
+    "time_ms_abs": 1
+  },
+  "supplied_provenance": {
+    "scope": "ACTUAL_SAVED_ROUTE_INPUT_TO_MATRIX_1X1",
+    "created_utc": "2026-10-19T19:06:06.457178+00:00",
+    "case": "restriction-1645783",
+    "profile": "car",
+    "base_url": "http://localhost:8999",
+    "source_geometry_summary": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\summary.json",
+    "source_geometry_summary_sha256": "1fa5584b9474d41949f5965fa9126654da353a16cb5b4d234c9e5f5ce54a5aee",
+    "source_geometry_summary_generated_utc": "2026-10-19T19:04:30.176244+00:00",
+    "source_route_request": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\restriction-1645783-car-run2.request.json",
+    "source_route_request_sha256": "6805f194327fdab3c10dc73fae513d4f53ea912b58e86b2fa3da07124339c90d",
+    "source_route_response": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\restriction-1645783-car-run2.response.json",
+    "source_route_response_sha256": "5b00c45f8baa8840ecbb73c7bff0389e61b3764e1fd044ea88520bb9ef58a3dc",
+    "matrix_request": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\restriction-car.json",
+    "matrix_request_file_sha256": "d4f77792457411278b2c15e1f9d280634adbf036bfbb01324b3450acecdcb06f",
+    "conversion": "Retain the actual profile and exact raw endpoint coordinates; use singleton axes and the four matrix metrics.",
+    "removed_route_only_fields": [
+      "algorithm",
+      "calc_points",
+      "ch.disable",
+      "details",
+      "instructions",
+      "lm.disable",
+      "points_encoded",
+      "snap_preventions"
+    ],
+    "coordinate_provenance": {
+      "candidate_report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\restriction-candidates.json",
+      "candidate_index": 1,
+      "source_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3"
+    },
+    "validator": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\prompt_pack\\GraphHopper_Local_Matrix_Codex_Pack\\validation\\validate_http.py",
+    "validator_sha256": "36d5fd4a3dc215dff9ce87aaf06934f7986546582e3e3243f93e5cf7f9183d77",
+    "manual_review": "Recorded separately; this verifier only checks HTTP metrics/null masks."
+  },
+  "matrix_info": {
+    "local_matrix": {
+      "contract_version": "1.0",
+      "algorithm": "flexible",
+      "profile": "car",
+      "turn_costs": true,
+      "origin_count": 1,
+      "destination_count": 1,
+      "unique_origin_count": 1,
+      "searches": 1,
+      "visited_states": 150,
+      "visited_states_known": 150,
+      "visited_states_complete": true,
+      "threads": 1,
+      "units": {
+        "weights": "profile_cost",
+        "times": "seconds",
+        "times_ms": "milliseconds",
+        "distances": "metres"
+      },
+      "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+      "profile_fingerprint": "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc",
+      "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points": [
+        {
+          "coordinates": [
+            -2.2484396582309834,
+            53.4809017682045
+          ],
+          "snap_distance_m": 0.15082083790990755
+        }
+      ],
+      "to_snapped_points": [
+        {
+          "coordinates": [
+            -2.248174485555098,
+            53.48057953373881
+          ],
+          "snap_distance_m": 0.015252413055009345
+        }
+      ],
+      "timings_ms": {
+        "snapping": 0.823,
+        "query_graph": 0.1585,
+        "backend_calls": 0.4176,
+        "core_search": 0.3923,
+        "scatter_output": 0.0219,
+        "search_and_output": 0.4493,
+        "total": 1.4571
+      }
+    },
+    "copyrights": [
+      "GraphHopper",
+      "OpenStreetMap contributors"
+    ]
+  },
+  "planned_checks": 1
+}

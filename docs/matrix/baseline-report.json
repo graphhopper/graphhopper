@@ -1,0 +1,219 @@
+{
+  "created_utc": "2026-10-19T18:10:05.675192+00:00",
+  "status": "FAIL_EXISTING_UPSTREAM_TEST_STARTUP",
+  "baseline_worktree": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-baseline",
+  "commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c",
+  "git_status": "",
+  "command": [
+    "mvn",
+    "-B",
+    "-pl",
+    "web",
+    "-am",
+    "verify"
+  ],
+  "exit_code": 1,
+  "exit_code_evidence": "Root agent's recorded command result; Maven BUILD FAILURE retained in log.",
+  "wall_time_log": "06:33 min",
+  "log": "audit\\baseline-pristine-maven.log",
+  "log_sha256": "ce0263241e75e96c7abcd2592280af97fa3b0a768f72d5b627c72f9cb8a7f888",
+  "modules": [
+    {
+      "module": "client-hc",
+      "suites": 4,
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "surefire_suites": 4,
+      "failsafe_suites": 0,
+      "passed": 24
+    },
+    {
+      "module": "core",
+      "suites": 178,
+      "tests": 2564,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 19,
+      "surefire_suites": 178,
+      "failsafe_suites": 0,
+      "passed": 2545
+    },
+    {
+      "module": "map-matching",
+      "suites": 0,
+      "tests": 0,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "surefire_suites": 0,
+      "failsafe_suites": 0,
+      "passed": 0
+    },
+    {
+      "module": "navigation",
+      "suites": 5,
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "surefire_suites": 5,
+      "failsafe_suites": 0,
+      "passed": 30
+    },
+    {
+      "module": "reader-gtfs",
+      "suites": 7,
+      "tests": 305,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 205,
+      "surefire_suites": 4,
+      "failsafe_suites": 3,
+      "passed": 100
+    },
+    {
+      "module": "web",
+      "suites": 28,
+      "tests": 201,
+      "failures": 0,
+      "errors": 1,
+      "skipped": 1,
+      "surefire_suites": 28,
+      "failsafe_suites": 0,
+      "passed": 199
+    },
+    {
+      "module": "web-api",
+      "suites": 14,
+      "tests": 43,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "surefire_suites": 14,
+      "failsafe_suites": 0,
+      "passed": 43
+    },
+    {
+      "module": "web-bundle",
+      "suites": 3,
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "surefire_suites": 3,
+      "failsafe_suites": 0,
+      "passed": 9
+    }
+  ],
+  "totals": {
+    "tests": 3177,
+    "failures": 0,
+    "errors": 1,
+    "skipped": 226,
+    "passed": 2950
+  },
+  "failed_testcases": [
+    {
+      "module": "web",
+      "suite": "com.graphhopper.application.resources.PtRouteResourceTripBasedTest",
+      "test": "com.graphhopper.application.resources.PtRouteResourceTripBasedTest",
+      "kind": "error",
+      "type": "java.lang.RuntimeException",
+      "message": "java.io.FileNotFoundException: .\\target\\gtfs-app-gh\\pt_to_street (The system cannot find the file specified)",
+      "text": "java.lang.RuntimeException: java.io.FileNotFoundException: .\\target\\gtfs-app-gh\\pt_to_street (The system cannot find the file specified)\nCaused by: java.io.FileNotFoundException: .\\target\\gtfs-app-gh\\pt_to_street (The system cannot find the file specified)\n",
+      "report": "graphhopper-baseline\\web\\target\\surefire-reports\\TEST-com.graphhopper.application.resources.PtRouteResourceTripBasedTest.xml",
+      "original_report_sha256": "86636ef3982bef58faedd9e92267a3e1ba981ac43dfaf9c6d64929a3b4708f5d"
+    }
+  ],
+  "post_failure_gtfs_directory_files": [
+    {
+      "gtfs_0": 1048576
+    },
+    {
+      "gtfs_0.p": 1048576
+    },
+    {
+      "location_index": 1048676
+    },
+    {
+      "transit_schedule": 1048576
+    },
+    {
+      "transit_schedule.p": 1048576
+    }
+  ],
+  "diagnosis": {
+    "classification": "Existing pristine upstream PT integration-test cache/lifecycle failure; unrelated to local matrix code.",
+    "immediate_cause": "GtfsStorage.loadExisting sees transit_schedule then opens missing pt_to_street; startup fails before the TripBased test methods execute.",
+    "mechanism": "Both PT resource classes hardcode target/gtfs-app-gh and remove it in BeforeAll/AfterAll while the Dropwizard extension owns a live application. Windows MapDB mmap files survive partial deletion while serialized mapping files are removed; the next class detects an incomplete persisted GTFS cache.",
+    "confidence": "Supported by source/log/surviving-file evidence and a passing cache-cleared isolated class replay; no baseline Java changes. Exact Windows file-handle events were not instrumented.",
+    "source_anchors": [
+      "web/src/test/java/com/graphhopper/application/resources/PtRouteResourceTest.java:53",
+      "web/src/test/java/com/graphhopper/application/resources/PtRouteResourceTest.java:68",
+      "web/src/test/java/com/graphhopper/application/resources/PtRouteResourceTripBasedTest.java:49",
+      "web/src/test/java/com/graphhopper/application/resources/PtRouteResourceTripBasedTest.java:66",
+      "reader-gtfs/src/main/java/com/graphhopper/gtfs/GtfsStorage.java:183",
+      "reader-gtfs/src/main/java/com/graphhopper/gtfs/GtfsStorage.java:203",
+      "reader-gtfs/src/main/java/com/graphhopper/gtfs/GtfsStorage.java:268",
+      "web-api/src/main/java/com/graphhopper/util/Helper.java:127"
+    ]
+  },
+  "isolated_replay": {
+    "status": "PASS",
+    "created_utc": "2026-10-19T18:11:12.499342+00:00",
+    "cwd": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-baseline",
+    "command": [
+      "cmd.exe",
+      "/d",
+      "/c",
+      "mvn",
+      "-B",
+      "-pl",
+      "web",
+      "-am",
+      "test",
+      "-Dtest=PtRouteResourceTripBasedTest",
+      "-Dsurefire.failIfNoSpecifiedTests=false"
+    ],
+    "exit_code": 0,
+    "duration_seconds": 44.598210800031666,
+    "counts": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "log": "audit\\baseline-pt-isolated.log",
+    "log_sha256": "071f00c08d5f10f31caf9be3dfc5281afd96638d78c15d5c5112ac47fb8d4d8e",
+    "generated_cache_removed": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-baseline\\web\\target\\gtfs-app-gh",
+    "removed_files": [
+      "gtfs_0",
+      "gtfs_0.p",
+      "location_index",
+      "transit_schedule",
+      "transit_schedule.p"
+    ],
+    "git_status_before": "",
+    "git_status_after": "",
+    "original_full_reactor_status": "FAIL_EXISTING_UPSTREAM_TEST_STARTUP",
+    "interpretation": "Focused cache-cleared replay evaluates this class alone and does not replace the original full reactor outcome."
+  },
+  "feature_fixture_correction": {
+    "status": "PASS_FULL_FEATURE_REACTOR",
+    "verification_evidence": "full-verification.json; both PT classes passed 11 cases with no failures/errors",
+    "scope": "Only existing PT integration-test lifecycle and generated cache names; pristine source untouched.",
+    "classes": ["PtRouteResourceTest", "PtRouteResourceTripBasedTest"],
+    "changes": ["Removed automatic extension registration to avoid reference-counted shutdown running twice.", "Distinct class-specific, per-run UUID generated graph directories prevent cache reuse.", "Checked cleanup of any existing owned path before explicit app.before() in BeforeAll.", "Exactly one explicit app.after() before best-effort cleanup in AfterAll; retained mmap files are reported without asserting immediate unmapping."],
+    "post_stop_cleanup_limitation": "Feature API-package execution passed all original route assertions but both added cleanup assertions failed because MapDB mmap files lingered after app.after() on Windows/JDK22. The final fixture uses UUID ownership and reports best-effort cleanup; checked filesystem cleanup is optional after the test JVM exits.",
+    "cleanup_evidence_log": "audit/matrix-api-package.log",
+    "post_jvm_cleanup_script": "scripts/cleanup-pt-test-caches.py",
+    "production_or_expected_value_changes": false,
+    "dependency_sources": [
+      "https://github.com/dropwizard/dropwizard/blob/v4.0.16/dropwizard-testing/src/main/java/io/dropwizard/testing/junit5/DropwizardExtensionsSupport.java",
+      "https://github.com/dropwizard/dropwizard/blob/v4.0.16/dropwizard-testing/src/main/java/io/dropwizard/testing/junit5/DropwizardAppExtension.java",
+      "https://github.com/dropwizard/dropwizard/blob/v4.0.16/dropwizard-testing/src/main/java/io/dropwizard/testing/DropwizardTestSupport.java"
+    ]
+  }
+}

@@ -1,0 +1,1440 @@
+{
+  "status": "EVIDENCE_SNAPSHOT_NOT_AUTOMATIC_RELEASE_CERTIFICATION",
+  "created_utc": "2026-10-19T19:32:32.435996+00:00",
+  "assessed_release": "11.1",
+  "assessed_upstream_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c",
+  "actual_upstream_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c",
+  "fork_commit": null,
+  "artifact_version": "11.0-SNAPSHOT",
+  "branch": "feature/local-matrix",
+  "dirty_worktree": true,
+  "worktree_snapshot": "M pom.xml\n M web-bundle/src/main/java/com/graphhopper/http/GraphHopperBundle.java\n M web/src/test/java/com/graphhopper/application/resources/PtRouteResourceTest.java\n M web/src/test/java/com/graphhopper/application/resources/PtRouteResourceTripBasedTest.java\n?? audit/\n?? core/src/main/java/com/graphhopper/routing/matrix/\n?? core/src/test/java/com/graphhopper/routing/matrix/\n?? core/src/test/resources/com/graphhopper/routing/matrix/\n?? docs/matrix/\n?? run-matrix.cmd\n?? scripts/\n?? web-api/src/main/java/com/graphhopper/matrix/\n?? web-api/src/test/java/com/graphhopper/matrix/\n?? web-bundle/src/main/java/com/graphhopper/resources/MatrixResource.java\n?? web/src/test/java/com/graphhopper/application/resources/MatrixResourceTest.java\n?? web/src/test/resources/com/graphhopper/application/matrix-disconnected.osm.xml",
+  "jdk": {
+    "argv": [
+      "java",
+      "-version"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "java version \"22.0.2\" 2024-07-16\nJava(TM) SE Runtime Environment (build 22.0.2+9-70)\nJava HotSpot(TM) 64-Bit Server VM (build 22.0.2+9-70, mixed mode, sharing)"
+  },
+  "javac": {
+    "argv": [
+      "javac",
+      "-version"
+    ],
+    "exit_code": 0,
+    "stdout": "javac 22.0.2",
+    "stderr": ""
+  },
+  "maven": {
+    "argv": [
+      "cmd.exe",
+      "/d",
+      "/c",
+      "mvn",
+      "-version"
+    ],
+    "exit_code": 0,
+    "stdout": "Apache Maven 3.9.9 (8e8579a9e76f7d015ee5ec7bfcdc97d260186937)\nMaven home: C:\\ProgramData\\chocolatey\\lib\\maven\\apache-maven-3.9.9\nJava version: 22.0.2, vendor: Oracle Corporation, runtime: C:\\Program Files\\Java\\jdk-22\nDefault locale: en_GB, platform encoding: UTF-8\nOS name: \"windows 11\", version: \"10.0\", arch: \"amd64\", family: \"windows\"",
+    "stderr": ""
+  },
+  "os": "Windows-11-10.0.22631-SP0",
+  "cpu": "Intel(R) Core(TM) i7-10610U CPU @ 1.80GHz",
+  "processor_identifier": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+  "logical_cpu_count": 8,
+  "ram_bytes": 51279912960,
+  "jvm_flags": null,
+  "data": {
+    "source": "core/files/monaco.osm.gz",
+    "upstream_url": "https://github.com/graphhopper/graphhopper/blob/ebb578f4e94db72e82f2f8d3bc69417758e16e1c/core/files/monaco.osm.gz",
+    "acquired_utc": null,
+    "osm_snapshot_date": null,
+    "sha256": "cca67724618cf38c2e8ff39082b19daa03a66b0725a5025515feb0fc678dcdfa",
+    "bbox": null,
+    "source_node_bounds": {
+      "minlat": 43.5136837,
+      "minlon": 7.3830115,
+      "maxlat": 43.7543317,
+      "maxlon": 7.5027982
+    },
+    "source_node_count": 13739,
+    "acquisition_note": "Bundled upstream fixture obtained with the pinned source checkout; original OSM acquisition date is unknown."
+  },
+  "configuration_path": "docs/matrix/config-matrix.yml",
+  "configuration_sha256": "b394046edf588107ed1acfb34466de90809b21ab8154a598ee102241cffc9c9c",
+  "custom_models_sha256": {
+    "core/src/main/resources/com/graphhopper/custom_models/foot.json": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+    "core/src/main/resources/com/graphhopper/custom_models/car.json": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90"
+  },
+  "graph_fingerprint": null,
+  "profile_fingerprint": null,
+  "profiles": [
+    {
+      "name": "foot",
+      "turn_costs": false,
+      "custom_model_files": [
+        "foot.json"
+      ]
+    },
+    {
+      "name": "car",
+      "turn_costs": true,
+      "custom_model_files": [
+        "car.json"
+      ],
+      "vehicle_types": [
+        "motorcar",
+        "motor_vehicle"
+      ],
+      "u_turn_costs_seconds": 60
+    }
+  ],
+  "encoded_values": [
+    "car_access",
+    "car_average_speed",
+    "road_access",
+    "foot_access",
+    "foot_priority",
+    "foot_average_speed",
+    "foot_road_access",
+    "hike_rating",
+    "mtb_rating",
+    "country",
+    "road_class"
+  ],
+  "graph_directory": "target/matrix-monaco-server",
+  "server_ports": {
+    "monaco_application": 8997,
+    "monaco_admin": 8998,
+    "regional_application": 8999,
+    "regional_admin": 9000
+  },
+  "algorithm": null,
+  "threads": null,
+  "seed": 20261019,
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "stdout": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "branch",
+        "--show-current"
+      ],
+      "exit_code": 0,
+      "stdout": "feature/local-matrix",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "remote",
+        "-v"
+      ],
+      "exit_code": 0,
+      "stdout": "origin\thttps://github.com/graphhopper/graphhopper.git (fetch)\norigin\thttps://github.com/graphhopper/graphhopper.git (push)",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "exit_code": 0,
+      "stdout": "M pom.xml\n M web-bundle/src/main/java/com/graphhopper/http/GraphHopperBundle.java\n M web/src/test/java/com/graphhopper/application/resources/PtRouteResourceTest.java\n M web/src/test/java/com/graphhopper/application/resources/PtRouteResourceTripBasedTest.java\n?? audit/\n?? core/src/main/java/com/graphhopper/routing/matrix/\n?? core/src/test/java/com/graphhopper/routing/matrix/\n?? core/src/test/resources/com/graphhopper/routing/matrix/\n?? docs/matrix/\n?? run-matrix.cmd\n?? scripts/\n?? web-api/src/main/java/com/graphhopper/matrix/\n?? web-api/src/test/java/com/graphhopper/matrix/\n?? web-bundle/src/main/java/com/graphhopper/resources/MatrixResource.java\n?? web/src/test/java/com/graphhopper/application/resources/MatrixResourceTest.java\n?? web/src/test/resources/com/graphhopper/application/matrix-disconnected.osm.xml",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "java",
+        "-version"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "java version \"22.0.2\" 2024-07-16\nJava(TM) SE Runtime Environment (build 22.0.2+9-70)\nJava HotSpot(TM) 64-Bit Server VM (build 22.0.2+9-70, mixed mode, sharing)"
+    },
+    {
+      "argv": [
+        "javac",
+        "-version"
+      ],
+      "exit_code": 0,
+      "stdout": "javac 22.0.2",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "cmd.exe",
+        "/d",
+        "/c",
+        "mvn",
+        "-version"
+      ],
+      "exit_code": 0,
+      "stdout": "Apache Maven 3.9.9 (8e8579a9e76f7d015ee5ec7bfcdc97d260186937)\nMaven home: C:\\ProgramData\\chocolatey\\lib\\maven\\apache-maven-3.9.9\nJava version: 22.0.2, vendor: Oracle Corporation, runtime: C:\\Program Files\\Java\\jdk-22\nDefault locale: en_GB, platform encoding: UTF-8\nOS name: \"windows 11\", version: \"10.0\", arch: \"amd64\", family: \"windows\"",
+      "stderr": ""
+    }
+  ],
+  "gates": {
+    "G0": "PASS",
+    "G1": "PASS",
+    "G2": "PASS",
+    "G3": "PASS",
+    "G4": "PASS_WITH_SCOPED_LIMITATIONS"
+  },
+  "unknown_value_notes": {
+    "fork_commit": "Development changes are not committed at this audit snapshot.",
+    "jvm_flags": "No single JVM covers every run. Captured per-run flags appear in runtime_evidence, deployment_runtime_manifest and captured_runtime_jvm_text; absent flags are not guessed.",
+    "graph_fingerprint": "Multiple immutable imports exist; use run-specific identities under runtime_evidence.",
+    "profile_fingerprint": "Use run/profile-specific identities under runtime_evidence.",
+    "algorithm": "Both reference/flexible and independent upstream algorithms were tested; use per-run evidence.",
+    "threads": "Measured per-run values are recorded where available; no cross-run count is invented."
+  },
+  "unresolved_issues": [],
+  "previous_snapshot_utc": "2026-10-19T19:25:58.578188+00:00",
+  "checkout_head": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c",
+  "source_worktree_note": "Development remains intentionally uncommitted. The packaged artifact embeds base commit plus dirty state; its SHA-256 identifies the actual binary.",
+  "changed_source_sha256": {
+    "core/src/main/java/com/graphhopper/routing/matrix/MatrixEngine.java": "6a42bab4763559a5e4d04066f72b4876e41a9eb29690d84767e05d1271e687f1",
+    "core/src/main/java/com/graphhopper/routing/matrix/MatrixProvenance.java": "d2cca7d8f1f8744fcdbf229f84027bc70b12cf019cc95e3424b5651ab725e508",
+    "core/src/main/java/com/graphhopper/routing/matrix/TargetSetDijkstra.java": "342c768ccc6a172a5d44208ac75e26c45855363fd583d417f6633b32f1cda95d",
+    "core/src/test/java/com/graphhopper/routing/matrix/CHWeightAudit.java": "f1e3d8dca1ee3f737353e4fa70d5e47e9b53b4dd0cb768917d457807f07b6ff4",
+    "core/src/test/java/com/graphhopper/routing/matrix/MatrixBenchmarkTest.java": "2584ea737ed17ed1d8c42ce189ce886e70467b737b07e54a06ab9fd55d7e0505",
+    "core/src/test/java/com/graphhopper/routing/matrix/MatrixCHHttpAuditTest.java": "476dc3bb4deebeaa24f5800e68a18f2ee690c59e0650377b3b255669194e1721",
+    "core/src/test/java/com/graphhopper/routing/matrix/MatrixCopyIdentityTest.java": "2beae12fbceecedc1262e0f0dffc53de01836246fa1b51d6022ce9b0db66e4bd",
+    "core/src/test/java/com/graphhopper/routing/matrix/MatrixEngineTest.java": "93efdc1fc9a8abf52e61c6bd496d22874a1821a477a6c2278f3abc3bb392ddfa",
+    "core/src/test/java/com/graphhopper/routing/matrix/MatrixPrecisionDiagnostics.java": "b93c5a7e9b8ae44672c312bef61f62010319a6aafa0455ea419bfac793edbba9",
+    "core/src/test/java/com/graphhopper/routing/matrix/MatrixRegionalReplayTest.java": "a7f840f1c60863697da54b565372002b3e1e6c79c6091007deb0ff98139bdf25",
+    "core/src/test/java/com/graphhopper/routing/matrix/MatrixRegionalTest.java": "b6a48ccd3238159773d5df1aadb67163f4ba7a990e50f860640bc3f68d204406",
+    "core/src/test/java/com/graphhopper/routing/matrix/MatrixSplitDiagnosticsTest.java": "dd9b8d5bdeaac23cfea12c6e75e23182828d2f054bb6f9c622d05d0cab33e4a6",
+    "core/src/test/java/com/graphhopper/routing/matrix/TargetSetDijkstraTest.java": "18c4ff7768b2b79da8ef5e032a4d7141858664d72cc81b8a4329b1dad9276cc5",
+    "pom.xml": "aa450096b3810018c9385ff5d4b7468de92b56a42c7b2b577b6c5814e5cfcdb8",
+    "run-matrix.cmd": "d116597eed1adb776b9d7e1342a7b39eaefbffe2c9b6fd875b41420a5aa88abf",
+    "scripts/GeometryCandidates.java": "2e4486da3bfe1a545a88c1a20458477633ccdca3c553400747ffa3b6d4384bd5",
+    "scripts/RestrictionCandidates.java": "77fc823674507252a12cb6408e67553d6c7860848089ef9a246cdf089cdc75ca",
+    "scripts/benchmark-http.py": "f2abcec7ba45c98a3fb393f3a57da74880d040bd2334866eada3b5113edde0fc",
+    "scripts/check-existing-endpoints.py": "491de3e25dc2e260d0bec497088091e5e5b1b6d07613c99a4de97842d7d279fe",
+    "scripts/cleanup-pt-test-caches.py": "7015df8926405c8a52b6745c72b30986d728325d50143c07ce59871c3cd59edf",
+    "scripts/client.py": "2fda44c7e9ee5eaa93a3fc42e9a6a9e403de9fd76fbdd0446794a12c97b7a633",
+    "scripts/geometry-spot-check.py": "981677bb8287c7ebd9ad0628adc6f13529aa244d25a1ac09c3a2dba070b717d1",
+    "scripts/http_reconciliation_guard.py": "2ce7d5331fca147049a0f9432f7e28779b6865416d5a5817be14cd76723ec67a",
+    "scripts/prepare-regional-http-benchmark.py": "65d85247b9c4be97f23530a8a684a2801e045437827dbeb99259a8ef4cf5ca19",
+    "scripts/record-matrix-provenance.py": "a147b802c9ffa2b10413d64b0fcb9edb94783077cc668e784cedbde71e6677dc",
+    "scripts/record-server-runtime.py": "b9479def8d4911553f6408f9567894102ebf6174a95c18ca9d6a9802827487db",
+    "scripts/summarize-matrix-benchmarks.py": "bca2b62d20112f3cd0673119503af6aa84997e55b303c447e502de985e152179",
+    "scripts/summarize-osm-warnings.py": "dcc5cc18a2a94e7966af9cb5671035ad49dfb0ed8b8d29488f7ca178572c11ae",
+    "scripts/validate-geometry-matrices.py": "2cbec0f821f1600a5aa4991e8b18550bb95028cf8ee91e2841e1e0b1f764c626",
+    "web-api/src/main/java/com/graphhopper/matrix/MatrixException.java": "1ddd4f5501ba641ca0c1eeb35a41e5802ebd85016b40ff1736e4293e5a2fd44e",
+    "web-api/src/main/java/com/graphhopper/matrix/MatrixRequest.java": "60c6d9f550c4772f1f3c8eb94789fa6d60f468317d9f4485a2ee7f9758a9e10c",
+    "web-api/src/main/java/com/graphhopper/matrix/MatrixSnappedPoint.java": "b2e6dfe102b879b60d36f57c9fe170c3f133a525e029e2e8f9ac3488946bc386",
+    "web-api/src/test/java/com/graphhopper/matrix/MatrixRequestTest.java": "c5cbcaccf28a750c51cd7ec4b9c426c235d2320b7b215455e8181e281e75e099",
+    "web-bundle/src/main/java/com/graphhopper/http/GraphHopperBundle.java": "434480e98b2cd84a4467ac3cfd90fe5baeeda76b980f23c47f91cf059637a866",
+    "web-bundle/src/main/java/com/graphhopper/resources/MatrixResource.java": "0f6d0ce1e663992ebb134b4fcc54e6fc241a6ed1a4e19a67820f1ca5434c0ebd",
+    "web/src/test/java/com/graphhopper/application/resources/MatrixResourceTest.java": "4536afcedd6d2c458dd7ee859d4b532d8c103ec3fa62f4e385ce2797aac16fd6",
+    "web/src/test/java/com/graphhopper/application/resources/PtRouteResourceTest.java": "37ecc803d6c2ce634a0316e09c34ff386fba790bd035b0fffbb0755a69b2cd8a",
+    "web/src/test/java/com/graphhopper/application/resources/PtRouteResourceTripBasedTest.java": "e343455728f8135f913d05b9a4d191434f2d243378ac1c0079941ac0e5d12fef"
+  },
+  "changed_source_manifest_fingerprint": "944d4f003273aac895bc74d5711ecbd2b12df423937e74e467fc3b1e9c1757d1",
+  "source_manifest_scope": "Current changed Java/POM/tool/launcher inputs; this is a content snapshot, not a claim of a separate Git commit.",
+  "sample_configuration_sha256": {
+    "docs/matrix/config-matrix.yml": "b394046edf588107ed1acfb34466de90809b21ab8154a598ee102241cffc9c9c",
+    "docs/matrix/config-manchester.yml": "12a53dbb28af8abbbc5b38038de70192dff07cf6767b2e3a4185a595ed4605f1"
+  },
+  "configuration_role": "Example configs; actual loaded identity and flags belong to each runtime evidence record.",
+  "artifact": {
+    "status": "PRESENT_CHECKSUM_RECORDED",
+    "path": "web/target/graphhopper-web-11.0-SNAPSHOT.jar",
+    "size_bytes": 47383957,
+    "sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+    "zip_crc_status": "PASS",
+    "zip_crc_bad_member": null,
+    "embedded_build_resources": {
+      "META-INF/MANIFEST.MF": "Manifest-Version: 1.0\nCreated-By: Apache Maven 3.9.9\nBuilt-By: hulse\nBuild-Jdk: 22.0.2\nMain-Class: com.graphhopper.application.GraphHopperApplication",
+      "META-INF/maven/com.graphhopper/graphhopper-web/pom.properties": "#Created by Apache Maven 3.9.9\nartifactId=graphhopper-web\ngroupId=com.graphhopper\nversion=11.0-SNAPSHOT",
+      "com/graphhopper/gitinfo": "# properties will be filled by git-commit-id-plugin during maven build\nebb578f4e94db72e82f2f8d3bc69417758e16e1c\n2026-09-29T13:58:19+0100\nMerge commit from fork\nfeature/local-matrix\ntrue",
+      "com/graphhopper/builddate": "2026-10-19T18:32:39Z",
+      "com/graphhopper/version": "11.0-SNAPSHOT"
+    },
+    "embedded_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c",
+    "embedded_branch": "feature/local-matrix",
+    "embedded_dirty": true,
+    "embedded_build_identity": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+    "checksum_sidecar": "web/target/graphhopper-web-11.0-SNAPSHOT.jar.sha256"
+  },
+  "runtime_evidence": {
+    "monaco_correctness": {
+      "status": "PASS_WITH_CLASSIFIED_SPLIT_PRECISION",
+      "graph_fingerprint": "f3a20eb0f1fca6b664b9a4dad3de0274f8dbfff995f13a4d1510d82f20486cfb",
+      "profile_fingerprints": {
+        "foot": "0ee2dad3573f59d8b850aa8cccfe669424ea25d03e6a81c0409f1f7be95676e7",
+        "car": "1deeacf723f6af9959a8d0e4c256ba8516506ea1f190d9cdb14fcc8596c6aafa"
+      },
+      "evidence_sha256": "9ed3da0ab0c219b3704ddad917469e54ca8167fcffa0c698debb1b8e153b110e"
+    },
+    "regional_reconciliation": {
+      "status": "PASS_WITH_PROVEN_COPY_TIES_AND_SPLIT_PRECISION",
+      "graph_fingerprint": "8bc23b19f81dfcfe6478fb596e3e38483aa49dba092bcf778db7283526b93047",
+      "profile_fingerprint": "5750929a87acae825011e8621c2f191915d90cf434ab2d7d29ea6435a3689838",
+      "profile": "car",
+      "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "matrix_workers": 1,
+      "remaining_unexplained_mismatches": 0,
+      "evidence_sha256": "5bafe8f83cb330b437ecb0a8afb2c9558e567d2acf5f182c11e5014c8758da57",
+      "captured_jcmd_vm_flags": "88444:\n-XX:CICompilerCount=4 -XX:ConcGCThreads=2 -XX:G1ConcRefinementThreads=8 -XX:G1EagerReclaimRemSetThreshold=12 -XX:G1HeapRegionSize=1048576 -XX:G1RemSetArrayOfCardsEntries=12 -XX:G1RemSetHowlMaxNumBuckets=8 -XX:G1RemSetHowlNumBuckets=4 -XX:InitialHeapSize=199229440 -XX:MarkStackSize=4194304 -XX:MaxHeapSize=2147483648 -XX:MaxNewSize=1287651328 -XX:MinHeapDeltaBytes=1048576 -XX:MinHeapSize=199229440 -XX:NonNMethodCodeHeapSize=5839372 -XX:NonProfiledCodeHeapSize=122909434 -XX:ProfiledCodeHeapSize=122909434 -XX:ReservedCodeCacheSize=251658240 -XX:+SegmentedCodeCache -XX:SoftMaxHeapSize=2147483648 -XX:+UseCompressedOops -XX:+UseFastUnorderedTimeStamps -XX:+UseG1GC -XX:-UseLargePagesIndividualAllocation"
+    },
+    "in_process_benchmark": {
+      "status": "MEASURED",
+      "jvm_arguments": [
+        "-Xmx2g",
+        "-Xms190m",
+        "-Duser.language=en"
+      ],
+      "completed_measured_samples": 960,
+      "scope_note": "Monaco fixture only; Greater Manchester data was acquired separately.",
+      "evidence_sha256": "98377c7646ca2ef476b5697a1b951f369eb56e95d07f3f2c1622066fdf94794e"
+    },
+    "http_benchmark:http-benchmark-report.json": {
+      "status": "MEASURED",
+      "matrix_provenance": {
+        "foot": {
+          "graph_fingerprint": "1083b022ae027331fc44c977e023d282f2b5605ddf81ee77a9ce1547471bfdeb",
+          "profile_fingerprint": "c6fe6ee1c661a318525ad0399b038bde4cdc2c83220ad947a49e2f467e76a55b",
+          "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty"
+        },
+        "car": {
+          "graph_fingerprint": "1083b022ae027331fc44c977e023d282f2b5605ddf81ee77a9ce1547471bfdeb",
+          "profile_fingerprint": "f56d09abf8c90ec47148807174471d361baffa5b3d98c57ab04afcbec9406c1b",
+          "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty"
+        }
+      },
+      "evidence_path": "http-benchmark-report.json",
+      "evidence_sha256": "cce59db1ee2b875355386778143bfbfea58b21b18e98f9a3d0c0314976fe5666"
+    },
+    "http_benchmark:regional-http-benchmark/http-benchmark-report.json": {
+      "status": "MEASURED",
+      "matrix_provenance": {
+        "foot": {
+          "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+          "profile_fingerprint": "1be092bef4d39565265853eb515a69b040ad2ccb84a7ba5c58a930788244b6df",
+          "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty"
+        },
+        "car": {
+          "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+          "profile_fingerprint": "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc",
+          "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty"
+        }
+      },
+      "evidence_path": "regional-http-benchmark/http-benchmark-report.json",
+      "evidence_sha256": "a2d1963decd1f6b02bcad16725fc164ec409957ff2ca49d05be5f31006adcd4c"
+    },
+    "http_smoke:http-smoke-geometry-opposing-forward.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "matrix_info": {
+        "local_matrix": {
+          "contract_version": "1.0",
+          "algorithm": "flexible",
+          "profile": "car",
+          "turn_costs": true,
+          "origin_count": 1,
+          "destination_count": 1,
+          "unique_origin_count": 1,
+          "searches": 1,
+          "visited_states": 135,
+          "visited_states_known": 135,
+          "visited_states_complete": true,
+          "threads": 1,
+          "units": {
+            "weights": "profile_cost",
+            "times": "seconds",
+            "times_ms": "milliseconds",
+            "distances": "metres"
+          },
+          "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+          "profile_fingerprint": "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc",
+          "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+          "from_snapped_points": [
+            {
+              "coordinates": [
+                -2.238475301609927,
+                53.47151524775152
+              ],
+              "snap_distance_m": 0.011393568244287769
+            }
+          ],
+          "to_snapped_points": [
+            {
+              "coordinates": [
+                -2.2385306938986127,
+                53.47160465871257
+              ],
+              "snap_distance_m": 0.3423552248720758
+            }
+          ],
+          "timings_ms": {
+            "snapping": 1.7969,
+            "query_graph": 0.3155,
+            "backend_calls": 0.7895,
+            "core_search": 0.7196,
+            "scatter_output": 0.0643,
+            "search_and_output": 0.8837,
+            "total": 3.1545
+          }
+        },
+        "copyrights": [
+          "GraphHopper",
+          "OpenStreetMap contributors"
+        ]
+      },
+      "evidence_sha256": "2b631910548e91de68f0484cd7d3917f4b5d8045b1affc97bed8326b728b32f4"
+    },
+    "http_smoke:http-smoke-geometry-opposing-reverse.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "matrix_info": {
+        "local_matrix": {
+          "contract_version": "1.0",
+          "algorithm": "flexible",
+          "profile": "car",
+          "turn_costs": true,
+          "origin_count": 1,
+          "destination_count": 1,
+          "unique_origin_count": 1,
+          "searches": 1,
+          "visited_states": 509,
+          "visited_states_known": 509,
+          "visited_states_complete": true,
+          "threads": 1,
+          "units": {
+            "weights": "profile_cost",
+            "times": "seconds",
+            "times_ms": "milliseconds",
+            "distances": "metres"
+          },
+          "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+          "profile_fingerprint": "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc",
+          "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+          "from_snapped_points": [
+            {
+              "coordinates": [
+                -2.2385306938986127,
+                53.47160465871257
+              ],
+              "snap_distance_m": 0.3423552248720758
+            }
+          ],
+          "to_snapped_points": [
+            {
+              "coordinates": [
+                -2.238475301609927,
+                53.47151524775152
+              ],
+              "snap_distance_m": 0.011393568244287769
+            }
+          ],
+          "timings_ms": {
+            "snapping": 1.2657,
+            "query_graph": 0.1761,
+            "backend_calls": 1.9568,
+            "core_search": 1.9102,
+            "scatter_output": 0.0313,
+            "search_and_output": 2.0027,
+            "total": 3.4801
+          }
+        },
+        "copyrights": [
+          "GraphHopper",
+          "OpenStreetMap contributors"
+        ]
+      },
+      "evidence_sha256": "1d48a241b08448253f19b44fbbd6f5c6a2d636a52cbf7ea6107696538c34720c"
+    },
+    "http_smoke:http-smoke-geometry-restriction-car.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "matrix_info": {
+        "local_matrix": {
+          "contract_version": "1.0",
+          "algorithm": "flexible",
+          "profile": "car",
+          "turn_costs": true,
+          "origin_count": 1,
+          "destination_count": 1,
+          "unique_origin_count": 1,
+          "searches": 1,
+          "visited_states": 150,
+          "visited_states_known": 150,
+          "visited_states_complete": true,
+          "threads": 1,
+          "units": {
+            "weights": "profile_cost",
+            "times": "seconds",
+            "times_ms": "milliseconds",
+            "distances": "metres"
+          },
+          "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+          "profile_fingerprint": "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc",
+          "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+          "from_snapped_points": [
+            {
+              "coordinates": [
+                -2.2484396582309834,
+                53.4809017682045
+              ],
+              "snap_distance_m": 0.15082083790990755
+            }
+          ],
+          "to_snapped_points": [
+            {
+              "coordinates": [
+                -2.248174485555098,
+                53.48057953373881
+              ],
+              "snap_distance_m": 0.015252413055009345
+            }
+          ],
+          "timings_ms": {
+            "snapping": 0.823,
+            "query_graph": 0.1585,
+            "backend_calls": 0.4176,
+            "core_search": 0.3923,
+            "scatter_output": 0.0219,
+            "search_and_output": 0.4493,
+            "total": 1.4571
+          }
+        },
+        "copyrights": [
+          "GraphHopper",
+          "OpenStreetMap contributors"
+        ]
+      },
+      "evidence_sha256": "f3e3acdf25dd400b1563410c79df1e5d075432afa852dc39f468c83060a9a2c8"
+    },
+    "http_smoke:http-smoke-geometry-trinity-foot.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "matrix_info": {
+        "local_matrix": {
+          "contract_version": "1.0",
+          "algorithm": "flexible",
+          "profile": "foot",
+          "turn_costs": false,
+          "origin_count": 1,
+          "destination_count": 1,
+          "unique_origin_count": 1,
+          "searches": 1,
+          "visited_states": 5,
+          "visited_states_known": 5,
+          "visited_states_complete": true,
+          "threads": 1,
+          "units": {
+            "weights": "profile_cost",
+            "times": "seconds",
+            "times_ms": "milliseconds",
+            "distances": "metres"
+          },
+          "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+          "profile_fingerprint": "1be092bef4d39565265853eb515a69b040ad2ccb84a7ba5c58a930788244b6df",
+          "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+          "from_snapped_points": [
+            {
+              "coordinates": [
+                -2.250961475,
+                53.482605575
+              ],
+              "snap_distance_m": 0.0
+            }
+          ],
+          "to_snapped_points": [
+            {
+              "coordinates": [
+                -2.250774425000005,
+                53.482370325000005
+              ],
+              "snap_distance_m": 2.9384839603145417e-10
+            }
+          ],
+          "timings_ms": {
+            "snapping": 2.3555,
+            "query_graph": 0.1338,
+            "backend_calls": 0.3754,
+            "core_search": 0.356,
+            "scatter_output": 0.0181,
+            "search_and_output": 0.4013,
+            "total": 2.9105
+          }
+        },
+        "copyrights": [
+          "GraphHopper",
+          "OpenStreetMap contributors"
+        ]
+      },
+      "evidence_sha256": "77a7a13615f87d3abcfbaa81fa1ae43a5149a4cd37bfe7037f57c837a5455a9f"
+    },
+    "http_smoke:http-smoke-manchester-one_to_many.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 3,
+      "matrix_info": {
+        "local_matrix": {
+          "contract_version": "1.0",
+          "algorithm": "flexible",
+          "profile": "foot",
+          "turn_costs": false,
+          "origin_count": 1,
+          "destination_count": 3,
+          "unique_origin_count": 1,
+          "searches": 1,
+          "visited_states": 22891,
+          "visited_states_known": 22891,
+          "visited_states_complete": true,
+          "threads": 1,
+          "units": {
+            "weights": "profile_cost",
+            "times": "seconds",
+            "times_ms": "milliseconds",
+            "distances": "metres"
+          },
+          "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+          "profile_fingerprint": "1be092bef4d39565265853eb515a69b040ad2ccb84a7ba5c58a930788244b6df",
+          "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+          "from_snapped_points": [
+            {
+              "coordinates": [
+                -2.2308100607125456,
+                53.477380938080806
+              ],
+              "snap_distance_m": 6.318023928897091
+            }
+          ],
+          "to_snapped_points": [
+            {
+              "coordinates": [
+                -2.242602053411688,
+                53.48079199058213
+              ],
+              "snap_distance_m": 0.9009121347629726
+            },
+            {
+              "coordinates": [
+                -2.2419762923887103,
+                53.487496245503145
+              ],
+              "snap_distance_m": 1.6231224833407811
+            },
+            {
+              "coordinates": [
+                -2.254269452338291,
+                53.47612825439584
+              ],
+              "snap_distance_m": 11.645890560647143
+            }
+          ],
+          "timings_ms": {
+            "snapping": 2.1276,
+            "query_graph": 0.2335,
+            "backend_calls": 46.3314,
+            "core_search": 46.2553,
+            "scatter_output": 0.0704,
+            "search_and_output": 46.4164,
+            "total": 48.8331
+          }
+        },
+        "copyrights": [
+          "GraphHopper",
+          "OpenStreetMap contributors"
+        ]
+      },
+      "evidence_sha256": "d4b2a0802ea4e231e62bb13745d94c6b1b3e01db28b85bdecc0286a5c1fbecdd"
+    },
+    "http_smoke:http-smoke-manchester-rectangular.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 12,
+      "matrix_info": {
+        "local_matrix": {
+          "contract_version": "1.0",
+          "algorithm": "flexible",
+          "profile": "car",
+          "turn_costs": true,
+          "origin_count": 3,
+          "destination_count": 4,
+          "unique_origin_count": 2,
+          "searches": 2,
+          "visited_states": 36046,
+          "visited_states_known": 36046,
+          "visited_states_complete": true,
+          "threads": 1,
+          "units": {
+            "weights": "profile_cost",
+            "times": "seconds",
+            "times_ms": "milliseconds",
+            "distances": "metres"
+          },
+          "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+          "profile_fingerprint": "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc",
+          "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+          "from_snapped_points": [
+            {
+              "coordinates": [
+                -2.2307744,
+                53.4768826
+              ],
+              "snap_distance_m": 58.12956877664705
+            },
+            {
+              "coordinates": [
+                -2.2427956503716446,
+                53.48715960170464
+              ],
+              "snap_distance_m": 64.8363015986992
+            },
+            {
+              "coordinates": [
+                -2.2307744,
+                53.4768826
+              ],
+              "snap_distance_m": 58.12956877664705
+            }
+          ],
+          "to_snapped_points": [
+            {
+              "coordinates": [
+                -2.2543387,
+                53.4761414
+              ],
+              "snap_distance_m": 16.453913043408097
+            },
+            {
+              "coordinates": [
+                -2.2425558452026872,
+                53.48079486158147
+              ],
+              "snap_distance_m": 2.9771196426161306
+            },
+            {
+              "coordinates": [
+                -2.2307744,
+                53.4768826
+              ],
+              "snap_distance_m": 58.12956877664705
+            },
+            {
+              "coordinates": [
+                -2.2543387,
+                53.4761414
+              ],
+              "snap_distance_m": 16.453913043408097
+            }
+          ],
+          "timings_ms": {
+            "snapping": 17.4899,
+            "query_graph": 0.5231,
+            "backend_calls": 118.6156,
+            "core_search": 115.8342,
+            "scatter_output": 0.3611,
+            "search_and_output": 119.8209,
+            "total": 138.4217
+          }
+        },
+        "copyrights": [
+          "GraphHopper",
+          "OpenStreetMap contributors"
+        ]
+      },
+      "evidence_sha256": "8c3ef49b8085358ef04318634916b7fe29e3dd0f481c8e282b38627527ddf9ac"
+    },
+    "http_smoke:http-smoke-manchester-square.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 9,
+      "matrix_info": {
+        "local_matrix": {
+          "contract_version": "1.0",
+          "algorithm": "flexible",
+          "profile": "car",
+          "turn_costs": true,
+          "origin_count": 3,
+          "destination_count": 3,
+          "unique_origin_count": 3,
+          "searches": 3,
+          "visited_states": 34662,
+          "visited_states_known": 34662,
+          "visited_states_complete": true,
+          "threads": 1,
+          "units": {
+            "weights": "profile_cost",
+            "times": "seconds",
+            "times_ms": "milliseconds",
+            "distances": "metres"
+          },
+          "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+          "profile_fingerprint": "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc",
+          "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+          "from_snapped_points": [
+            {
+              "coordinates": [
+                -2.2307744,
+                53.4768826
+              ],
+              "snap_distance_m": 58.12956877664705
+            },
+            {
+              "coordinates": [
+                -2.2425558452026872,
+                53.48079486158147
+              ],
+              "snap_distance_m": 2.9771196426161306
+            },
+            {
+              "coordinates": [
+                -2.2543387,
+                53.4761414
+              ],
+              "snap_distance_m": 16.453913043408097
+            }
+          ],
+          "to_snapped_points": [
+            {
+              "coordinates": [
+                -2.2307744,
+                53.4768826
+              ],
+              "snap_distance_m": 58.12956877664705
+            },
+            {
+              "coordinates": [
+                -2.2425558452026872,
+                53.48079486158147
+              ],
+              "snap_distance_m": 2.9771196426161306
+            },
+            {
+              "coordinates": [
+                -2.2543387,
+                53.4761414
+              ],
+              "snap_distance_m": 16.453913043408097
+            }
+          ],
+          "timings_ms": {
+            "snapping": 1.2898,
+            "query_graph": 0.1958,
+            "backend_calls": 73.3825,
+            "core_search": 73.0835,
+            "scatter_output": 0.1415,
+            "search_and_output": 73.5563,
+            "total": 75.1166
+          }
+        },
+        "copyrights": [
+          "GraphHopper",
+          "OpenStreetMap contributors"
+        ]
+      },
+      "evidence_sha256": "a66a18b32a68862b456adda694601027671759a567ebd7ba3b8658855fddca3d"
+    },
+    "ch_weight_reconciliation:ch-weight-reconciliation.json": {
+      "status": "PASS_WITH_PATH_PROVEN_CH_STORAGE_PRECISION",
+      "original_report_sha256": "cce59db1ee2b875355386778143bfbfea58b21b18e98f9a3d0c0314976fe5666",
+      "original_requests_sha256": "71f16a4c08b450a7d7e42bd030a748752167f4b8ad4c8bbe6beea621e7ba9aab",
+      "original_samples_sha256": "9321d5e6a9214c46097557cafcfbf98c8003caedf282e3e5f4826d21f54da44e",
+      "replay_graph_fingerprint": "1083b022ae027331fc44c977e023d282f2b5605ddf81ee77a9ce1547471bfdeb",
+      "replay_profile_fingerprints": {
+        "foot": "c6fe6ee1c661a318525ad0399b038bde4cdc2c83220ad947a49e2f467e76a55b",
+        "car": "f56d09abf8c90ec47148807174471d361baffa5b3d98c57ab04afcbec9406c1b"
+      },
+      "replay_build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "indexed_flagged_cases": 184,
+      "unique_profile_coordinate_pairs": 184,
+      "retained_original_issue_records_checked": 300,
+      "aggregate_original_flag_instances": 3680,
+      "remaining_unexplained_cases": 0,
+      "historic_evidence_scope": "Fresh paths are reconstructed for each unique profile/OD and linked to every flagged indexed cell. All retained original issue scalars and aggregate counts are checked; capped issue lists do not contain every repetition's path or scalar. Stable aggregate CSV checksums cannot alone exclude compensating per-cell changes in omitted records, which are not directly reverified. Original absence of time/distance/null flags establishes only the original HTTP thresholds; fresh replay checks actual full-precision path metrics.",
+      "evidence_path": "ch-weight-reconciliation.json",
+      "evidence_sha256": "477259545fa3d130c1b86b11be93fdc2527906744e3d249164fe8c01b896ecdd"
+    },
+    "ch_weight_reconciliation:regional-http-benchmark/ch-weight-reconciliation.json": {
+      "status": "PASS_WITH_PATH_PROVEN_CH_STORAGE_PRECISION",
+      "original_report_sha256": "a2d1963decd1f6b02bcad16725fc164ec409957ff2ca49d05be5f31006adcd4c",
+      "original_requests_sha256": "34add677b7bc0bb47408b0d0a292c226d7a5cf1900d223cc87ba247334b02ba0",
+      "original_samples_sha256": "99b8a784a953330d8239e50ee453fa6beecd95d2ffa5248f67685d3818b6dd45",
+      "replay_graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+      "replay_profile_fingerprints": {
+        "foot": "1be092bef4d39565265853eb515a69b040ad2ccb84a7ba5c58a930788244b6df",
+        "car": "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc"
+      },
+      "replay_build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "indexed_flagged_cases": 38,
+      "unique_profile_coordinate_pairs": 20,
+      "retained_original_issue_records_checked": 520,
+      "aggregate_original_flag_instances": 760,
+      "remaining_unexplained_cases": 0,
+      "historic_evidence_scope": "Fresh paths are reconstructed for each unique profile/OD and linked to every flagged indexed cell. All retained original issue scalars and aggregate counts are checked; capped issue lists do not contain every repetition's path or scalar. Stable aggregate CSV checksums cannot alone exclude compensating per-cell changes in omitted records, which are not directly reverified. Original absence of time/distance/null flags establishes only the original HTTP thresholds; fresh replay checks actual full-precision path metrics.",
+      "evidence_path": "regional-http-benchmark/ch-weight-reconciliation.json",
+      "evidence_sha256": "ebb7b415a0bf8e7cec52b14059f2dad042defe3e1965d6b3033270978451c5d5"
+    }
+  },
+  "production_binary_binding": {
+    "contents": {
+      "status": "PASS",
+      "scope": "Current compiled matrix production classes and configured model resources exactly match the live-tested packaged JAR. Diagnostic-only test additions are outside the artifact.",
+      "artifact_sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+      "classes_checked": 40,
+      "classes": [
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/MatrixEngine$Backend.class",
+          "sha256": "cf626abce507e2e089e2718b6cb87a453fb2147eef9eaf411d3dd95dc1c70763"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/MatrixEngine$Cell.class",
+          "sha256": "801ceccded2c578c49d4f267400e5001f3416fea3f3971e98f3db63046e5573d"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/MatrixEngine$Context.class",
+          "sha256": "19779c7676e4e34b541ea28628c874fd4d0ea918056787e73b18e9ffe380deb4"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/MatrixEngine$Coordinate.class",
+          "sha256": "4612945b5b0463b5293354d712b26f283dd0a3d33211586e3f9f608a99b89f8d"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/MatrixEngine$Counters.class",
+          "sha256": "84aa570f07b0c22a8e29a2b5726e86e3c2be0bc9bb312cbfa41188ae570111c0"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/MatrixEngine$FlexibleBackend.class",
+          "sha256": "f053a13193530012913cdf9f9c7719d01c61245fe92ae4bb19a619623455bc07"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/MatrixEngine$Limits.class",
+          "sha256": "f22ff24c01182746a6aadd0ccdfdb2117ef3605636ed1f0818b8e9dc7135d53b"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/MatrixEngine$ReferenceBackend.class",
+          "sha256": "10f7e1a65be0aeaf4b9652cce3df0b8d994f3cd63289049a2dde531aa9cecf14"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/MatrixEngine$Row.class",
+          "sha256": "ab6ccf4530f7dd82dc2561d9493f7441cc51352c1c552927d88e9d43ed4f7e2c"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/MatrixEngine.class",
+          "sha256": "2db2a55b7deddb58796962988cb937c8f0ed7d2bb8beaa8c044f5401ebb7334d"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/MatrixProvenance.class",
+          "sha256": "ea7c4c526ebbf478ac665f3b1f484ab8db9bd5a6a6aac2025db2f71b44e3dd71"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Failure.class",
+          "sha256": "afb8708091a61bfe6032c27ee1ee03e8bf830765ff3a7023a2694eadacce2499"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Label.class",
+          "sha256": "22643da6da2a6971e72359c6ed60ac9195bccc9fa851c91faf558c93ff8666b5"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Metrics.class",
+          "sha256": "60bf1008781e12e1dc2c433d1d223a98b32553d7b67b1c2884322b80ec73a745"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Result.class",
+          "sha256": "e609ec68b87d1ee82c13d2963f8db93bc8166297184d2d7bf7f5cb4b23074c31"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$SearchException.class",
+          "sha256": "896a8bd8e656f7215a20097bc89f4b679d52f242bf78d29c6ed740dc82917839"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Step.class",
+          "sha256": "bad41ee80f1b180e1c1eaefecdcf5ad8f9224d29aebf009354a0914c16c58335"
+        },
+        {
+          "module": "core",
+          "class": "com/graphhopper/routing/matrix/TargetSetDijkstra.class",
+          "sha256": "13cddb40f7ac3daace0f58aedc73e868ad034f1ff1da10cd12e0f049e5312cea"
+        },
+        {
+          "module": "web-api",
+          "class": "com/graphhopper/matrix/MatrixException.class",
+          "sha256": "9fe453719707caa82655376d09ece019df22fbbd8e1dfbb734b01e9ec08aca5f"
+        },
+        {
+          "module": "web-api",
+          "class": "com/graphhopper/matrix/MatrixRequest.class",
+          "sha256": "b42be1aa1eb15fae9c1f18cad293d87264c7dc27a465aaa36a709967f527b1bb"
+        },
+        {
+          "module": "web-api",
+          "class": "com/graphhopper/matrix/MatrixSnappedPoint.class",
+          "sha256": "9dc0aaeb933dc0462bc954e01935dd029187ba7be0fe6e672e46c12ff26db933"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$1.class",
+          "sha256": "4eb9e86f6de9805cc3acddb0ec785e1b8327f9c580344b64f09da9c9e87eaaa4"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$2.class",
+          "sha256": "5ad4a0bbf620d2100154904af600289e40ddd0155fa8ed92fd6e9d5536079db4"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$3.class",
+          "sha256": "74548596ceb2f947b4ccb4b9a2e7ef8e7c02564b36c1de2edd19189358852bd2"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$4.class",
+          "sha256": "380b44c9a3694713c756fc1352de57697f93dbf4fa44ceaf2b03d91b113e0c2c"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$BaseGraphFactory.class",
+          "sha256": "3c981fddf3e1afff8527ea1f57eaf927b23b241ce451a253c90bcf6ae11362d2"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$EmptyRealtimeFeedFactory.class",
+          "sha256": "b1112facca4e8353d217ae125f3e19f016481fbd1d5ec5c1e344758de46e5418"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$EncodingManagerFactory.class",
+          "sha256": "b054c7bf92147982764e48f4db9ca6482377ae207d67417d3d97559b52f1be70"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$GHRequestTransformerFactory.class",
+          "sha256": "120569b83ee40d5fee1786c67c477bc681e1f25931e8ef6a923922d8c54e4684"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$GtfsStorageFactory.class",
+          "sha256": "2cfee6ecd99054a05e885b2c7a1e0f27dcb4f3a426f0b0ca2aa9c042da5edbd8"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$HasElevation.class",
+          "sha256": "b07093a3bf7a8ef34889d8de7e1f544d6037ef08e3f65d509480c8582dab4fe0"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$LocationIndexFactory.class",
+          "sha256": "1a63ebe20b3dcc7d81958be137fd93f31b33c1df5e4af8bd9ea43360b2e77a1a"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$MapMatchingRouterFactoryFactory.class",
+          "sha256": "d9b7d911ac8459cba03f996c43b72f99ba9a59681be4f8841158c2ec70e036ce"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$MatrixEngineFactory.class",
+          "sha256": "329b087e8f59805ac2e7e3f60f35aa74d9aa4102dc985dbbd7a9a840011bfaa5"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$PathDetailsBuilderFactoryFactory.class",
+          "sha256": "d76b97632aa82b8b0efe6b460727e3a50423ca89b98830cf8fa502187d52e471"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$ProfileResolverFactory.class",
+          "sha256": "031a04673a19747cdad8369caaa7a80140100432588c1b4b08750cbca7446018"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle$TranslationMapFactory.class",
+          "sha256": "2e8550a53dd805a3bfc35590b07a6dd9dc9a31e592a880b4b1222950fa3b0827"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundle.class",
+          "sha256": "c232a4fedfc693e3bc4b2593a25a1dbff898b4d64c88518689390423630ccab1"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/http/GraphHopperBundleConfiguration.class",
+          "sha256": "49791cb1ca53fb1f690352e0ed92c3ae70c7fed44f1f2d6b4ef170cd2d5ecd2a"
+        },
+        {
+          "module": "web-bundle",
+          "class": "com/graphhopper/resources/MatrixResource.class",
+          "sha256": "7fffe87cbd3177ef4c2ae5e5fb9e0243f8b92b7a9e7559095f74410b9c0eaaa9"
+        }
+      ],
+      "rechecked_utc": "2026-10-19T19:28:44.606023+00:00",
+      "models_checked": 2,
+      "models": [
+        {
+          "resource": "com/graphhopper/custom_models/foot.json",
+          "source_sha256": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+          "compiled_sha256": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+          "jar_sha256": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+          "all_bytes_equal": true
+        },
+        {
+          "resource": "com/graphhopper/custom_models/car.json",
+          "source_sha256": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90",
+          "compiled_sha256": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90",
+          "jar_sha256": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90",
+          "all_bytes_equal": true
+        }
+      ],
+      "verification_script": "../../../audit/verify_binary_source_binding.py"
+    },
+    "path": "binary-source-binding.json",
+    "sha256": "c916a0aacbf93ebfc3a284150a56c718e7a2d391d9f8b9d5373fa0155b987ddf"
+  },
+  "final_review": {
+    "contents": {
+      "status": "PASS",
+      "reviewed_utc": "2026-10-19T19:27:21.478957+00:00",
+      "artifact_sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+      "runtime_manifest_sha256": "00694fe948f83ad1c8734a2316bb66e4c975d2e6100458b69abc5b6e0f6b77fd",
+      "approved_http_reconciliations": [
+        {
+          "http_report": "http-benchmark-report.json",
+          "http_report_sha256": "cce59db1ee2b875355386778143bfbfea58b21b18e98f9a3d0c0314976fe5666",
+          "reconciliation": "ch-weight-reconciliation.json",
+          "reconciliation_sha256": "477259545fa3d130c1b86b11be93fdc2527906744e3d249164fe8c01b896ecdd"
+        },
+        {
+          "http_report": "regional-http-benchmark/http-benchmark-report.json",
+          "http_report_sha256": "a2d1963decd1f6b02bcad16725fc164ec409957ff2ca49d05be5f31006adcd4c",
+          "reconciliation": "regional-http-benchmark/ch-weight-reconciliation.json",
+          "reconciliation_sha256": "ebb7b415a0bf8e7cec52b14059f2dad042defe3e1965d6b3033270978451c5d5"
+        }
+      ],
+      "independent_exact_rational_path_review": [
+        {
+          "report": "http-benchmark-report.json",
+          "unique_path_proofs": 184,
+          "indexed_cases": 184,
+          "exact_rational_path_review": "PASS"
+        },
+        {
+          "report": "regional-http-benchmark/http-benchmark-report.json",
+          "unique_path_proofs": 20,
+          "indexed_cases": 38,
+          "exact_rational_path_review": "PASS"
+        }
+      ],
+      "production_class_binding": "binary-source-binding.json",
+      "decision": "Core behaviour is complete within the recorded static street-profile, fixture and regional coverage. Raw CH comparison mismatches remain retained; explicit per-case expanded-path/storage proofs explain them. No global tolerance was widened.",
+      "source_state": "Local feature/local-matrix branch, uncommitted changes, pinned upstream base plus source input hashes. No production edits after full Maven and live JAR checks.",
+      "scope_limits": [
+        "Monaco gains do not imply regional or national gains; configured CH won five of six tiny Manchester HTTP cases.",
+        "Historical HTTP diagnostics were capped; 204 fresh path proofs cover222 indexed cases,820 retained scalars and4440 aggregate flags without claiming all original outputs/paths were captured.",
+        "OSM/model/import limitations and upstream weight-detail limitations remain documented.",
+        "Dedicated CH matrix acceleration, PT/time-dependent matrices and large/national/concurrent throughput work remain deferred."
+      ],
+      "operational_state": "Both isolated test servers stopped gracefully; application/admin ports checked closed."
+    },
+    "path": "final-review.json",
+    "sha256": "6b7ee6e24d9d592fd3da1f2ddb752280efdbe8d4a1a55cee83be7d6b42c1ab6f"
+  },
+  "post_snapshot_ch_precision_diagnostics": {
+    "regional": {
+      "status": "PASS",
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml": "../../../audit/matrix-ch-http-regional-final.xml",
+      "log": "../../../audit/matrix-ch-http-regional-final.log"
+    },
+    "monaco": {
+      "status": "PASS",
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml": "../../../audit/matrix-ch-http-monaco-final.xml",
+      "log": "../../../audit/matrix-ch-http-monaco-final.log"
+    },
+    "default_control": {
+      "status": "PASS",
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "xml": "../../../audit/matrix-ch-http-default-control.xml",
+      "log": "../../../audit/matrix-ch-http-default-control.log"
+    }
+  },
+  "deployment_runtime_manifest": {
+    "servers": {
+      "manchester": {
+        "captured_utc": "2026-10-19T19:08:23.790295+00:00",
+        "pid": 95848,
+        "name": "manchester",
+        "repository_root": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix",
+        "jcmd_path": "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+        "configuration_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\config-manchester.yml",
+        "configuration_sha256": "12a53dbb28af8abbbc5b38038de70192dff07cf6767b2e3a4185a595ed4605f1",
+        "configuration_hash_scope": "File bytes at capture; JVM command line independently identifies the selected config path.",
+        "artifact_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\web\\target\\graphhopper-web-11.0-SNAPSHOT.jar",
+        "artifact_size_bytes": 47383957,
+        "artifact_sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+        "graph_directory_as_configured": "target/matrix-manchester-server",
+        "graph_directory_resolved": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\target\\matrix-manchester-server",
+        "application_port": 8999,
+        "admin_port": 9000,
+        "jcmd_command_line": {
+          "argv": [
+            "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+            "95848",
+            "VM.command_line"
+          ],
+          "exit_code": 0,
+          "stdout": "95848:\nVM Arguments:\njvm_args: -Xmx4g \njava_command: web\\target\\graphhopper-web-11.0-SNAPSHOT.jar server docs\\matrix\\config-manchester.yml\njava_class_path (initial): web\\target\\graphhopper-web-11.0-SNAPSHOT.jar\nLauncher Type: SUN_STANDARD\n",
+          "stderr": ""
+        },
+        "jcmd_flags": {
+          "argv": [
+            "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+            "95848",
+            "VM.flags"
+          ],
+          "exit_code": 0,
+          "stdout": "95848:\n-XX:CICompilerCount=4 -XX:ConcGCThreads=2 -XX:G1ConcRefinementThreads=8 -XX:G1EagerReclaimRemSetThreshold=16 -XX:G1HeapRegionSize=2097152 -XX:G1RemSetArrayOfCardsEntries=16 -XX:G1RemSetHowlMaxNumBuckets=8 -XX:G1RemSetHowlNumBuckets=8 -XX:InitialHeapSize=803209216 -XX:MarkStackSize=4194304 -XX:MaxHeapSize=4294967296 -XX:MaxNewSize=2575302656 -XX:MinHeapDeltaBytes=2097152 -XX:MinHeapSize=8388608 -XX:NonNMethodCodeHeapSize=5839372 -XX:NonProfiledCodeHeapSize=122909434 -XX:ProfiledCodeHeapSize=122909434 -XX:ReservedCodeCacheSize=251658240 -XX:+SegmentedCodeCache -XX:SoftMaxHeapSize=4294967296 -XX:+UseCompressedOops -XX:+UseFastUnorderedTimeStamps -XX:+UseG1GC -XX:-UseLargePagesIndividualAllocation \n",
+          "stderr": ""
+        },
+        "captured_text_files": {
+          "jvm-command-line": {
+            "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-manchester-jvm-command-line.txt",
+            "sha256": "d4bcd2423169d1a55e3cc500d73dbfb9af4531122baa3502186983f34c29a920",
+            "command": [
+              "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+              "95848",
+              "VM.command_line"
+            ],
+            "exit_code": 0
+          },
+          "jvm-flags": {
+            "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-manchester-jvm-flags.txt",
+            "sha256": "921bff3cc440abc777ef568b6a63725f3b99fee744ba4850ec722e6db838b71f",
+            "command": [
+              "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+              "95848",
+              "VM.flags"
+            ],
+            "exit_code": 0
+          }
+        },
+        "log": {
+          "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-manchester.log",
+          "size_bytes_at_capture": 555121,
+          "sha256_at_capture": "dc4d8056d810922d65bc0b44b5d04a7e893f7734092215ccdc9eee40a2e709d6",
+          "hash_scope": "Exactly the first size_bytes_at_capture bytes; a running server log can grow later."
+        },
+        "shutdown": {
+          "status": "STOPPED_AFTER_VALIDATION",
+          "stopped_utc": "2026-10-19T19:08:24.289+00:00",
+          "evidence": "../audit/server-manchester.log; Jetty stopped server and both connectors; subsequent jps showed no server JVM.",
+          "ports_checked_not_listening_ipv4": [
+            8999,
+            9000
+          ],
+          "recorded_utc": "2026-10-19T19:15:32.889801+00:00",
+          "heap_snapshot": "../audit/server-manchester-heap-snapshot.txt",
+          "heap_snapshot_scope": "One post-measurement JVM heap snapshot; not peak, minimum memory or RSS."
+        }
+      },
+      "monaco": {
+        "captured_utc": "2026-10-19T19:14:10.522312+00:00",
+        "pid": 93460,
+        "name": "monaco",
+        "repository_root": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix",
+        "jcmd_path": "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+        "configuration_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\config-matrix.yml",
+        "configuration_sha256": "b394046edf588107ed1acfb34466de90809b21ab8154a598ee102241cffc9c9c",
+        "configuration_hash_scope": "File bytes at capture; JVM command line independently identifies the selected config path.",
+        "artifact_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\web\\target\\graphhopper-web-11.0-SNAPSHOT.jar",
+        "artifact_size_bytes": 47383957,
+        "artifact_sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+        "graph_directory_as_configured": "target/matrix-monaco-server",
+        "graph_directory_resolved": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\target\\matrix-monaco-server",
+        "application_port": 8997,
+        "admin_port": 8998,
+        "jcmd_command_line": {
+          "argv": [
+            "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+            "93460",
+            "VM.command_line"
+          ],
+          "exit_code": 0,
+          "stdout": "93460:\nVM Arguments:\njvm_args: -Xmx2g \njava_command: web\\target\\graphhopper-web-11.0-SNAPSHOT.jar server docs\\matrix\\config-matrix.yml\njava_class_path (initial): web\\target\\graphhopper-web-11.0-SNAPSHOT.jar\nLauncher Type: SUN_STANDARD\n",
+          "stderr": ""
+        },
+        "jcmd_flags": {
+          "argv": [
+            "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+            "93460",
+            "VM.flags"
+          ],
+          "exit_code": 0,
+          "stdout": "93460:\n-XX:CICompilerCount=4 -XX:ConcGCThreads=2 -XX:G1ConcRefinementThreads=8 -XX:G1EagerReclaimRemSetThreshold=12 -XX:G1HeapRegionSize=1048576 -XX:G1RemSetArrayOfCardsEntries=12 -XX:G1RemSetHowlMaxNumBuckets=8 -XX:G1RemSetHowlNumBuckets=4 -XX:InitialHeapSize=803209216 -XX:MarkStackSize=4194304 -XX:MaxHeapSize=2147483648 -XX:MaxNewSize=1287651328 -XX:MinHeapDeltaBytes=1048576 -XX:MinHeapSize=8388608 -XX:NonNMethodCodeHeapSize=5839372 -XX:NonProfiledCodeHeapSize=122909434 -XX:ProfiledCodeHeapSize=122909434 -XX:ReservedCodeCacheSize=251658240 -XX:+SegmentedCodeCache -XX:SoftMaxHeapSize=2147483648 -XX:+UseCompressedOops -XX:+UseFastUnorderedTimeStamps -XX:+UseG1GC -XX:-UseLargePagesIndividualAllocation \n",
+          "stderr": ""
+        },
+        "captured_text_files": {
+          "jvm-command-line": {
+            "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-monaco-jvm-command-line.txt",
+            "sha256": "a44a1e416afd4837973c7cc74f0680aa236ebadcd00d8f6fabdaf9638443a1ad",
+            "command": [
+              "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+              "93460",
+              "VM.command_line"
+            ],
+            "exit_code": 0
+          },
+          "jvm-flags": {
+            "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-monaco-jvm-flags.txt",
+            "sha256": "a380d4b053df83fc3fbfa7bfdd7cf70b5ae2f89667b3099c68e4f053836188f9",
+            "command": [
+              "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+              "93460",
+              "VM.flags"
+            ],
+            "exit_code": 0
+          }
+        },
+        "log": {
+          "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-monaco.log",
+          "size_bytes_at_capture": 2163020,
+          "sha256_at_capture": "5d3f190a311e73ff4b609432d4cd4117e7a7aa0a4054db4380567ef9b3ac5b72",
+          "hash_scope": "Exactly the first size_bytes_at_capture bytes; a running server log can grow later."
+        },
+        "shutdown": {
+          "status": "STOPPED_AFTER_VALIDATION",
+          "stopped_utc": "2026-10-19T19:14:11.029+00:00",
+          "evidence": "../audit/server-monaco.log; Jetty stopped server and both connectors; subsequent jps showed no server JVM.",
+          "ports_checked_not_listening_ipv4": [
+            8997,
+            8998
+          ],
+          "recorded_utc": "2026-10-19T19:15:33.926469+00:00",
+          "heap_snapshot": "../audit/server-monaco-heap-snapshot.txt",
+          "heap_snapshot_scope": "One post-measurement JVM heap snapshot; not peak, minimum memory or RSS."
+        }
+      }
+    },
+    "updated_utc": "2026-10-19T19:15:33.926469+00:00"
+  },
+  "deployment_runtime_manifest_sha256": "00694fe948f83ad1c8734a2316bb66e4c975d2e6100458b69abc5b6e0f6b77fd",
+  "captured_runtime_jvm_text": {
+    "regional-replay-jvm-flags.txt": {
+      "contents": "88444:\n-XX:CICompilerCount=4 -XX:ConcGCThreads=2 -XX:G1ConcRefinementThreads=8 -XX:G1EagerReclaimRemSetThreshold=12 -XX:G1HeapRegionSize=1048576 -XX:G1RemSetArrayOfCardsEntries=12 -XX:G1RemSetHowlMaxNumBuckets=8 -XX:G1RemSetHowlNumBuckets=4 -XX:InitialHeapSize=199229440 -XX:MarkStackSize=4194304 -XX:MaxHeapSize=2147483648 -XX:MaxNewSize=1287651328 -XX:MinHeapDeltaBytes=1048576 -XX:MinHeapSize=199229440 -XX:NonNMethodCodeHeapSize=5839372 -XX:NonProfiledCodeHeapSize=122909434 -XX:ProfiledCodeHeapSize=122909434 -XX:ReservedCodeCacheSize=251658240 -XX:+SegmentedCodeCache -XX:SoftMaxHeapSize=2147483648 -XX:+UseCompressedOops -XX:+UseFastUnorderedTimeStamps -XX:+UseG1GC -XX:-UseLargePagesIndividualAllocation",
+      "sha256": "49470ae5ccde7f0e993e62e3e8f8a4c099e3faf512a7023a5529c6f9931300cb"
+    },
+    "server-manchester-jvm-flags.txt": {
+      "contents": "95848:\n-XX:CICompilerCount=4 -XX:ConcGCThreads=2 -XX:G1ConcRefinementThreads=8 -XX:G1EagerReclaimRemSetThreshold=16 -XX:G1HeapRegionSize=2097152 -XX:G1RemSetArrayOfCardsEntries=16 -XX:G1RemSetHowlMaxNumBuckets=8 -XX:G1RemSetHowlNumBuckets=8 -XX:InitialHeapSize=803209216 -XX:MarkStackSize=4194304 -XX:MaxHeapSize=4294967296 -XX:MaxNewSize=2575302656 -XX:MinHeapDeltaBytes=2097152 -XX:MinHeapSize=8388608 -XX:NonNMethodCodeHeapSize=5839372 -XX:NonProfiledCodeHeapSize=122909434 -XX:ProfiledCodeHeapSize=122909434 -XX:ReservedCodeCacheSize=251658240 -XX:+SegmentedCodeCache -XX:SoftMaxHeapSize=4294967296 -XX:+UseCompressedOops -XX:+UseFastUnorderedTimeStamps -XX:+UseG1GC -XX:-UseLargePagesIndividualAllocation",
+      "sha256": "921bff3cc440abc777ef568b6a63725f3b99fee744ba4850ec722e6db838b71f"
+    },
+    "server-monaco-jvm-flags.txt": {
+      "contents": "93460:\n-XX:CICompilerCount=4 -XX:ConcGCThreads=2 -XX:G1ConcRefinementThreads=8 -XX:G1EagerReclaimRemSetThreshold=12 -XX:G1HeapRegionSize=1048576 -XX:G1RemSetArrayOfCardsEntries=12 -XX:G1RemSetHowlMaxNumBuckets=8 -XX:G1RemSetHowlNumBuckets=4 -XX:InitialHeapSize=803209216 -XX:MarkStackSize=4194304 -XX:MaxHeapSize=2147483648 -XX:MaxNewSize=1287651328 -XX:MinHeapDeltaBytes=1048576 -XX:MinHeapSize=8388608 -XX:NonNMethodCodeHeapSize=5839372 -XX:NonProfiledCodeHeapSize=122909434 -XX:ProfiledCodeHeapSize=122909434 -XX:ReservedCodeCacheSize=251658240 -XX:+SegmentedCodeCache -XX:SoftMaxHeapSize=2147483648 -XX:+UseCompressedOops -XX:+UseFastUnorderedTimeStamps -XX:+UseG1GC -XX:-UseLargePagesIndividualAllocation",
+      "sha256": "a380d4b053df83fc3fbfa7bfdd7cf70b5ae2f89667b3099c68e4f053836188f9"
+    },
+    "server-manchester-jvm-command-line.txt": {
+      "contents": "95848:\nVM Arguments:\njvm_args: -Xmx4g \njava_command: web\\target\\graphhopper-web-11.0-SNAPSHOT.jar server docs\\matrix\\config-manchester.yml\njava_class_path (initial): web\\target\\graphhopper-web-11.0-SNAPSHOT.jar\nLauncher Type: SUN_STANDARD",
+      "sha256": "d4bcd2423169d1a55e3cc500d73dbfb9af4531122baa3502186983f34c29a920"
+    },
+    "server-monaco-jvm-command-line.txt": {
+      "contents": "93460:\nVM Arguments:\njvm_args: -Xmx2g \njava_command: web\\target\\graphhopper-web-11.0-SNAPSHOT.jar server docs\\matrix\\config-matrix.yml\njava_class_path (initial): web\\target\\graphhopper-web-11.0-SNAPSHOT.jar\nLauncher Type: SUN_STANDARD",
+      "sha256": "a44a1e416afd4837973c7cc74f0680aa236ebadcd00d8f6fabdaf9638443a1ad"
+    }
+  },
+  "regional_data": {
+    "status": "ACQUIRED_AND_VERIFIED",
+    "source_page": "https://download.geofabrik.de/europe/united-kingdom/england/greater-manchester.html",
+    "resolved_url": "https://download.geofabrik.de/europe/united-kingdom/england/greater-manchester-261018.osm.pbf",
+    "acquired_utc": "2026-10-19T18:06:41.557727+00:00",
+    "size_bytes": 51632590,
+    "sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+    "boundary": {
+      "source_url": "https://download.geofabrik.de/europe/united-kingdom/england/greater-manchester.poly",
+      "local_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\data\\greater-manchester.poly",
+      "sha256": "c5ad67442b8905cbd77e90f93b95da2cb7fa1205ea13bcac6774068e3609a63a",
+      "response_headers": {
+        "Content-Length": "6927",
+        "Last-Modified": "Mon, 19 Oct 2026 00:49:42 GMT",
+        "ETag": "\"1b0f-65e26e3bec1a2\""
+      },
+      "coordinate_order": "longitude,latitude",
+      "bbox": [
+        -2.732097,
+        53.32613,
+        -1.90804,
+        53.68742
+      ],
+      "coordinate_count": 216
+    },
+    "license": "ODbL-1.0; OpenStreetMap contributors, Geofabrik extract",
+    "local_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\data\\greater-manchester-11f9b3f5b1d63cdf.osm.pbf",
+    "present": true,
+    "current_sha256_matches_manifest": true,
+    "validation_status": "PASS_WITH_PROVEN_COPY_TIES_AND_SPLIT_PRECISION"
+  },
+  "full_maven_verify": {
+    "status": "PASS_FULL_MAVEN_VERIFY",
+    "command": [
+      "mvn",
+      "-B",
+      "verify"
+    ],
+    "exit_code": 0,
+    "totals": {
+      "tests": 3276,
+      "passed": 3047,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 229
+    },
+    "finished_at_log": "2026-10-19T19:37:30+01:00"
+  },
+  "pristine_baseline_status": "FAIL_EXISTING_UPSTREAM_TEST_STARTUP",
+  "validation_summary_sha256": "9dabfdb475fef47df4afdce2a89606b95c0a2ef1d26d1fc1c0e86c79e2784741",
+  "limitations": [
+    "The unmodified full baseline failed; do not replace that recorded status with the feature full-reactor PASS.",
+    "Initial regional FAIL and two OOM/incomplete replays remain preserved; the successful replay only revisits ten cells.",
+    "Equal-cost/restriction-copy and virtual-split classifications require each case's independent legal-path evidence; tolerances were not globally widened.",
+    "No existing user service/configuration, user graph cache or user-specific regional OD files were supplied.",
+    "Imported OSM/model restrictions have documented source-data limitations; algorithm agreement does not establish real-world legality.",
+    "Default Maven skips opt-in regional/benchmark classes; separate explicit runs provide their evidence.",
+    "Large dense matrices, PT, runtime custom models, headings/curbsides and dedicated CH matrices are outside this milestone."
+  ]
+}

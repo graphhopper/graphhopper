@@ -1,0 +1,1329 @@
+{
+  "generated_utc": "2026-10-19T18:15:29.511320+00:00",
+  "input_log": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\matrix-regional.log",
+  "input_log_snapshot_sha256": "f55a934f1b64fc4efbaf028f946fb5216dcdb5569df9e1bc7d89ce01a8416b95",
+  "input_log_snapshot_bytes": 40039,
+  "input_log_snapshot_lines": 204,
+  "source_pbf_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+  "source_pbf_url": "https://download.geofabrik.de/europe/united-kingdom/england/greater-manchester-261018.osm.pbf",
+  "restriction_warning_count": 137,
+  "distinct_ignored_relation_count": 137,
+  "other_upstream_warning_count": 0,
+  "maven_warning_count": 4,
+  "categories": [
+    {
+      "reason": "has no member with role 'to'",
+      "count": 40,
+      "relation_ids": [
+        4853649,
+        4853650,
+        4853651,
+        4853652,
+        4853653,
+        5919068,
+        7336293,
+        7411083,
+        7756373,
+        7909906,
+        8495053,
+        9343266,
+        10022860,
+        11217699,
+        12685115,
+        12686448,
+        12691653,
+        12691654,
+        12756095,
+        12887067,
+        12887068,
+        13055523,
+        13290965,
+        13335727,
+        14222464,
+        14222468,
+        14222473,
+        14222485,
+        14222486,
+        14222993,
+        14222995,
+        14241048,
+        14262313,
+        14262314,
+        14276902,
+        15525532,
+        16750127,
+        16750128,
+        19021679,
+        19976137
+      ]
+    },
+    {
+      "reason": "has no member with role 'from'",
+      "count": 32,
+      "relation_ids": [
+        7422845,
+        7423368,
+        7902165,
+        9343269,
+        11802869,
+        11802871,
+        12155828,
+        12629716,
+        12685114,
+        12685671,
+        12726280,
+        12726281,
+        12756093,
+        12887070,
+        13613112,
+        14222469,
+        14222470,
+        14222471,
+        14222474,
+        14222475,
+        14222477,
+        14222490,
+        14222491,
+        14245432,
+        14245635,
+        14262315,
+        14281807,
+        15525535,
+        15640419,
+        17514154,
+        19021681,
+        19021682
+      ]
+    },
+    {
+      "reason": "has no member with role 'from' and 'to'",
+      "count": 32,
+      "relation_ids": [
+        2087629,
+        8001488,
+        8001489,
+        8001490,
+        8001491,
+        10022859,
+        10887105,
+        11003989,
+        12629709,
+        12629718,
+        12658466,
+        12685539,
+        12685540,
+        12685541,
+        12685542,
+        12685672,
+        12685673,
+        12691655,
+        14044409,
+        14222480,
+        14222483,
+        14222484,
+        14222488,
+        14241463,
+        14713796,
+        15525533,
+        15774794,
+        15774796,
+        16750129,
+        18972183,
+        19021683,
+        19021684
+      ]
+    },
+    {
+      "reason": "has no member with role 'via'",
+      "count": 10,
+      "relation_ids": [
+        7833466,
+        7833467,
+        7833468,
+        7833471,
+        7833472,
+        11551567,
+        12756094,
+        13779401,
+        14222466,
+        14222467
+      ]
+    },
+    {
+      "reason": "has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'",
+      "count": 8,
+      "relation_ids": [
+        13131244,
+        13347980,
+        15525534,
+        15702354,
+        15702355,
+        15702356,
+        16194616,
+        21503740
+      ]
+    },
+    {
+      "reason": "has disconnected member ways",
+      "count": 4,
+      "relation_ids": [
+        3821792,
+        8908883,
+        14713987,
+        18972187
+      ]
+    },
+    {
+      "reason": "has to-member ways that aren't split at the via-member node",
+      "count": 3,
+      "relation_ids": [
+        14222994,
+        19417734,
+        19976136
+      ]
+    },
+    {
+      "reason": "has from-member ways that aren't split at the via-member node",
+      "count": 2,
+      "relation_ids": [
+        13258979,
+        19976135
+      ]
+    },
+    {
+      "reason": "has multiple members with role 'from' even though it is not a 'no_entry' restriction",
+      "count": 2,
+      "relation_ids": [
+        9038615,
+        12947073
+      ]
+    },
+    {
+      "reason": "has from-member ways that aren't adjacent to the via-member node",
+      "count": 1,
+      "relation_ids": [
+        11878414
+      ]
+    },
+    {
+      "reason": "has member ways that do not form a unique path",
+      "count": 1,
+      "relation_ids": [
+        3821793
+      ]
+    },
+    {
+      "reason": "has multiple members with role 'to' even though it is not a 'no_exit' restriction",
+      "count": 1,
+      "relation_ids": [
+        8462058
+      ]
+    },
+    {
+      "reason": "has to-member ways that aren't adjacent to the via-member node",
+      "count": 1,
+      "relation_ids": [
+        13009586
+      ]
+    }
+  ],
+  "restriction_warnings": [
+    {
+      "relation_id": 2087629,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[via node 784044665]",
+      "log_line": 67,
+      "raw": "2026-10-19 19:13:18.354 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 2087629 has no member with role 'from' and 'to'. tags: {restriction=only_right_turn, type=restriction}, members: [via node 784044665]. Relation ignored."
+    },
+    {
+      "relation_id": 3821792,
+      "reason": "has disconnected member ways",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 82479767, via way 421916553, to way 4419699]",
+      "log_line": 68,
+      "raw": "2026-10-19 19:13:18.371 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 3821792 has disconnected member ways. tags: {restriction=no_u_turn, type=restriction}, members: [from way 82479767, via way 421916553, to way 4419699]. Relation ignored."
+    },
+    {
+      "relation_id": 3821793,
+      "reason": "has member ways that do not form a unique path",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 421916554, via way 421916556, to way 288118214]",
+      "log_line": 69,
+      "raw": "2026-10-19 19:13:18.372 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 3821793 has member ways that do not form a unique path. tags: {restriction=no_u_turn, type=restriction}, members: [from way 421916554, via way 421916556, to way 288118214]. Relation ignored."
+    },
+    {
+      "relation_id": 4853649,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 342069645, via node 1667586018]",
+      "log_line": 70,
+      "raw": "2026-10-19 19:13:18.374 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 4853649 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 342069645, via node 1667586018]. Relation ignored."
+    },
+    {
+      "relation_id": 4853650,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[from way 135848028, via node 639251585]",
+      "log_line": 71,
+      "raw": "2026-10-19 19:13:18.374 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 4853650 has no member with role 'to'. tags: {restriction=no_left_turn, type=restriction}, members: [from way 135848028, via node 639251585]. Relation ignored."
+    },
+    {
+      "relation_id": 4853651,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 135848028, via node 639251585]",
+      "log_line": 72,
+      "raw": "2026-10-19 19:13:18.375 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 4853651 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 135848028, via node 639251585]. Relation ignored."
+    },
+    {
+      "relation_id": 4853652,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[from way 154186785, via node 639251584]",
+      "log_line": 73,
+      "raw": "2026-10-19 19:13:18.375 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 4853652 has no member with role 'to'. tags: {restriction=no_left_turn, type=restriction}, members: [from way 154186785, via node 639251584]. Relation ignored."
+    },
+    {
+      "relation_id": 4853653,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 154186785, via node 639251584]",
+      "log_line": 74,
+      "raw": "2026-10-19 19:13:18.375 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 4853653 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 154186785, via node 639251584]. Relation ignored."
+    },
+    {
+      "relation_id": 5919068,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[via node 3975125545, from way 394515952]",
+      "log_line": 75,
+      "raw": "2026-10-19 19:13:18.376 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 5919068 has no member with role 'to'. tags: {restriction=only_right_turn, type=restriction}, members: [via node 3975125545, from way 394515952]. Relation ignored."
+    },
+    {
+      "relation_id": 7336293,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[from way 114034523, via node 1292290965]",
+      "log_line": 76,
+      "raw": "2026-10-19 19:13:18.378 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7336293 has no member with role 'to'. tags: {restriction=no_left_turn, type=restriction}, members: [from way 114034523, via node 1292290965]. Relation ignored."
+    },
+    {
+      "relation_id": 7411083,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 628486295, via node 1681676416]",
+      "log_line": 77,
+      "raw": "2026-10-19 19:13:18.379 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7411083 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 628486295, via node 1681676416]. Relation ignored."
+    },
+    {
+      "relation_id": 7422845,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 1139522921, to way 1464042472]",
+      "log_line": 78,
+      "raw": "2026-10-19 19:13:18.380 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7422845 has no member with role 'from'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 1139522921, to way 1464042472]. Relation ignored."
+    },
+    {
+      "relation_id": 7423368,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 25612827, to way 510792725]",
+      "log_line": 79,
+      "raw": "2026-10-19 19:13:18.380 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7423368 has no member with role 'from'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 25612827, to way 510792725]. Relation ignored."
+    },
+    {
+      "relation_id": 7756373,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 542562024, via node 632287310]",
+      "log_line": 80,
+      "raw": "2026-10-19 19:13:18.381 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7756373 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 542562024, via node 632287310]. Relation ignored."
+    },
+    {
+      "relation_id": 7833466,
+      "reason": "has no member with role 'via'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 187284892, to way 1458719539]",
+      "log_line": 81,
+      "raw": "2026-10-19 19:13:18.382 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7833466 has no member with role 'via'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 187284892, to way 1458719539]. Relation ignored."
+    },
+    {
+      "relation_id": 7833467,
+      "reason": "has no member with role 'via'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 1458719539, to way 171600550]",
+      "log_line": 82,
+      "raw": "2026-10-19 19:13:18.382 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7833467 has no member with role 'via'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 1458719539, to way 171600550]. Relation ignored."
+    },
+    {
+      "relation_id": 7833468,
+      "reason": "has no member with role 'via'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 1458719539, to way 1458719539]",
+      "log_line": 83,
+      "raw": "2026-10-19 19:13:18.382 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7833468 has no member with role 'via'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 1458719539, to way 1458719539]. Relation ignored."
+    },
+    {
+      "relation_id": 7833471,
+      "reason": "has no member with role 'via'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 171600550, to way 171600550]",
+      "log_line": 84,
+      "raw": "2026-10-19 19:13:18.382 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7833471 has no member with role 'via'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 171600550, to way 171600550]. Relation ignored."
+    },
+    {
+      "relation_id": 7833472,
+      "reason": "has no member with role 'via'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 171600550, to way 1458719541]",
+      "log_line": 85,
+      "raw": "2026-10-19 19:13:18.383 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7833472 has no member with role 'via'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 171600550, to way 1458719541]. Relation ignored."
+    },
+    {
+      "relation_id": 7902165,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 5339251181, to way 1308559060, to way 918340877]",
+      "log_line": 86,
+      "raw": "2026-10-19 19:13:18.384 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7902165 has no member with role 'from'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 5339251181, to way 1308559060, to way 918340877]. Relation ignored."
+    },
+    {
+      "relation_id": 7909906,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 217293452, via node 1782581382]",
+      "log_line": 87,
+      "raw": "2026-10-19 19:13:18.384 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 7909906 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 217293452, via node 1782581382]. Relation ignored."
+    },
+    {
+      "relation_id": 8001488,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 990553890]",
+      "log_line": 88,
+      "raw": "2026-10-19 19:13:18.384 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 8001488 has no member with role 'from' and 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 990553890]. Relation ignored."
+    },
+    {
+      "relation_id": 8001489,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 990553890]",
+      "log_line": 89,
+      "raw": "2026-10-19 19:13:18.384 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 8001489 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 990553890]. Relation ignored."
+    },
+    {
+      "relation_id": 8001490,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 990553890]",
+      "log_line": 90,
+      "raw": "2026-10-19 19:13:18.384 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 8001490 has no member with role 'from' and 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 990553890]. Relation ignored."
+    },
+    {
+      "relation_id": 8001491,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 990553890]",
+      "log_line": 91,
+      "raw": "2026-10-19 19:13:18.385 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 8001491 has no member with role 'from' and 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 990553890]. Relation ignored."
+    },
+    {
+      "relation_id": 8462058,
+      "reason": "has multiple members with role 'to' even though it is not a 'no_exit' restriction",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 609552734, to way 1557682777, to way 117285950]",
+      "log_line": 92,
+      "raw": "2026-10-19 19:13:18.386 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 8462058 has multiple members with role 'to' even though it is not a 'no_exit' restriction. tags: {restriction=no_right_turn, type=restriction}, members: [from way 609552734, to way 1557682777, to way 117285950]. Relation ignored."
+    },
+    {
+      "relation_id": 8495053,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 81450266, via node 25902293]",
+      "log_line": 93,
+      "raw": "2026-10-19 19:13:18.386 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 8495053 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 81450266, via node 25902293]. Relation ignored."
+    },
+    {
+      "relation_id": 8908883,
+      "reason": "has disconnected member ways",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[from way 640984867, via way 642484322, to way 281723227]",
+      "log_line": 94,
+      "raw": "2026-10-19 19:13:18.386 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 8908883 has disconnected member ways. tags: {restriction=only_straight_on, type=restriction}, members: [from way 640984867, via way 642484322, to way 281723227]. Relation ignored."
+    },
+    {
+      "relation_id": 9038615,
+      "reason": "has multiple members with role 'from' even though it is not a 'no_entry' restriction",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 1365098027, from way 647832956, to way 467288203]",
+      "log_line": 95,
+      "raw": "2026-10-19 19:13:18.387 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 9038615 has multiple members with role 'from' even though it is not a 'no_entry' restriction. tags: {restriction=no_u_turn, type=restriction}, members: [from way 1365098027, from way 647832956, to way 467288203]. Relation ignored."
+    },
+    {
+      "relation_id": 9343266,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 905026513, via node 13803532]",
+      "log_line": 96,
+      "raw": "2026-10-19 19:13:18.388 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 9343266 has no member with role 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 905026513, via node 13803532]. Relation ignored."
+    },
+    {
+      "relation_id": 9343269,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[to way 1149012127, via node 10689626791]",
+      "log_line": 97,
+      "raw": "2026-10-19 19:13:18.388 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 9343269 has no member with role 'from'. tags: {restriction=no_u_turn, type=restriction}, members: [to way 1149012127, via node 10689626791]. Relation ignored."
+    },
+    {
+      "relation_id": 10022859,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[via node 1678296126]",
+      "log_line": 98,
+      "raw": "2026-10-19 19:13:18.389 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 10022859 has no member with role 'from' and 'to'. tags: {restriction=no_left_turn, type=restriction}, members: [via node 1678296126]. Relation ignored."
+    },
+    {
+      "relation_id": 10022860,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 1049813789, via node 1678296126]",
+      "log_line": 99,
+      "raw": "2026-10-19 19:13:18.389 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 10022860 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 1049813789, via node 1678296126]. Relation ignored."
+    },
+    {
+      "relation_id": 10887105,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 5353132934]",
+      "log_line": 100,
+      "raw": "2026-10-19 19:13:18.391 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 10887105 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 5353132934]. Relation ignored."
+    },
+    {
+      "relation_id": 11003989,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[via node 6046620734]",
+      "log_line": 101,
+      "raw": "2026-10-19 19:13:18.392 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 11003989 has no member with role 'from' and 'to'. tags: {restriction=no_left_turn, type=restriction}, members: [via node 6046620734]. Relation ignored."
+    },
+    {
+      "relation_id": 11217699,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 660334149, via node 10689626772]",
+      "log_line": 102,
+      "raw": "2026-10-19 19:13:18.392 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 11217699 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 660334149, via node 10689626772]. Relation ignored."
+    },
+    {
+      "relation_id": 11551567,
+      "reason": "has no member with role 'via'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 841383468, to way 841383468]",
+      "log_line": 103,
+      "raw": "2026-10-19 19:13:18.393 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 11551567 has no member with role 'via'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 841383468, to way 841383468]. Relation ignored."
+    },
+    {
+      "relation_id": 11802869,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_left_turn, type=restriction}",
+      "members": "[via node 990976019, to way 165660358]",
+      "log_line": 104,
+      "raw": "2026-10-19 19:13:18.393 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 11802869 has no member with role 'from'. tags: {restriction=only_left_turn, type=restriction}, members: [via node 990976019, to way 165660358]. Relation ignored."
+    },
+    {
+      "relation_id": 11802871,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_left_turn, type=restriction}",
+      "members": "[via node 990976014, to way 165660249]",
+      "log_line": 105,
+      "raw": "2026-10-19 19:13:18.393 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 11802871 has no member with role 'from'. tags: {restriction=only_left_turn, type=restriction}, members: [via node 990976014, to way 165660249]. Relation ignored."
+    },
+    {
+      "relation_id": 11878414,
+      "reason": "has from-member ways that aren't adjacent to the via-member node",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 446127925, to way 870502865, via node 808733083]",
+      "log_line": 106,
+      "raw": "2026-10-19 19:13:18.394 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 11878414 has from-member ways that aren't adjacent to the via-member node. tags: {restriction=no_right_turn, type=restriction}, members: [from way 446127925, to way 870502865, via node 808733083]. Relation ignored."
+    },
+    {
+      "relation_id": 12155828,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 1574694653, to way 893691194]",
+      "log_line": 107,
+      "raw": "2026-10-19 19:13:18.394 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12155828 has no member with role 'from'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 1574694653, to way 893691194]. Relation ignored."
+    },
+    {
+      "relation_id": 12629709,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[via node 917350949]",
+      "log_line": 108,
+      "raw": "2026-10-19 19:13:18.395 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12629709 has no member with role 'from' and 'to'. tags: {restriction=no_left_turn, type=restriction}, members: [via node 917350949]. Relation ignored."
+    },
+    {
+      "relation_id": 12629716,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[to way 935171234, via node 7300446262]",
+      "log_line": 109,
+      "raw": "2026-10-19 19:13:18.395 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12629716 has no member with role 'from'. tags: {restriction=no_left_turn, type=restriction}, members: [to way 935171234, via node 7300446262]. Relation ignored."
+    },
+    {
+      "relation_id": 12629718,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 7300446262]",
+      "log_line": 110,
+      "raw": "2026-10-19 19:13:18.396 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12629718 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 7300446262]. Relation ignored."
+    },
+    {
+      "relation_id": 12658466,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 8690478856]",
+      "log_line": 111,
+      "raw": "2026-10-19 19:13:18.396 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12658466 has no member with role 'from' and 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 8690478856]. Relation ignored."
+    },
+    {
+      "relation_id": 12685114,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[to way 936463567, via node 32614035]",
+      "log_line": 112,
+      "raw": "2026-10-19 19:13:18.397 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12685114 has no member with role 'from'. tags: {restriction=no_u_turn, type=restriction}, members: [to way 936463567, via node 32614035]. Relation ignored."
+    },
+    {
+      "relation_id": 12685115,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 936463565, via node 8677303531]",
+      "log_line": 113,
+      "raw": "2026-10-19 19:13:18.397 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12685115 has no member with role 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 936463565, via node 8677303531]. Relation ignored."
+    },
+    {
+      "relation_id": 12685539,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 307730329]",
+      "log_line": 114,
+      "raw": "2026-10-19 19:13:18.397 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12685539 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 307730329]. Relation ignored."
+    },
+    {
+      "relation_id": 12685540,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 307730329]",
+      "log_line": 115,
+      "raw": "2026-10-19 19:13:18.397 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12685540 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 307730329]. Relation ignored."
+    },
+    {
+      "relation_id": 12685541,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[via node 307730329]",
+      "log_line": 116,
+      "raw": "2026-10-19 19:13:18.397 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12685541 has no member with role 'from' and 'to'. tags: {restriction=no_left_turn, type=restriction}, members: [via node 307730329]. Relation ignored."
+    },
+    {
+      "relation_id": 12685542,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 307730329]",
+      "log_line": 117,
+      "raw": "2026-10-19 19:13:18.398 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12685542 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 307730329]. Relation ignored."
+    },
+    {
+      "relation_id": 12685671,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[to way 448914800, via node 2547230169]",
+      "log_line": 118,
+      "raw": "2026-10-19 19:13:18.398 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12685671 has no member with role 'from'. tags: {restriction=no_u_turn, type=restriction}, members: [to way 448914800, via node 2547230169]. Relation ignored."
+    },
+    {
+      "relation_id": 12685672,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 8710758856]",
+      "log_line": 119,
+      "raw": "2026-10-19 19:13:18.398 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12685672 has no member with role 'from' and 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 8710758856]. Relation ignored."
+    },
+    {
+      "relation_id": 12685673,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 249587387]",
+      "log_line": 120,
+      "raw": "2026-10-19 19:13:18.398 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12685673 has no member with role 'from' and 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 249587387]. Relation ignored."
+    },
+    {
+      "relation_id": 12686448,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 633426502, via node 8674223414]",
+      "log_line": 121,
+      "raw": "2026-10-19 19:13:18.399 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12686448 has no member with role 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 633426502, via node 8674223414]. Relation ignored."
+    },
+    {
+      "relation_id": 12691653,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[from way 940540083, via node 8677303521]",
+      "log_line": 122,
+      "raw": "2026-10-19 19:13:18.399 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12691653 has no member with role 'to'. tags: {restriction=no_left_turn, type=restriction}, members: [from way 940540083, via node 8677303521]. Relation ignored."
+    },
+    {
+      "relation_id": 12691654,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 940540083, via node 8677303521]",
+      "log_line": 123,
+      "raw": "2026-10-19 19:13:18.399 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12691654 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 940540083, via node 8677303521]. Relation ignored."
+    },
+    {
+      "relation_id": 12691655,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 8677303521]",
+      "log_line": 124,
+      "raw": "2026-10-19 19:13:18.400 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12691655 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 8677303521]. Relation ignored."
+    },
+    {
+      "relation_id": 12726280,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 944525188, to way 944145210]",
+      "log_line": 125,
+      "raw": "2026-10-19 19:13:18.400 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12726280 has no member with role 'from'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 944525188, to way 944145210]. Relation ignored."
+    },
+    {
+      "relation_id": 12726281,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via way 944145209, via way 944145213, to way 154687182]",
+      "log_line": 126,
+      "raw": "2026-10-19 19:13:18.400 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12726281 has no member with role 'from'. tags: {restriction=no_u_turn, type=restriction}, members: [via way 944145209, via way 944145213, to way 154687182]. Relation ignored."
+    },
+    {
+      "relation_id": 12756093,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via way 947041680, to way 941096966]",
+      "log_line": 127,
+      "raw": "2026-10-19 19:13:18.401 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12756093 has no member with role 'from'. tags: {restriction=no_u_turn, type=restriction}, members: [via way 947041680, to way 941096966]. Relation ignored."
+    },
+    {
+      "relation_id": 12756094,
+      "reason": "has no member with role 'via'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 938216440, to way 947041680]",
+      "log_line": 128,
+      "raw": "2026-10-19 19:13:18.401 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12756094 has no member with role 'via'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 938216440, to way 947041680]. Relation ignored."
+    },
+    {
+      "relation_id": 12756095,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 941096966, via way 938216440]",
+      "log_line": 129,
+      "raw": "2026-10-19 19:13:18.401 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12756095 has no member with role 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 941096966, via way 938216440]. Relation ignored."
+    },
+    {
+      "relation_id": 12887067,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 311966148, via node 3177478999]",
+      "log_line": 130,
+      "raw": "2026-10-19 19:13:18.402 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12887067 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 311966148, via node 3177478999]. Relation ignored."
+    },
+    {
+      "relation_id": 12887068,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_straight_on, type=restriction}",
+      "members": "[from way 311966149, via node 3177478999]",
+      "log_line": 131,
+      "raw": "2026-10-19 19:13:18.402 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12887068 has no member with role 'to'. tags: {restriction=no_straight_on, type=restriction}, members: [from way 311966149, via node 3177478999]. Relation ignored."
+    },
+    {
+      "relation_id": 12887070,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[via node 3177479002, to way 958188568]",
+      "log_line": 132,
+      "raw": "2026-10-19 19:13:18.402 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12887070 has no member with role 'from'. tags: {restriction=no_left_turn, type=restriction}, members: [via node 3177479002, to way 958188568]. Relation ignored."
+    },
+    {
+      "relation_id": 12947073,
+      "reason": "has multiple members with role 'from' even though it is not a 'no_entry' restriction",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[from way 963758336, from way 1364864964, to way 963758337]",
+      "log_line": 133,
+      "raw": "2026-10-19 19:13:18.402 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 12947073 has multiple members with role 'from' even though it is not a 'no_entry' restriction. tags: {restriction=no_left_turn, type=restriction}, members: [from way 963758336, from way 1364864964, to way 963758337]. Relation ignored."
+    },
+    {
+      "relation_id": 13009586,
+      "reason": "has to-member ways that aren't adjacent to the via-member node",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 233785880, to way 1484039739, via node 10086048458]",
+      "log_line": 134,
+      "raw": "2026-10-19 19:13:18.403 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 13009586 has to-member ways that aren't adjacent to the via-member node. tags: {restriction=no_right_turn, type=restriction}, members: [from way 233785880, to way 1484039739, via node 10086048458]. Relation ignored."
+    },
+    {
+      "relation_id": 13055523,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 1365282346, via node 9008749926]",
+      "log_line": 135,
+      "raw": "2026-10-19 19:13:18.403 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 13055523 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 1365282346, via node 9008749926]. Relation ignored."
+    },
+    {
+      "relation_id": 13131244,
+      "reason": "has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'",
+      "tags": "{restriction=only_left_turn, type=restriction}",
+      "members": "[via node 10059840429, to way 976756519, via way 1098691904, from way 1372990629, via node 274816123]",
+      "log_line": 136,
+      "raw": "2026-10-19 19:13:18.403 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 13131244 has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'. tags: {restriction=only_left_turn, type=restriction}, members: [via node 10059840429, to way 976756519, via way 1098691904, from way 1372990629, via node 274816123]. Relation ignored."
+    },
+    {
+      "relation_id": 13258979,
+      "reason": "has from-member ways that aren't split at the via-member node",
+      "tags": "{restriction=no_entry, type=restriction}",
+      "members": "[via node 9120399863, to way 986689131, from way 51972420]",
+      "log_line": 137,
+      "raw": "2026-10-19 19:13:18.404 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 13258979 has from-member ways that aren't split at the via-member node. tags: {restriction=no_entry, type=restriction}, members: [via node 9120399863, to way 986689131, from way 51972420]. Relation ignored."
+    },
+    {
+      "relation_id": 13290965,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[from way 80129119, via node 4530334376]",
+      "log_line": 138,
+      "raw": "2026-10-19 19:13:18.404 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 13290965 has no member with role 'to'. tags: {restriction=no_left_turn, type=restriction}, members: [from way 80129119, via node 4530334376]. Relation ignored."
+    },
+    {
+      "relation_id": 13335727,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 43300823, from way 1288925780, from way 1288925779, via node 369467257]",
+      "log_line": 139,
+      "raw": "2026-10-19 19:13:18.405 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 13335727 has no member with role 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 43300823, from way 1288925780, from way 1288925779, via node 369467257]. Relation ignored."
+    },
+    {
+      "relation_id": 13347980,
+      "reason": "has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 2477445014, from way 1161035443, via way 1161035446, to way 1161035447, via node 10798908782]",
+      "log_line": 140,
+      "raw": "2026-10-19 19:13:18.405 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 13347980 has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 2477445014, from way 1161035443, via way 1161035446, to way 1161035447, via node 10798908782]. Relation ignored."
+    },
+    {
+      "relation_id": 13613112,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[via node 32027614, to way 1010346489]",
+      "log_line": 141,
+      "raw": "2026-10-19 19:13:18.406 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 13613112 has no member with role 'from'. tags: {restriction=only_straight_on, type=restriction}, members: [via node 32027614, to way 1010346489]. Relation ignored."
+    },
+    {
+      "relation_id": 13779401,
+      "reason": "has no member with role 'via'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[from way 378959091, to way 818516139]",
+      "log_line": 142,
+      "raw": "2026-10-19 19:13:18.407 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 13779401 has no member with role 'via'. tags: {restriction=only_straight_on, type=restriction}, members: [from way 378959091, to way 818516139]. Relation ignored."
+    },
+    {
+      "relation_id": 14044409,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[via node 9647533500]",
+      "log_line": 143,
+      "raw": "2026-10-19 19:13:18.408 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14044409 has no member with role 'from' and 'to'. tags: {restriction=no_left_turn, type=restriction}, members: [via node 9647533500]. Relation ignored."
+    },
+    {
+      "relation_id": 14222464,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 1241211924, via way 1067005186]",
+      "log_line": 144,
+      "raw": "2026-10-19 19:13:18.409 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222464 has no member with role 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 1241211924, via way 1067005186]. Relation ignored."
+    },
+    {
+      "relation_id": 14222466,
+      "reason": "has no member with role 'via'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 1067005186, to way 1067005205]",
+      "log_line": 145,
+      "raw": "2026-10-19 19:13:18.409 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222466 has no member with role 'via'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 1067005186, to way 1067005205]. Relation ignored."
+    },
+    {
+      "relation_id": 14222467,
+      "reason": "has no member with role 'via'",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[from way 1067005186, to way 1067005204]",
+      "log_line": 146,
+      "raw": "2026-10-19 19:13:18.409 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222467 has no member with role 'via'. tags: {restriction=no_left_turn, type=restriction}, members: [from way 1067005186, to way 1067005204]. Relation ignored."
+    },
+    {
+      "relation_id": 14222468,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 1067005186]",
+      "log_line": 147,
+      "raw": "2026-10-19 19:13:18.410 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222468 has no member with role 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 1067005186]. Relation ignored."
+    },
+    {
+      "relation_id": 14222469,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[to way 1067005198]",
+      "log_line": 148,
+      "raw": "2026-10-19 19:13:18.410 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222469 has no member with role 'from'. tags: {restriction=only_right_turn, type=restriction}, members: [to way 1067005198]. Relation ignored."
+    },
+    {
+      "relation_id": 14222470,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[via node 9797368138, to way 1067005198]",
+      "log_line": 149,
+      "raw": "2026-10-19 19:13:18.410 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222470 has no member with role 'from'. tags: {restriction=only_right_turn, type=restriction}, members: [via node 9797368138, to way 1067005198]. Relation ignored."
+    },
+    {
+      "relation_id": 14222471,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[via node 9797368136, to way 1067005206]",
+      "log_line": 150,
+      "raw": "2026-10-19 19:13:18.410 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222471 has no member with role 'from'. tags: {restriction=only_straight_on, type=restriction}, members: [via node 9797368136, to way 1067005206]. Relation ignored."
+    },
+    {
+      "relation_id": 14222473,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[from way 1067005186, via node 28889610]",
+      "log_line": 151,
+      "raw": "2026-10-19 19:13:18.411 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222473 has no member with role 'to'. tags: {restriction=only_straight_on, type=restriction}, members: [from way 1067005186, via node 28889610]. Relation ignored."
+    },
+    {
+      "relation_id": 14222474,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[via way 1067005205, to way 1241211925]",
+      "log_line": 152,
+      "raw": "2026-10-19 19:13:18.411 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222474 has no member with role 'from'. tags: {restriction=only_right_turn, type=restriction}, members: [via way 1067005205, to way 1241211925]. Relation ignored."
+    },
+    {
+      "relation_id": 14222475,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[via way 1067005205, to way 1241211925]",
+      "log_line": 153,
+      "raw": "2026-10-19 19:13:18.411 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222475 has no member with role 'from'. tags: {restriction=only_right_turn, type=restriction}, members: [via way 1067005205, to way 1241211925]. Relation ignored."
+    },
+    {
+      "relation_id": 14222477,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_left_turn, type=restriction}",
+      "members": "[via node 9797368124, to way 1241211925]",
+      "log_line": 154,
+      "raw": "2026-10-19 19:13:18.411 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222477 has no member with role 'from'. tags: {restriction=only_left_turn, type=restriction}, members: [via node 9797368124, to way 1241211925]. Relation ignored."
+    },
+    {
+      "relation_id": 14222480,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via way 1067005180]",
+      "log_line": 155,
+      "raw": "2026-10-19 19:13:18.411 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222480 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via way 1067005180]. Relation ignored."
+    },
+    {
+      "relation_id": 14222483,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via way 1067005180, via way 1067005213]",
+      "log_line": 156,
+      "raw": "2026-10-19 19:13:18.411 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222483 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via way 1067005180, via way 1067005213]. Relation ignored."
+    },
+    {
+      "relation_id": 14222484,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via way 1067005180]",
+      "log_line": 157,
+      "raw": "2026-10-19 19:13:18.411 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222484 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via way 1067005180]. Relation ignored."
+    },
+    {
+      "relation_id": 14222485,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[from way 1067005188]",
+      "log_line": 158,
+      "raw": "2026-10-19 19:13:18.412 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222485 has no member with role 'to'. tags: {restriction=only_right_turn, type=restriction}, members: [from way 1067005188]. Relation ignored."
+    },
+    {
+      "relation_id": 14222486,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[from way 1067005190]",
+      "log_line": 159,
+      "raw": "2026-10-19 19:13:18.412 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222486 has no member with role 'to'. tags: {restriction=only_right_turn, type=restriction}, members: [from way 1067005190]. Relation ignored."
+    },
+    {
+      "relation_id": 14222488,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[via node 9797368143]",
+      "log_line": 160,
+      "raw": "2026-10-19 19:13:18.412 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222488 has no member with role 'from' and 'to'. tags: {restriction=only_right_turn, type=restriction}, members: [via node 9797368143]. Relation ignored."
+    },
+    {
+      "relation_id": 14222490,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[to way 1067053611]",
+      "log_line": 161,
+      "raw": "2026-10-19 19:13:18.412 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222490 has no member with role 'from'. tags: {restriction=only_straight_on, type=restriction}, members: [to way 1067053611]. Relation ignored."
+    },
+    {
+      "relation_id": 14222491,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[via node 9797368117, to way 1067053611]",
+      "log_line": 162,
+      "raw": "2026-10-19 19:13:18.412 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222491 has no member with role 'from'. tags: {restriction=only_straight_on, type=restriction}, members: [via node 9797368117, to way 1067053611]. Relation ignored."
+    },
+    {
+      "relation_id": 14222993,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 1067005194, via way 1067005204]",
+      "log_line": 163,
+      "raw": "2026-10-19 19:13:18.412 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222993 has no member with role 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 1067005194, via way 1067005204]. Relation ignored."
+    },
+    {
+      "relation_id": 14222994,
+      "reason": "has to-member ways that aren't split at the via-member node",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[from way 1067005194, via node 9797368149, to way 1067005205]",
+      "log_line": 164,
+      "raw": "2026-10-19 19:13:18.413 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222994 has to-member ways that aren't split at the via-member node. tags: {restriction=no_left_turn, type=restriction}, members: [from way 1067005194, via node 9797368149, to way 1067005205]. Relation ignored."
+    },
+    {
+      "relation_id": 14222995,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 1067005204, via node 28889610]",
+      "log_line": 165,
+      "raw": "2026-10-19 19:13:18.413 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14222995 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 1067005204, via node 28889610]. Relation ignored."
+    },
+    {
+      "relation_id": 14241048,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 506673286]",
+      "log_line": 166,
+      "raw": "2026-10-19 19:13:18.414 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14241048 has no member with role 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 506673286]. Relation ignored."
+    },
+    {
+      "relation_id": 14241463,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 663595579]",
+      "log_line": 167,
+      "raw": "2026-10-19 19:13:18.414 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14241463 has no member with role 'from' and 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 663595579]. Relation ignored."
+    },
+    {
+      "relation_id": 14245432,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[to way 68022939, via node 2882638781]",
+      "log_line": 168,
+      "raw": "2026-10-19 19:13:18.418 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14245432 has no member with role 'from'. tags: {restriction=no_u_turn, type=restriction}, members: [to way 68022939, via node 2882638781]. Relation ignored."
+    },
+    {
+      "relation_id": 14245635,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_left_turn, type=restriction}",
+      "members": "[via node 9813183567, to way 1069076529]",
+      "log_line": 169,
+      "raw": "2026-10-19 19:13:18.418 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14245635 has no member with role 'from'. tags: {restriction=only_left_turn, type=restriction}, members: [via node 9813183567, to way 1069076529]. Relation ignored."
+    },
+    {
+      "relation_id": 14262313,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 1125878238, via node 419698442]",
+      "log_line": 170,
+      "raw": "2026-10-19 19:13:18.420 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14262313 has no member with role 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 1125878238, via node 419698442]. Relation ignored."
+    },
+    {
+      "relation_id": 14262314,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[from way 970260366, via node 419698443]",
+      "log_line": 171,
+      "raw": "2026-10-19 19:13:18.420 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14262314 has no member with role 'to'. tags: {restriction=only_straight_on, type=restriction}, members: [from way 970260366, via node 419698443]. Relation ignored."
+    },
+    {
+      "relation_id": 14262315,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[to way 970260366, via node 419698443]",
+      "log_line": 172,
+      "raw": "2026-10-19 19:13:18.420 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14262315 has no member with role 'from'. tags: {restriction=only_straight_on, type=restriction}, members: [to way 970260366, via node 419698443]. Relation ignored."
+    },
+    {
+      "relation_id": 14276902,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[from way 512392960, via node 4088571315]",
+      "log_line": 173,
+      "raw": "2026-10-19 19:13:18.421 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14276902 has no member with role 'to'. tags: {restriction=only_straight_on, type=restriction}, members: [from way 512392960, via node 4088571315]. Relation ignored."
+    },
+    {
+      "relation_id": 14281807,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[to way 564148768, via node 252659218]",
+      "log_line": 174,
+      "raw": "2026-10-19 19:13:18.422 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14281807 has no member with role 'from'. tags: {restriction=only_straight_on, type=restriction}, members: [to way 564148768, via node 252659218]. Relation ignored."
+    },
+    {
+      "relation_id": 14713796,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[via node 11233294772]",
+      "log_line": 175,
+      "raw": "2026-10-19 19:13:18.423 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14713796 has no member with role 'from' and 'to'. tags: {restriction=only_straight_on, type=restriction}, members: [via node 11233294772]. Relation ignored."
+    },
+    {
+      "relation_id": 14713987,
+      "reason": "has disconnected member ways",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 698057728, via way 698057724, to way 82291089]",
+      "log_line": 176,
+      "raw": "2026-10-19 19:13:18.424 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 14713987 has disconnected member ways. tags: {restriction=no_right_turn, type=restriction}, members: [from way 698057728, via way 698057724, to way 82291089]. Relation ignored."
+    },
+    {
+      "relation_id": 15525532,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[from way 1149012129, via node 6182395167]",
+      "log_line": 177,
+      "raw": "2026-10-19 19:13:18.425 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 15525532 has no member with role 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [from way 1149012129, via node 6182395167]. Relation ignored."
+    },
+    {
+      "relation_id": 15525533,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[via node 6182395178]",
+      "log_line": 178,
+      "raw": "2026-10-19 19:13:18.425 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 15525533 has no member with role 'from' and 'to'. tags: {restriction=only_straight_on, type=restriction}, members: [via node 6182395178]. Relation ignored."
+    },
+    {
+      "relation_id": 15525534,
+      "reason": "has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 6182395174, via node 6182395178, from way 1149012131, via way 671825116]",
+      "log_line": 179,
+      "raw": "2026-10-19 19:13:18.425 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 15525534 has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 6182395174, via node 6182395178, from way 1149012131, via way 671825116]. Relation ignored."
+    },
+    {
+      "relation_id": 15525535,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[to way 660334149, via node 13803532]",
+      "log_line": 180,
+      "raw": "2026-10-19 19:13:18.425 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 15525535 has no member with role 'from'. tags: {restriction=no_u_turn, type=restriction}, members: [to way 660334149, via node 13803532]. Relation ignored."
+    },
+    {
+      "relation_id": 15640419,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[to way 63565602]",
+      "log_line": 181,
+      "raw": "2026-10-19 19:13:18.425 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 15640419 has no member with role 'from'. tags: {restriction=no_right_turn, type=restriction}, members: [to way 63565602]. Relation ignored."
+    },
+    {
+      "relation_id": 15702354,
+      "reason": "has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 10798908783, from way 1161035447, via way 1161035445, to way 1161035443, via node 10798908772]",
+      "log_line": 182,
+      "raw": "2026-10-19 19:13:18.425 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 15702354 has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 10798908783, from way 1161035447, via way 1161035445, to way 1161035443, via node 10798908772]. Relation ignored."
+    },
+    {
+      "relation_id": 15702355,
+      "reason": "has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 10798908772, from way 1161035445, via way 1161035443, to way 1161035446, via node 2477445014]",
+      "log_line": 183,
+      "raw": "2026-10-19 19:13:18.425 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 15702355 has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 10798908772, from way 1161035445, via way 1161035443, to way 1161035446, via node 2477445014]. Relation ignored."
+    },
+    {
+      "relation_id": 15702356,
+      "reason": "has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 10798908782, from way 1161035446, via way 1161035447, to way 1161035445, via node 10798908783]",
+      "log_line": 184,
+      "raw": "2026-10-19 19:13:18.426 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 15702356 has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 10798908782, from way 1161035446, via way 1161035447, to way 1161035445, via node 10798908783]. Relation ignored."
+    },
+    {
+      "relation_id": 15774794,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 26130088]",
+      "log_line": 185,
+      "raw": "2026-10-19 19:13:18.426 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 15774794 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 26130088]. Relation ignored."
+    },
+    {
+      "relation_id": 15774796,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 26130037]",
+      "log_line": 186,
+      "raw": "2026-10-19 19:13:18.426 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 15774796 has no member with role 'from' and 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 26130037]. Relation ignored."
+    },
+    {
+      "relation_id": 16194616,
+      "reason": "has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via node 8863689774, via node 8863689775, from way 940589141, via way 23344552, to way 125935195]",
+      "log_line": 187,
+      "raw": "2026-10-19 19:13:18.427 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 16194616 has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'. tags: {restriction=no_u_turn, type=restriction}, members: [via node 8863689774, via node 8863689775, from way 940589141, via way 23344552, to way 125935195]. Relation ignored."
+    },
+    {
+      "relation_id": 16750127,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, except=bicycle, type=restriction}",
+      "members": "[from way 468023826, via node 1827300884]",
+      "log_line": 188,
+      "raw": "2026-10-19 19:13:18.428 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 16750127 has no member with role 'to'. tags: {restriction=no_right_turn, except=bicycle, type=restriction}, members: [from way 468023826, via node 1827300884]. Relation ignored."
+    },
+    {
+      "relation_id": 16750128,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_left_turn, except=bicycle, type=restriction}",
+      "members": "[from way 1226575034, via node 1827300884]",
+      "log_line": 189,
+      "raw": "2026-10-19 19:13:18.429 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 16750128 has no member with role 'to'. tags: {restriction=no_left_turn, except=bicycle, type=restriction}, members: [from way 1226575034, via node 1827300884]. Relation ignored."
+    },
+    {
+      "relation_id": 16750129,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_straight_on, except=bicycle, type=restriction}",
+      "members": "[via node 1827300884]",
+      "log_line": 190,
+      "raw": "2026-10-19 19:13:18.429 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 16750129 has no member with role 'from' and 'to'. tags: {restriction=no_straight_on, except=bicycle, type=restriction}, members: [via node 1827300884]. Relation ignored."
+    },
+    {
+      "relation_id": 17514154,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[via node 11846648351, to way 28078795]",
+      "log_line": 191,
+      "raw": "2026-10-19 19:13:18.429 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 17514154 has no member with role 'from'. tags: {restriction=no_right_turn, type=restriction}, members: [via node 11846648351, to way 28078795]. Relation ignored."
+    },
+    {
+      "relation_id": 18972183,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[via node 6555788175]",
+      "log_line": 192,
+      "raw": "2026-10-19 19:13:18.432 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 18972183 has no member with role 'from' and 'to'. tags: {restriction=only_straight_on, type=restriction}, members: [via node 6555788175]. Relation ignored."
+    },
+    {
+      "relation_id": 18972187,
+      "reason": "has disconnected member ways",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[from way 1097345285, via way 1376442109, to way 153679545]",
+      "log_line": 193,
+      "raw": "2026-10-19 19:13:18.433 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 18972187 has disconnected member ways. tags: {restriction=only_right_turn, type=restriction}, members: [from way 1097345285, via way 1376442109, to way 153679545]. Relation ignored."
+    },
+    {
+      "relation_id": 19021679,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 155008083]",
+      "log_line": 194,
+      "raw": "2026-10-19 19:13:18.433 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 19021679 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 155008083]. Relation ignored."
+    },
+    {
+      "relation_id": 19021681,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[to way 633208371]",
+      "log_line": 195,
+      "raw": "2026-10-19 19:13:18.434 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 19021681 has no member with role 'from'. tags: {restriction=only_right_turn, type=restriction}, members: [to way 633208371]. Relation ignored."
+    },
+    {
+      "relation_id": 19021682,
+      "reason": "has no member with role 'from'",
+      "tags": "{restriction=only_right_turn, type=restriction}",
+      "members": "[to way 633208371]",
+      "log_line": 196,
+      "raw": "2026-10-19 19:13:18.434 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 19021682 has no member with role 'from'. tags: {restriction=only_right_turn, type=restriction}, members: [to way 633208371]. Relation ignored."
+    },
+    {
+      "relation_id": 19021683,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via way 633208370]",
+      "log_line": 197,
+      "raw": "2026-10-19 19:13:18.434 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 19021683 has no member with role 'from' and 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [via way 633208370]. Relation ignored."
+    },
+    {
+      "relation_id": 19021684,
+      "reason": "has no member with role 'from' and 'to'",
+      "tags": "{restriction=no_u_turn, type=restriction}",
+      "members": "[via way 633208370]",
+      "log_line": 198,
+      "raw": "2026-10-19 19:13:18.434 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 19021684 has no member with role 'from' and 'to'. tags: {restriction=no_u_turn, type=restriction}, members: [via way 633208370]. Relation ignored."
+    },
+    {
+      "relation_id": 19417734,
+      "reason": "has to-member ways that aren't split at the via-member node",
+      "tags": "{restriction=only_left_turn, type=restriction}",
+      "members": "[from way 1419412970, to way 375415305, via node 9148621965]",
+      "log_line": 199,
+      "raw": "2026-10-19 19:13:18.434 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 19417734 has to-member ways that aren't split at the via-member node. tags: {restriction=only_left_turn, type=restriction}, members: [from way 1419412970, to way 375415305, via node 9148621965]. Relation ignored."
+    },
+    {
+      "relation_id": 19976135,
+      "reason": "has from-member ways that aren't split at the via-member node",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[from way 1459605250, via node 778218453, to way 1459605248]",
+      "log_line": 200,
+      "raw": "2026-10-19 19:13:18.435 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 19976135 has from-member ways that aren't split at the via-member node. tags: {restriction=no_left_turn, type=restriction}, members: [from way 1459605250, via node 778218453, to way 1459605248]. Relation ignored."
+    },
+    {
+      "relation_id": 19976136,
+      "reason": "has to-member ways that aren't split at the via-member node",
+      "tags": "{restriction=no_left_turn, type=restriction}",
+      "members": "[from way 1459605253, via node 778218453, to way 1459605250]",
+      "log_line": 201,
+      "raw": "2026-10-19 19:13:18.435 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 19976136 has to-member ways that aren't split at the via-member node. tags: {restriction=no_left_turn, type=restriction}, members: [from way 1459605253, via node 778218453, to way 1459605250]. Relation ignored."
+    },
+    {
+      "relation_id": 19976137,
+      "reason": "has no member with role 'to'",
+      "tags": "{restriction=no_right_turn, type=restriction}",
+      "members": "[from way 1459605253, via node 778218453]",
+      "log_line": 202,
+      "raw": "2026-10-19 19:13:18.435 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 19976137 has no member with role 'to'. tags: {restriction=no_right_turn, type=restriction}, members: [from way 1459605253, via node 778218453]. Relation ignored."
+    },
+    {
+      "relation_id": 21503740,
+      "reason": "has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'",
+      "tags": "{restriction=only_straight_on, type=restriction}",
+      "members": "[via node 25613007, via node 25613006, from way 1565321567, via way 756803927, to way 246109393]",
+      "log_line": 203,
+      "raw": "2026-10-19 19:13:18.436 [main] WARN  com.graphhopper.osm_warnings - Restriction relation 21503740 has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'. tags: {restriction=only_straight_on, type=restriction}, members: [via node 25613007, via node 25613006, from way 1565321567, via way 756803927, to way 246109393]. Relation ignored."
+    }
+  ],
+  "other_upstream_warnings": []
+}

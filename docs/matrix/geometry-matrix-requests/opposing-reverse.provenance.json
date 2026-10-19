@@ -1,0 +1,103 @@
+{
+  "scope": "ACTUAL_SAVED_ROUTE_INPUT_TO_MATRIX_1X1",
+  "created_utc": "2026-10-19T19:05:57.635504+00:00",
+  "case": "opposite-carriageways-source-reverse",
+  "profile": "car",
+  "base_url": "http://localhost:8999",
+  "source_geometry_summary": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\summary.json",
+  "source_geometry_summary_sha256": "1fa5584b9474d41949f5965fa9126654da353a16cb5b4d234c9e5f5ce54a5aee",
+  "source_geometry_summary_generated_utc": "2026-10-19T19:04:30.176244+00:00",
+  "source_route_request": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\opposite-carriageways-source-reverse-car.request.json",
+  "source_route_request_sha256": "2baaaf5b637f2d1ce25422b11a17913d25f9ca146898029f714a0e6f8279de0a",
+  "source_route_response": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\opposite-carriageways-source-reverse-car.response.json",
+  "source_route_response_sha256": "28bcb114b285d5752a17e5a0d19f842c2e880523c59558d87dac1954b5e698d3",
+  "matrix_request": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\opposing-reverse.json",
+  "matrix_request_file_sha256": "6418217d8e4ecca0c981382543672e7a364196fc5679e349906b1e45b577aa40",
+  "conversion": "Retain the actual profile and exact raw endpoint coordinates; use singleton axes and the four matrix metrics.",
+  "removed_route_only_fields": [
+    "algorithm",
+    "calc_points",
+    "ch.disable",
+    "details",
+    "instructions",
+    "lm.disable",
+    "points_encoded",
+    "snap_preventions"
+  ],
+  "coordinate_provenance": {
+    "source_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+    "metadata_report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-candidates.json",
+    "source_pair": {
+      "first_way_id": 121174584,
+      "first_way_tags": {
+        "bicycle": "no",
+        "bridge": "yes",
+        "highway": "motorway",
+        "lanes": "3",
+        "layer": "1",
+        "lit": "yes",
+        "maxspeed": "30 mph",
+        "name": "Mancunian Way",
+        "not:name": "Mancunian Way (Elevated Road)",
+        "oneway": "yes",
+        "operator": "Manchester City Council",
+        "ref": "A57(M)",
+        "surface": "asphalt"
+      },
+      "first_segment_node_ids": [
+        3351263,
+        3350617
+      ],
+      "first_permitted_tangent": [
+        -0.9543407429068519,
+        -0.2987201808180994
+      ],
+      "second_way_id": 1128395117,
+      "second_way_tags": {
+        "bicycle": "no",
+        "bridge": "yes",
+        "highway": "motorway",
+        "lane_markings": "yes",
+        "lanes": "3",
+        "layer": "1",
+        "lit": "yes",
+        "maxspeed": "30 mph",
+        "name": "Mancunian Way",
+        "not:name": "Mancunian Way (Elevated Road)",
+        "oneway": "yes",
+        "operator": "Manchester City Council",
+        "ref": "A57(M)",
+        "source": "bing",
+        "source:name": "OS_OpenData_Locator",
+        "source:ref": "OS_OpenData_Locator",
+        "surface": "asphalt",
+        "turn:lanes": "slight_left|through|through"
+      },
+      "second_segment_node_ids": [
+        2870425365,
+        1663075703
+      ],
+      "second_permitted_tangent": [
+        0.9380532687064318,
+        0.3464910750209575
+      ],
+      "points_lon_lat": [
+        [
+          -2.2384752500000005,
+          53.47151515
+        ],
+        [
+          -2.238532575468136,
+          53.471607526670134
+        ]
+      ],
+      "separation_m": 10.962457981856243,
+      "permitted_tangent_dot_product": -0.998726329925615,
+      "distance_from_city_anchor_m": 1069.1058859712916,
+      "confirmation": "SOURCE_GEOMETRY_CONFIRMED; IMPORTED_SNAPS_AND_ROUTE_PENDING"
+    }
+  },
+  "validator": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\prompt_pack\\GraphHopper_Local_Matrix_Codex_Pack\\validation\\validate_http.py",
+  "validator_sha256": "36d5fd4a3dc215dff9ce87aaf06934f7986546582e3e3243f93e5cf7f9183d77",
+  "manual_review": "Recorded separately; this verifier only checks HTTP metrics/null masks."
+}

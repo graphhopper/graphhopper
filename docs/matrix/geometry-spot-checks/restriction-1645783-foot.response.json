@@ -1,0 +1,366 @@
+{
+  "hints": {
+    "visited_nodes.sum": 54,
+    "visited_nodes.average": 54.0
+  },
+  "info": {
+    "copyrights": [
+      "GraphHopper",
+      "OpenStreetMap contributors"
+    ],
+    "took": 2,
+    "road_data_timestamp": "2026-10-18T20:25:06Z"
+  },
+  "paths": [
+    {
+      "distance": 55.309,
+      "weight": 40.203867,
+      "time": 39823,
+      "transfers": 0,
+      "legs": [],
+      "points_encoded": false,
+      "bbox": [
+        -2.24844,
+        53.48058,
+        -2.248069,
+        53.480902
+      ],
+      "points": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -2.24844,
+            53.480902
+          ],
+          [
+            -2.248207,
+            53.480864
+          ],
+          [
+            -2.248225,
+            53.480825
+          ],
+          [
+            -2.248228,
+            53.480818
+          ],
+          [
+            -2.248193,
+            53.480798
+          ],
+          [
+            -2.248184,
+            53.480762
+          ],
+          [
+            -2.248158,
+            53.480756
+          ],
+          [
+            -2.248069,
+            53.480735
+          ],
+          [
+            -2.248174,
+            53.48058
+          ]
+        ]
+      },
+      "instructions": [
+        {
+          "street_ref": "A34",
+          "distance": 15.938,
+          "heading": 105.36,
+          "sign": 0,
+          "interval": [
+            0,
+            1
+          ],
+          "text": "Continue onto Bridge Street",
+          "time": 11475,
+          "street_name": "Bridge Street"
+        },
+        {
+          "distance": 5.245,
+          "sign": 2,
+          "interval": [
+            1,
+            3
+          ],
+          "text": "Turn right",
+          "time": 3776,
+          "street_name": ""
+        },
+        {
+          "distance": 7.276,
+          "sign": -2,
+          "interval": [
+            3,
+            5
+          ],
+          "text": "Turn left",
+          "time": 5239,
+          "street_name": ""
+        },
+        {
+          "distance": 8.21,
+          "sign": -2,
+          "interval": [
+            5,
+            7
+          ],
+          "text": "Turn left",
+          "time": 5912,
+          "street_name": ""
+        },
+        {
+          "street_ref": "A56",
+          "distance": 18.64,
+          "sign": 2,
+          "interval": [
+            7,
+            8
+          ],
+          "text": "Turn right onto Deansgate",
+          "time": 13421,
+          "street_name": "Deansgate"
+        },
+        {
+          "distance": 0.0,
+          "sign": 4,
+          "last_heading": 202.05929603083612,
+          "interval": [
+            8,
+            8
+          ],
+          "text": "Arrive at destination",
+          "time": 0,
+          "street_name": ""
+        }
+      ],
+      "details": {
+        "distance": [
+          [
+            0,
+            1,
+            15.93811955210725
+          ],
+          [
+            1,
+            2,
+            4.438
+          ],
+          [
+            2,
+            3,
+            0.807
+          ],
+          [
+            3,
+            5,
+            7.276
+          ],
+          [
+            5,
+            6,
+            1.866
+          ],
+          [
+            6,
+            7,
+            6.344
+          ],
+          [
+            7,
+            8,
+            18.640221855768768
+          ]
+        ],
+        "foot_access": [
+          [
+            0,
+            8,
+            true
+          ]
+        ],
+        "edge_key": [
+          [
+            0,
+            1,
+            742459
+          ],
+          [
+            1,
+            2,
+            742444
+          ],
+          [
+            2,
+            3,
+            742441
+          ],
+          [
+            3,
+            5,
+            742438
+          ],
+          [
+            5,
+            6,
+            742434
+          ],
+          [
+            6,
+            7,
+            742161
+          ],
+          [
+            7,
+            8,
+            742156
+          ]
+        ],
+        "weight": [
+          [
+            0,
+            1,
+            "Infinity"
+          ],
+          [
+            1,
+            2,
+            2.6627999999999994
+          ],
+          [
+            2,
+            3,
+            0.4842
+          ],
+          [
+            3,
+            5,
+            4.3656
+          ],
+          [
+            5,
+            6,
+            1.1196
+          ],
+          [
+            6,
+            7,
+            3.8064000000000004
+          ],
+          [
+            7,
+            8,
+            13.420959736153513
+          ]
+        ],
+        "road_class": [
+          [
+            0,
+            1,
+            "primary"
+          ],
+          [
+            1,
+            7,
+            "footway"
+          ],
+          [
+            7,
+            8,
+            "tertiary"
+          ]
+        ],
+        "time": [
+          [
+            0,
+            1,
+            11475
+          ],
+          [
+            1,
+            2,
+            3195
+          ],
+          [
+            2,
+            3,
+            581
+          ],
+          [
+            3,
+            5,
+            5239
+          ],
+          [
+            5,
+            6,
+            1344
+          ],
+          [
+            6,
+            7,
+            4568
+          ],
+          [
+            7,
+            8,
+            13421
+          ]
+        ],
+        "car_access": [
+          [
+            0,
+            1,
+            true
+          ],
+          [
+            1,
+            7,
+            false
+          ],
+          [
+            7,
+            8,
+            true
+          ]
+        ],
+        "street_name": [
+          [
+            0,
+            1,
+            "Bridge Street"
+          ],
+          [
+            1,
+            7,
+            null
+          ],
+          [
+            7,
+            8,
+            "Deansgate"
+          ]
+        ]
+      },
+      "ascend": 0.0,
+      "descend": 0.0,
+      "snapped_waypoints": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -2.24844,
+            53.480902
+          ],
+          [
+            -2.248174,
+            53.48058
+          ]
+        ]
+      }
+    }
+  ]
+}

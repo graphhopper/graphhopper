@@ -1,0 +1,13 @@
+profile,workload,backend,repeats,median_ms,p95_ms,completed_cells_min,completed_cells_max,reachable_cells_min,reachable_cells_max,completed_cells_per_second,reachable_cells_per_second,median_output_body_bytes,median_http_requests,connections_opened,server_connection_closes
+foot,manchester_one_to_many,http_matrix_flexible,20,21.72505,24.0956,3,3,3,3,138.09602819733243,138.09602819733243,1479.0,1.0,0,0
+foot,manchester_one_to_many,http_route_configured_ch,20,11.81315,15.6216,3,3,3,3,254.00948311674648,254.00948311674648,1119.0,3.0,0,0
+car,manchester_one_to_many,http_matrix_flexible,20,21.688450000000003,24.8559,3,3,3,3,138.32553964848506,138.32553964848506,1440.5,1.0,0,0
+car,manchester_one_to_many,http_route_configured_ch,20,12.04925,16.6843,3,3,3,3,248.9816947104141,248.9816947104141,1115.0,3.0,0,0
+foot,manchester_rectangular,http_matrix_flexible,20,38.18105,45.6313,12,12,12,12,314.30747120045544,314.30747120045544,2142.0,1.0,0,0
+foot,manchester_rectangular,http_route_configured_ch,20,38.93685,44.2254,12,12,12,12,308.2006112616077,308.2006112616077,4428.0,12.0,0,0
+car,manchester_rectangular,http_matrix_flexible,20,35.515150000000006,42.7737,12,12,12,12,337.88535637460035,337.88535637460035,2045.0,1.0,0,0
+car,manchester_rectangular,http_route_configured_ch,20,31.0476,34.4831,12,12,12,12,386.5210550201726,386.5210550201726,4413.0,12.0,0,0
+foot,manchester_square,http_matrix_flexible,20,46.9999,49.6425,9,9,9,9,191.49692959626606,191.49692959626606,1856.0,1.0,0,0
+foot,manchester_square,http_route_configured_ch,20,24.0319,28.4306,9,9,9,9,374.5024159653907,374.5024159653907,3280.0,9.0,0,0
+car,manchester_square,http_matrix_flexible,20,33.6612,36.8189,9,9,9,9,267.40648604557396,267.40648604557396,1790.0,1.0,0,0
+car,manchester_square,http_route_configured_ch,20,19.3609,21.9499,9,9,9,9,464.91401710625985,464.91401710625985,3273.0,9.0,0,0

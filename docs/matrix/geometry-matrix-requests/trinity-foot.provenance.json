@@ -1,0 +1,75 @@
+{
+  "scope": "ACTUAL_SAVED_ROUTE_INPUT_TO_MATRIX_1X1",
+  "created_utc": "2026-10-19T19:06:02.036820+00:00",
+  "case": "foot-only-source-way-29419166",
+  "profile": "foot",
+  "base_url": "http://localhost:8999",
+  "source_geometry_summary": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\summary.json",
+  "source_geometry_summary_sha256": "1fa5584b9474d41949f5965fa9126654da353a16cb5b4d234c9e5f5ce54a5aee",
+  "source_geometry_summary_generated_utc": "2026-10-19T19:04:30.176244+00:00",
+  "source_route_request": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\foot-only-source-way-29419166-foot.request.json",
+  "source_route_request_sha256": "33ba803df1ef8a065de3225a0efa2191ab1c2da702f3a08ddaa9885d60343dec",
+  "source_route_response": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\foot-only-source-way-29419166-foot.response.json",
+  "source_route_response_sha256": "cdf8a4676b77a761ccfa3871fde2829d3301d05ead9a7de003418260a04e8691",
+  "matrix_request": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\trinity-foot.json",
+  "matrix_request_file_sha256": "6c91d91110dc0464627eedc833f2b368a8b7ebadb10e698b37b6341d14674d58",
+  "conversion": "Retain the actual profile and exact raw endpoint coordinates; use singleton axes and the four matrix metrics.",
+  "removed_route_only_fields": [
+    "algorithm",
+    "calc_points",
+    "ch.disable",
+    "details",
+    "instructions",
+    "lm.disable",
+    "points_encoded",
+    "snap_preventions"
+  ],
+  "coordinate_provenance": {
+    "source_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+    "metadata_report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-candidates.json",
+    "source_way": {
+      "osm_way_id": 29419166,
+      "way_tags": {
+        "bridge": "yes",
+        "highway": "footway",
+        "layer": "1",
+        "lit": "yes",
+        "name": "Trinity Bridge",
+        "smoothness": "excellent",
+        "source": "GPS survey",
+        "surface": "asphalt",
+        "tfgmcitycentre": "yes"
+      },
+      "way_node_ids": [
+        1364844269,
+        324233382
+      ],
+      "way_geometry_lon_lat": [
+        [
+          -2.251055,
+          53.4827232
+        ],
+        [
+          -2.2506809000000003,
+          53.482252700000004
+        ]
+      ],
+      "points_lon_lat": [
+        [
+          -2.250961475,
+          53.482605575
+        ],
+        [
+          -2.2507744250000004,
+          53.482370325000005
+        ]
+      ],
+      "way_length_m": 57.94286054491089,
+      "distance_from_city_anchor_m": 579.0405974480793,
+      "confirmation": "OSM_FOOTWAY_GEOMETRY_CONFIRMED; IMPORTED_ACCESS_AND_ROUTE_PENDING"
+    }
+  },
+  "validator": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\prompt_pack\\GraphHopper_Local_Matrix_Codex_Pack\\validation\\validate_http.py",
+  "validator_sha256": "36d5fd4a3dc215dff9ce87aaf06934f7986546582e3e3243f93e5cf7f9183d77",
+  "manual_review": "Recorded separately; this verifier only checks HTTP metrics/null masks."
+}

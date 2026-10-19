@@ -1,0 +1,128 @@
+{
+  "times": [
+    [
+      274,
+      181,
+      0
+    ],
+    [
+      335,
+      242,
+      286
+    ]
+  ],
+  "times_ms": [
+    [
+      274257,
+      181526,
+      0
+    ],
+    [
+      335277,
+      242546,
+      286189
+    ]
+  ],
+  "distances": [
+    [
+      3587.5707450842647,
+      2132.0197560639836,
+      0.0
+    ],
+    [
+      4282.197737809792,
+      2826.6467487895106,
+      2538.660007274473
+    ]
+  ],
+  "weights": [
+    [
+      597.138245486944,
+      373.4094796825273,
+      0.0
+    ],
+    [
+      720.6745321411229,
+      496.9457663367063,
+      514.6696269821848
+    ]
+  ],
+  "hints": [],
+  "info": {
+    "local_matrix": {
+      "contract_version": "1.0",
+      "algorithm": "flexible",
+      "profile": "car",
+      "turn_costs": true,
+      "origin_count": 2,
+      "destination_count": 3,
+      "unique_origin_count": 2,
+      "searches": 2,
+      "visited_states": 2594,
+      "visited_states_known": 2594,
+      "visited_states_complete": true,
+      "threads": 1,
+      "units": {
+        "distances": "metres",
+        "times_ms": "milliseconds",
+        "times": "seconds",
+        "weights": "profile_cost"
+      },
+      "graph_fingerprint": "1083b022ae027331fc44c977e023d282f2b5605ddf81ee77a9ce1547471bfdeb",
+      "profile_fingerprint": "f56d09abf8c90ec47148807174471d361baffa5b3d98c57ab04afcbec9406c1b",
+      "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points": [
+        {
+          "coordinates": [
+            7.418756012211189,
+            43.72768519152673
+          ],
+          "snap_distance_m": 1.5408693150328812
+        },
+        {
+          "coordinates": [
+            7.4213923,
+            43.7307001
+          ],
+          "snap_distance_m": 53.14352631044918
+        }
+      ],
+      "to_snapped_points": [
+        {
+          "coordinates": [
+            7.436636041782713,
+            43.749543210747646
+          ],
+          "snap_distance_m": 6.956046905015437
+        },
+        {
+          "coordinates": [
+            7.42434721702183,
+            43.73964910026232
+          ],
+          "snap_distance_m": 1.5647407981336532
+        },
+        {
+          "coordinates": [
+            7.418756012211189,
+            43.72768519152673
+          ],
+          "snap_distance_m": 1.5408693150328812
+        }
+      ],
+      "timings_ms": {
+        "snapping": 27.2301,
+        "query_graph": 8.6978,
+        "backend_calls": 36.6282,
+        "core_search": 32.3689,
+        "scatter_output": 0.8251,
+        "search_and_output": 40.2314,
+        "total": 76.2072
+      }
+    },
+    "copyrights": [
+      "GraphHopper",
+      "OpenStreetMap contributors"
+    ]
+  }
+}

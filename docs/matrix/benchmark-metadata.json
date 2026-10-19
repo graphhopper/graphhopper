@@ -1,0 +1,58 @@
+{
+  "matrix_provenance" : {
+    "foot" : {
+      "graph_fingerprint" : "77c60efadc0a2716fcc27159291134f31377a69d57ac97b9a33e8d5b71487688",
+      "profile_fingerprint" : "9ebe0c983b94cfc2b320255778975e6650006c14febe7277df8093dfdc412112",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty"
+    },
+    "car" : {
+      "graph_fingerprint" : "77c60efadc0a2716fcc27159291134f31377a69d57ac97b9a33e8d5b71487688",
+      "profile_fingerprint" : "334960a1e1f897664628545d571c1cd15565bd1ea63c44451d397ae5b9197015",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty"
+    }
+  },
+  "import_and_prepare_ms" : 2230.481,
+  "osm_reader_ms" : 889.3374,
+  "ch_preparation_ms" : 579.8381,
+  "graph_nodes" : 1217,
+  "graph_edges" : 1619,
+  "created_utc" : "2026-10-19T18:55:01.344279Z",
+  "seed" : 20261019,
+  "warmups_per_backend_workload" : 5,
+  "measured_repeats_per_backend_workload" : 20,
+  "matrix_worker_threads" : 1,
+  "benchmark_limits" : {
+    "max_visited_states" : 2147483647,
+    "max_cells" : 100000,
+    "max_concurrent_requests" : 1,
+    "max_axis_points" : 1000,
+    "timeout_ms" : 600000
+  },
+  "coordinate_policy" : "Seeded imported tower-node coordinates; duplicates exact; local request selects nearest ten.",
+  "measured_scope" : "In-process request wall time and separately timed JSON serialization, plus their per-sample sum for matrix backends. HTTP transport/client parsing and import/CH preparation are excluded. CH is a minimal-output ordinary routing-call baseline with no matrix JSON serialization phase.",
+  "timing_columns" : {
+    "elapsed_request_ms" : "Complete in-process backend request including production validation; excludes harness outcome validation and serialization",
+    "serialization_ms" : "Matrix response serialization with a reused Jackson mapper; null for the CH call baseline",
+    "stage_columns" : "Measured info.local_matrix.timings_ms values; absent/unexposed phases remain null. Stage medians need not sum to the median total.",
+    "elapsed_ms" : "Compatibility alias of elapsed_request_ms",
+    "request_plus_serialization_ms" : "Per-sample elapsed_request_ms + serialization_ms; null for the CH call baseline"
+  },
+  "memory_scope" : "Heap pool peak sums and request GC counts are captured before JSON serialization; separate serialization GC counts follow. Peak sums are not RSS or simultaneous peak heap.",
+  "thread_allocation_scope" : "Current-thread allocated-byte counter deltas bracket each request and serializer timer. One serial matrix worker executes on this thread; other threads, retained heap and RSS are excluded. Tracking is never enabled by this benchmark; unsupported/disabled readings remain null.",
+  "thread_allocation_supported" : true,
+  "thread_allocation_enabled_at_end" : true,
+  "java_version" : "22.0.2",
+  "java_vm" : "Java HotSpot(TM) 64-Bit Server VM",
+  "jvm_arguments" : [ "-Xmx2g", "-Xms190m", "-Duser.language=en" ],
+  "os" : "Windows 11 10.0 amd64",
+  "available_processors" : 8,
+  "fixture_sha256" : "cca67724618cf38c2e8ff39082b19daa03a66b0725a5025515feb0fc678dcdfa",
+  "custom_model_sha256" : {
+    "foot.json" : "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+    "car.json" : "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90"
+  },
+  "completed_measured_samples" : 960,
+  "benchmark_requests_sha256" : "71f16a4c08b450a7d7e42bd030a748752167f4b8ad4c8bbe6beea621e7ba9aab",
+  "status" : "MEASURED",
+  "limitations" : [ "Bundled Monaco fixture benchmark only; separately acquired Greater Manchester data is used for regional correctness and geometry checks.", "HTTP baseline is separate and is not measured by this harness.", "Performance measurements do not waive unresolved correctness discrepancies or certify release gates." ]
+}

@@ -1,0 +1,81 @@
+{
+  "hints": {
+    "visited_nodes.sum": 1,
+    "visited_nodes.average": 1.0
+  },
+  "info": {
+    "copyrights": [
+      "GraphHopper",
+      "OpenStreetMap contributors"
+    ],
+    "took": 5,
+    "road_data_timestamp": "2026-10-18T20:25:06Z"
+  },
+  "paths": [
+    {
+      "distance": 0.0,
+      "weight": 0.0,
+      "time": 0,
+      "transfers": 0,
+      "legs": [],
+      "points_encoded": false,
+      "bbox": [
+        -2.241327,
+        53.480011,
+        -2.241327,
+        53.480011
+      ],
+      "points": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -2.241327,
+            53.480011
+          ],
+          [
+            -2.241327,
+            53.480011
+          ]
+        ]
+      },
+      "instructions": [
+        {
+          "distance": 0.0,
+          "sign": 4,
+          "interval": [
+            0,
+            0
+          ],
+          "text": "Arrive at destination",
+          "time": 0,
+          "street_name": ""
+        }
+      ],
+      "details": {
+        "distance": [],
+        "foot_access": [],
+        "edge_key": [],
+        "weight": [],
+        "road_class": [],
+        "time": [],
+        "car_access": [],
+        "street_name": []
+      },
+      "ascend": 0.0,
+      "descend": 0.0,
+      "snapped_waypoints": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -2.241327,
+            53.480011
+          ],
+          [
+            -2.241327,
+            53.480011
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "profile": "foot",
+  "points": [
+    [
+      -2.250961475,
+      53.482605575
+    ],
+    [
+      -2.2507744250000004,
+      53.482370325000005
+    ]
+  ],
+  "algorithm": "dijkstra",
+  "ch.disable": true,
+  "lm.disable": true,
+  "snap_preventions": [],
+  "instructions": true,
+  "calc_points": true,
+  "points_encoded": false,
+  "details": [
+    "street_name",
+    "road_class",
+    "edge_key",
+    "time",
+    "distance",
+    "weight",
+    "car_access",
+    "foot_access"
+  ]
+}

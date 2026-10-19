@@ -5,6 +5,14 @@
 # to native line endings on checkout.
 *.sh text
 
+# Measured source hashes and immutable evidence must survive checkout unchanged.
+core/src/main/java/com/graphhopper/routing/matrix/*.java text eol=lf
+core/src/test/java/com/graphhopper/routing/matrix/*.java text eol=lf
+docs/matrix/**/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/matrix/**/*.csv -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/matrix/**/*.jsonl -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/matrix/**/*.jsonl.gz -text
+
 # Retain reproducible matrix evidence while keeping generated data collapsed in PRs.
 docs/matrix/*-reconciliation*.json linguist-generated=true
 docs/matrix/*-validation.json linguist-generated=true

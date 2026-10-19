@@ -43,3 +43,5 @@ local.properties
 .DS_Store
 /graph-cache
 package-lock.json
+__pycache__/
+*.py[cod]

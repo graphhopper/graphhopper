@@ -1,0 +1,16 @@
+{
+  "status" : "FAIL",
+  "started_utc" : "2026-10-19T19:16:36.703006200Z",
+  "original_report_status" : "MEASURED",
+  "original_report_sha256" : "a2d1963decd1f6b02bcad16725fc164ec409957ff2ca49d05be5f31006adcd4c",
+  "original_requests_sha256" : "34add677b7bc0bb47408b0d0a292c226d7a5cf1900d223cc87ba247334b02ba0",
+  "original_samples_sha256" : "99b8a784a953330d8239e50ee453fa6beecd95d2ffa5248f67685d3818b6dd45",
+  "prepared_graph" : "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\target\\matrix-manchester-server",
+  "historic_evidence_scope" : "Fresh paths are reconstructed for each unique profile/OD and linked to every flagged indexed cell. All retained original issue scalars and aggregate counts are checked; capped issue lists do not contain every repetition's path or scalar. Stable aggregate CSV checksums cannot alone exclude compensating per-cell changes in omitted records, which are not directly reverified. Original absence of time/distance/null flags establishes only the original HTTP thresholds; fresh replay checks actual full-precision path metrics.",
+  "production_algorithm_changed" : false,
+  "unique_pair_proofs" : [ ],
+  "indexed_cases" : [ ],
+  "unexplained_cases" : [ ],
+  "failure" : "java.lang.IllegalArgumentException: Do not use custom_model_files and custom_model together",
+  "completed_utc" : "2026-10-19T19:16:37.295170300Z"
+}

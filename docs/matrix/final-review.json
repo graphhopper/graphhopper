@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "reviewed_utc": "2026-10-19T19:27:21.478957+00:00",
+  "artifact_sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+  "runtime_manifest_sha256": "00694fe948f83ad1c8734a2316bb66e4c975d2e6100458b69abc5b6e0f6b77fd",
+  "approved_http_reconciliations": [
+    {
+      "http_report": "http-benchmark-report.json",
+      "http_report_sha256": "cce59db1ee2b875355386778143bfbfea58b21b18e98f9a3d0c0314976fe5666",
+      "reconciliation": "ch-weight-reconciliation.json",
+      "reconciliation_sha256": "477259545fa3d130c1b86b11be93fdc2527906744e3d249164fe8c01b896ecdd"
+    },
+    {
+      "http_report": "regional-http-benchmark/http-benchmark-report.json",
+      "http_report_sha256": "a2d1963decd1f6b02bcad16725fc164ec409957ff2ca49d05be5f31006adcd4c",
+      "reconciliation": "regional-http-benchmark/ch-weight-reconciliation.json",
+      "reconciliation_sha256": "ebb7b415a0bf8e7cec52b14059f2dad042defe3e1965d6b3033270978451c5d5"
+    }
+  ],
+  "independent_exact_rational_path_review": [
+    {
+      "report": "http-benchmark-report.json",
+      "unique_path_proofs": 184,
+      "indexed_cases": 184,
+      "exact_rational_path_review": "PASS"
+    },
+    {
+      "report": "regional-http-benchmark/http-benchmark-report.json",
+      "unique_path_proofs": 20,
+      "indexed_cases": 38,
+      "exact_rational_path_review": "PASS"
+    }
+  ],
+  "production_class_binding": "binary-source-binding.json",
+  "decision": "Core behaviour is complete within the recorded static street-profile, fixture and regional coverage. Raw CH comparison mismatches remain retained; explicit per-case expanded-path/storage proofs explain them. No global tolerance was widened.",
+  "source_state": "Local feature/local-matrix branch, uncommitted changes, pinned upstream base plus source input hashes. No production edits after full Maven and live JAR checks.",
+  "scope_limits": [
+    "Monaco gains do not imply regional or national gains; configured CH won five of six tiny Manchester HTTP cases.",
+    "Historical HTTP diagnostics were capped; 204 fresh path proofs cover222 indexed cases,820 retained scalars and4440 aggregate flags without claiming all original outputs/paths were captured.",
+    "OSM/model/import limitations and upstream weight-detail limitations remain documented.",
+    "Dedicated CH matrix acceleration, PT/time-dependent matrices and large/national/concurrent throughput work remain deferred."
+  ],
+  "operational_state": "Both isolated test servers stopped gracefully; application/admin ports checked closed."
+}

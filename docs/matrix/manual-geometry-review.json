@@ -1,0 +1,321 @@
+{
+  "status": "PASS",
+  "reviewed_utc": "2026-10-19T19:06:12.400573+00:00",
+  "reviewer": "Codex",
+  "scope": "Nine actual upstream route geometries inspected visually in rendered SVG, with street instructions, raw/snapped endpoints and source-derived OSM metadata. One OpenStreetMap basemap view provided crossing context. This is a scoped geometry check, not a legal-access or whole-dataset certificate.",
+  "categories_reviewed": [
+    "restricted_turn_detour",
+    "opposing_carriageways",
+    "river_crossing",
+    "pedestrian_only_imported_way",
+    "adjacent_road_snapping"
+  ],
+  "rendered_artifacts": [
+    "docs/matrix/geometry-spot-checks/overview.html",
+    "docs/matrix/geometry-spot-checks/index.html"
+  ],
+  "source_metadata": [
+    "docs/matrix/restriction-candidates.json",
+    "docs/matrix/geometry-candidates.json",
+    "docs/matrix/regional-data.json"
+  ],
+  "context_map": "https://www.openstreetmap.org/?mlat=53.483566&mlon=-2.247487#map=17/53.483566/-2.247487",
+  "cases": [
+    {
+      "case": "piccadilly-to-victoria",
+      "profile": "car",
+      "review": "PASS_SCOPED_GEOMETRY",
+      "observation": "Rendered station-area geometry and endpoint snaps inspected. Instructions follow Fairfield Street, Whitworth Street, Sackville Street, Portland Street, Charlotte Street, Fountain Street, Shudehill and Todd Street.",
+      "response": "docs/matrix/geometry-spot-checks/piccadilly-to-victoria-car-run2.response.json",
+      "response_sha256": "a59da69c4a1531ee6ad2c0bcc933aebc6096fd45dc8d42c7fa1831c12eec3e48",
+      "distance_m": 2254.967,
+      "time_ms": 283336,
+      "weight": 486.284329,
+      "requested_points": [
+        [
+          -2.2309,
+          53.4774
+        ],
+        [
+          -2.242,
+          53.4875
+        ]
+      ],
+      "snapped_points": [
+        [
+          -2.230774,
+          53.476883
+        ],
+        [
+          -2.242796,
+          53.48716
+        ]
+      ]
+    },
+    {
+      "case": "irwell-blackfriars-approaches",
+      "profile": "car",
+      "review": "PASS_SCOPED_GEOMETRY",
+      "observation": "Rendered route makes a larger circuit via Chapel Street and New Bailey Street before the eastern-bank destination. It does not take the short direct Blackfriars crossing used by the foot sample.",
+      "response": "docs/matrix/geometry-spot-checks/irwell-blackfriars-approaches-car-run2.response.json",
+      "response_sha256": "f9813f9902574ad12aa78a8b83c57bc25105719df527ab1edb4d4212522fccce",
+      "distance_m": 1251.687,
+      "time_ms": 128606,
+      "weight": 241.257695,
+      "requested_points": [
+        [
+          -2.2490419999999998,
+          53.48441
+        ],
+        [
+          -2.246642,
+          53.48321
+        ]
+      ],
+      "snapped_points": [
+        [
+          -2.248897,
+          53.484482
+        ],
+        [
+          -2.247094,
+          53.483199
+        ]
+      ]
+    },
+    {
+      "case": "piccadilly-to-victoria",
+      "profile": "foot",
+      "review": "PASS_SCOPED_GEOMETRY",
+      "observation": "Rendered foot geometry follows the station approach and pedestrian network toward Victoria. Its route and snaps differ from car; this is expected profile-specific access.",
+      "response": "docs/matrix/geometry-spot-checks/piccadilly-to-victoria-foot-run2.response.json",
+      "response_sha256": "8686ef67309a497b128c7c9bab2783be88370da75d332de5097f7be0345acea7",
+      "distance_m": 1635.181,
+      "time_ms": 1180136,
+      "weight": 987.240573,
+      "requested_points": [
+        [
+          -2.2309,
+          53.4774
+        ],
+        [
+          -2.242,
+          53.4875
+        ]
+      ],
+      "snapped_points": [
+        [
+          -2.23081,
+          53.477381
+        ],
+        [
+          -2.241976,
+          53.487496
+        ]
+      ]
+    },
+    {
+      "case": "irwell-blackfriars-approaches",
+      "profile": "foot",
+      "review": "PASS_SCOPED_GEOMETRY",
+      "observation": "Rendered short crossing and eastern-bank approaches inspected. Current OpenStreetMap basemap at the actual exported midpoint identifies the River Irwell and Blackfriars Bridge. The current basemap is geographic context, not the dated import oracle.",
+      "response": "docs/matrix/geometry-spot-checks/irwell-blackfriars-approaches-foot-run2.response.json",
+      "response_sha256": "c46255fb9b532ab616b8931b690f0b6a6c962746facad8032e121e858ebc0e2e",
+      "distance_m": 276.868,
+      "time_ms": 199347,
+      "weight": 166.120527,
+      "requested_points": [
+        [
+          -2.2490419999999998,
+          53.48441
+        ],
+        [
+          -2.246642,
+          53.48321
+        ]
+      ],
+      "snapped_points": [
+        [
+          -2.248977,
+          53.484444
+        ],
+        [
+          -2.246596,
+          53.483198
+        ]
+      ]
+    },
+    {
+      "case": "opposite-carriageways-source-forward",
+      "profile": "car",
+      "review": "PASS_SCOPED_GEOMETRY",
+      "observation": "Distinct snaps on source-derived opposing A57(M) ways are visible. Geometry loops through a connection between carriageways rather than jumping the roughly 11 metre separation; forward route is 689.814 metres.",
+      "response": "docs/matrix/geometry-spot-checks/opposite-carriageways-source-forward-car.response.json",
+      "response_sha256": "48c276c887a8f6eb2b8b46e7d657fa287119d1527a92a77096921effea27f866",
+      "distance_m": 689.814,
+      "time_ms": 56439,
+      "weight": 118.522521,
+      "requested_points": [
+        [
+          -2.2384752500000005,
+          53.47151515
+        ],
+        [
+          -2.238532575468136,
+          53.471607526670134
+        ]
+      ],
+      "snapped_points": [
+        [
+          -2.238475,
+          53.471515
+        ],
+        [
+          -2.238531,
+          53.471605
+        ]
+      ]
+    },
+    {
+      "case": "opposite-carriageways-source-reverse",
+      "profile": "car",
+      "review": "PASS_SCOPED_GEOMETRY",
+      "observation": "Reverse geometry uses a different connection and loops, 977.532 metres. Directional asymmetry and distinct endpoint snaps are visible. OSM way tags establish opposing one-way source geometries; this is not an audit of every motorway rule.",
+      "response": "docs/matrix/geometry-spot-checks/opposite-carriageways-source-reverse-car.response.json",
+      "response_sha256": "28bcb114b285d5752a17e5a0d19f842c2e880523c59558d87dac1954b5e698d3",
+      "distance_m": 977.532,
+      "time_ms": 87763,
+      "weight": 175.740812,
+      "requested_points": [
+        [
+          -2.238532575468136,
+          53.471607526670134
+        ],
+        [
+          -2.2384752500000005,
+          53.47151515
+        ]
+      ],
+      "snapped_points": [
+        [
+          -2.238531,
+          53.471605
+        ],
+        [
+          -2.238475,
+          53.471515
+        ]
+      ]
+    },
+    {
+      "case": "foot-only-source-way-29419166",
+      "profile": "foot",
+      "review": "PASS_SCOPED_GEOMETRY",
+      "observation": "Rendered short segment on source way29419166, Trinity Bridge, inspected. Source highway=footway/bridge=yes and returned road_class=footway with car_access=false support the pedestrian-network sample; no claim of current legal access is inferred.",
+      "response": "docs/matrix/geometry-spot-checks/foot-only-source-way-29419166-foot.response.json",
+      "response_sha256": "cdf8a4676b77a761ccfa3871fde2829d3301d05ead9a7de003418260a04e8691",
+      "distance_m": 28.939,
+      "time_ms": 20836,
+      "weight": 20.835993,
+      "requested_points": [
+        [
+          -2.250961475,
+          53.482605575
+        ],
+        [
+          -2.2507744250000004,
+          53.482370325000005
+        ]
+      ],
+      "snapped_points": [
+        [
+          -2.250961,
+          53.482606
+        ],
+        [
+          -2.250774,
+          53.48237
+        ]
+      ]
+    },
+    {
+      "case": "restriction-1645783",
+      "profile": "car",
+      "review": "PASS_SCOPED_GEOMETRY",
+      "observation": "Rendered geometry passes the source via node, continues along Bridge Street, then loops via Bow Street, South King Street and Deansgate instead of making the source no_right_turn. Distance328.843 metres. This is consistent with the imported restriction; the independent core turn-storage tests provide separate algorithm assurance.",
+      "response": "docs/matrix/geometry-spot-checks/restriction-1645783-car-run2.response.json",
+      "response_sha256": "5b00c45f8baa8840ecbb73c7bff0389e61b3764e1fd044ea88520bb9ef58a3dc",
+      "distance_m": 328.843,
+      "time_ms": 42280,
+      "weight": 71.875759,
+      "requested_points": [
+        [
+          -2.2484402619868145,
+          53.480900460291885
+        ],
+        [
+          -2.2481742719273683,
+          53.48057948222779
+        ]
+      ],
+      "snapped_points": [
+        [
+          -2.24844,
+          53.480902
+        ],
+        [
+          -2.248174,
+          53.48058
+        ]
+      ]
+    },
+    {
+      "case": "restriction-1645783",
+      "profile": "foot",
+      "review": "PASS_SCOPED_GEOMETRY",
+      "observation": "Rendered55.309 metre route uses adjacent footways/crossings west of the road via node. This is a different foot network, not a controlled comparison with only car turn restrictions switched off.",
+      "response": "docs/matrix/geometry-spot-checks/restriction-1645783-foot-run2.response.json",
+      "response_sha256": "658c62f5777c2db4b1c1ad7d699c01b5b62857c0ea7d0aaed21e21a33113b5dc",
+      "distance_m": 55.309,
+      "time_ms": 39823,
+      "weight": 40.203867,
+      "requested_points": [
+        [
+          -2.2484402619868145,
+          53.480900460291885
+        ],
+        [
+          -2.2481742719273683,
+          53.48057948222779
+        ]
+      ],
+      "snapped_points": [
+        [
+          -2.24844,
+          53.480902
+        ],
+        [
+          -2.248174,
+          53.48058
+        ]
+      ]
+    }
+  ],
+  "preserved_initial_observations": [
+    {
+      "response": "docs/matrix/geometry-spot-checks/opposite-carriageway-candidate-forward-car.response.json",
+      "sha256": "1b0919b7d28c6c6b5e0494c9b3837eafcdc061642c8160e89faaa22938914b4d",
+      "classification": "SAME_SNAPPED_POINT_NOT_OPPOSING_CARRIAGEWAY_COVERAGE"
+    },
+    {
+      "response": "docs/matrix/geometry-spot-checks/opposite-carriageway-candidate-reverse-car.response.json",
+      "sha256": "b59b217ccc2df816e8324f3280cabeb0c116a1b07a895cacac65d5a3a6a631fd",
+      "classification": "SAME_SNAPPED_POINT_NOT_OPPOSING_CARRIAGEWAY_COVERAGE"
+    }
+  ],
+  "limitations": [
+    "Imported OSM/model limitations remain in osm-data-limitations.md.",
+    "Upstream per-edge weight path details contain Infinity/apparent U-turn charges; they are preserved but excluded from metric proof. See upstream-geometry-detail-limitations.md.",
+    "Matrix output has no per-cell geometry; separate HTTP differential smoke reports connect these requests to the matrix scalar metrics."
+  ]
+}

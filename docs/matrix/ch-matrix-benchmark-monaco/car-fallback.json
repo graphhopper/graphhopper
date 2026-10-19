@@ -1,0 +1,119 @@
+{
+  "workload" : "1x3",
+  "profile" : "car",
+  "actual" : "ch_experimental",
+  "expected" : "flexible",
+  "cells" : 3,
+  "expected_reachable_cells" : 3,
+  "expected_null_cells" : 0,
+  "mismatched_cells" : 0,
+  "all_mismatches" : [ ],
+  "status" : "NO_FLAGS_AT_FIXED_THRESHOLDS",
+  "requested_ch_info" : {
+    "contract_version" : "1.0",
+    "algorithm" : "flexible",
+    "requested_algorithm" : "ch_experimental",
+    "fallback_reason" : "TURN_COST_PROFILE_UNSUPPORTED",
+    "profile" : "car",
+    "turn_costs" : true,
+    "origin_count" : 1,
+    "destination_count" : 3,
+    "unique_origin_count" : 1,
+    "searches" : 1,
+    "visited_states" : 1053,
+    "visited_states_known" : 1053,
+    "visited_states_complete" : true,
+    "threads" : 1,
+    "units" : {
+      "times" : "seconds",
+      "times_ms" : "milliseconds",
+      "distances" : "metres",
+      "weights" : "profile_cost"
+    },
+    "graph_fingerprint" : "1083b022ae027331fc44c977e023d282f2b5605ddf81ee77a9ce1547471bfdeb",
+    "profile_fingerprint" : "f56d09abf8c90ec47148807174471d361baffa5b3d98c57ab04afcbec9406c1b",
+    "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+    "from_snapped_points" : [ {
+      "coordinates" : [ 7.421190826444309, 43.73443032444794 ],
+      "snap_distance_m" : 6.9180923445426075
+    } ],
+    "to_snapped_points" : [ {
+      "coordinates" : [ 7.421190826444309, 43.73443032444794 ],
+      "snap_distance_m" : 6.9180923445426075
+    }, {
+      "coordinates" : [ 7.430581472906882, 43.74235018590988 ],
+      "snap_distance_m" : 43.99238287324764
+    }, {
+      "coordinates" : [ 7.4199253314616636, 43.72728838743989 ],
+      "snap_distance_m" : 44.3505069897044
+    } ],
+    "timings_ms" : {
+      "snapping" : 0.4213,
+      "query_graph" : 0.4037,
+      "backend_calls" : 5.1075,
+      "core_search" : 4.9005,
+      "scatter_output" : 0.0076,
+      "search_and_output" : 5.1214,
+      "total" : 5.9658
+    }
+  },
+  "flexible_info" : {
+    "contract_version" : "1.0",
+    "algorithm" : "flexible",
+    "requested_algorithm" : "flexible",
+    "profile" : "car",
+    "turn_costs" : true,
+    "origin_count" : 1,
+    "destination_count" : 3,
+    "unique_origin_count" : 1,
+    "searches" : 1,
+    "visited_states" : 1053,
+    "visited_states_known" : 1053,
+    "visited_states_complete" : true,
+    "threads" : 1,
+    "units" : {
+      "times" : "seconds",
+      "times_ms" : "milliseconds",
+      "distances" : "metres",
+      "weights" : "profile_cost"
+    },
+    "graph_fingerprint" : "1083b022ae027331fc44c977e023d282f2b5605ddf81ee77a9ce1547471bfdeb",
+    "profile_fingerprint" : "f56d09abf8c90ec47148807174471d361baffa5b3d98c57ab04afcbec9406c1b",
+    "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+    "from_snapped_points" : [ {
+      "coordinates" : [ 7.421190826444309, 43.73443032444794 ],
+      "snap_distance_m" : 6.9180923445426075
+    } ],
+    "to_snapped_points" : [ {
+      "coordinates" : [ 7.421190826444309, 43.73443032444794 ],
+      "snap_distance_m" : 6.9180923445426075
+    }, {
+      "coordinates" : [ 7.430581472906882, 43.74235018590988 ],
+      "snap_distance_m" : 43.99238287324764
+    }, {
+      "coordinates" : [ 7.4199253314616636, 43.72728838743989 ],
+      "snap_distance_m" : 44.3505069897044
+    } ],
+    "timings_ms" : {
+      "snapping" : 0.9292,
+      "query_graph" : 27.0671,
+      "backend_calls" : 14.5121,
+      "core_search" : 14.4705,
+      "scatter_output" : 0.0455,
+      "search_and_output" : 14.5653,
+      "total" : 42.5935
+    }
+  },
+  "requested_ch_metrics" : {
+    "times" : [ [ 0, 84, 190 ] ],
+    "times_ms" : [ [ 0, 84444, 190253 ] ],
+    "distances" : [ [ 0.0, 1396.1858614352366, 1464.606191642354 ] ],
+    "weights" : [ [ 0.0, 210.10033074520922, 322.06806751762167 ] ]
+  },
+  "flexible_metrics" : {
+    "times" : [ [ 0, 84, 190 ] ],
+    "times_ms" : [ [ 0, 84444, 190253 ] ],
+    "distances" : [ [ 0.0, 1396.1858614352366, 1464.606191642354 ] ],
+    "weights" : [ [ 0.0, 210.10033074520922, 322.06806751762167 ] ]
+  }
+}

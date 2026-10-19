@@ -1,0 +1,1408 @@
+{
+  "status" : "FAIL",
+  "started_utc" : "2026-10-19T18:13:01.919252800Z",
+  "source_path" : "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\data\\greater-manchester-11f9b3f5b1d63cdf.osm.pbf",
+  "source_sha256" : "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+  "seed" : 20261019,
+  "actual_matrix_workers" : 1,
+  "ch_preparations" : 0,
+  "lm_preparations" : 0,
+  "tolerances" : {
+    "weight_absolute" : 1.0E-7,
+    "distance_m" : 0.002,
+    "weight_relative" : 1.0E-10,
+    "duration_ms" : 1
+  },
+  "cases" : [ {
+    "case" : "stratified_regional_square",
+    "profile" : "foot",
+    "origin_coordinates_lon_lat" : [ [ -2.2309, 53.4774 ], [ -2.2426, 53.4808 ], [ -2.2541, 53.4761 ], [ -2.242, 53.4875 ], [ -2.2309, 53.4774 ], [ -2.2426, 53.4808 ], [ -2.3953385, 53.0131832 ], [ -2.1435477, 53.6931291 ], [ -2.7425702, 53.503344 ], [ -1.8835016, 53.5387714 ], [ -1.9791596666666667, 53.4630698 ], [ -1.9791870333333335, 53.4630711 ], [ -2.238493536475323, 53.48225999726532 ], [ -2.250293408307704, 53.483081716076306 ], [ -2.233401972042957, 53.474906272976185 ], [ -2.2382428808591093, 53.477534903522574 ], [ -2.2432376881488323, 53.48516435381162 ], [ -2.2381099855752837, 53.48780099247865 ], [ -2.244287997706924, 53.4747550464384 ], [ -2.240516838527936, 53.485123735643135 ], [ -2.004486, 53.5336895 ], [ -2.5032173, 53.5471849 ], [ -2.1761565, 53.3798541 ], [ -2.1458682, 53.5463684 ], [ -2.3786689, 53.4182435 ], [ -2.2301703, 53.4851609 ], [ -2.1903917, 53.5064554 ], [ -2.3469504, 53.5098627 ], [ -2.1417187, 53.4018049 ], [ -2.1633431, 53.598596 ], [ -2.132995, 53.5269131 ], [ -2.1656813, 53.6188452 ], [ -2.1436836, 53.6016702 ], [ -2.4793012, 53.5281394 ], [ -2.5213073, 53.5114672 ], [ -2.1428552, 53.5347736 ] ],
+    "destination_coordinates_lon_lat" : [ [ -2.2309, 53.4774 ], [ -2.2426, 53.4808 ], [ -2.2541, 53.4761 ], [ -2.242, 53.4875 ], [ -2.2309, 53.4774 ], [ -2.2426, 53.4808 ], [ -2.3953385, 53.0131832 ], [ -2.1435477, 53.6931291 ], [ -2.7425702, 53.503344 ], [ -1.8835016, 53.5387714 ], [ -1.9791596666666667, 53.4630698 ], [ -1.9791870333333335, 53.4630711 ], [ -2.238493536475323, 53.48225999726532 ], [ -2.250293408307704, 53.483081716076306 ], [ -2.233401972042957, 53.474906272976185 ], [ -2.2382428808591093, 53.477534903522574 ], [ -2.2432376881488323, 53.48516435381162 ], [ -2.2381099855752837, 53.48780099247865 ], [ -2.244287997706924, 53.4747550464384 ], [ -2.240516838527936, 53.485123735643135 ], [ -2.004486, 53.5336895 ], [ -2.5032173, 53.5471849 ], [ -2.1761565, 53.3798541 ], [ -2.1458682, 53.5463684 ], [ -2.3786689, 53.4182435 ], [ -2.2301703, 53.4851609 ], [ -2.1903917, 53.5064554 ], [ -2.3469504, 53.5098627 ], [ -2.1417187, 53.4018049 ], [ -2.1633431, 53.598596 ], [ -2.132995, 53.5269131 ], [ -2.1656813, 53.6188452 ], [ -2.1436836, 53.6016702 ], [ -2.4793012, 53.5281394 ], [ -2.5213073, 53.5114672 ], [ -2.1428552, 53.5347736 ] ],
+    "requested_arrays" : [ "times", "times_ms", "distances", "weights" ],
+    "pairs" : 1296,
+    "reachable_pairs" : 1091,
+    "null_pairs" : 205,
+    "asymmetric_reciprocal_weight_pairs" : 0,
+    "mismatches_above_fixed_thresholds" : 22,
+    "explained_by_path_evidence" : 22,
+    "unexplained_mismatches" : 0,
+    "flexible_ms" : 17598.9009,
+    "reference_ms" : 193304.5759,
+    "flexible_metadata" : {
+      "contract_version" : "1.0",
+      "algorithm" : "flexible",
+      "profile" : "foot",
+      "turn_costs" : false,
+      "origin_count" : 36,
+      "destination_count" : 36,
+      "unique_origin_count" : 34,
+      "searches" : 33,
+      "visited_states" : 13879885,
+      "visited_states_known" : 13879885,
+      "visited_states_complete" : true,
+      "threads" : 1,
+      "units" : {
+        "times_ms" : "milliseconds",
+        "times" : "seconds",
+        "weights" : "profile_cost",
+        "distances" : "metres"
+      },
+      "graph_fingerprint" : "0174eed0d93c2ca9feb7526b0fc9234720eac1e0dcd64f98c1f54aa89568268e",
+      "profile_fingerprint" : "85fcd281306fb543ea6f9c9b074304895dafa83ee439a58047d6305642c6ad0f",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points" : [ {
+        "coordinates" : [ -2.2308100607125456, 53.477380938080806 ],
+        "snap_distance_m" : 6.318023928897091
+      }, {
+        "coordinates" : [ -2.242602053411688, 53.48079199058213 ],
+        "snap_distance_m" : 0.9009121347629726
+      }, {
+        "coordinates" : [ -2.254269452338291, 53.47612825439584 ],
+        "snap_distance_m" : 11.645890560647143
+      }, {
+        "coordinates" : [ -2.2419762923887103, 53.487496245503145 ],
+        "snap_distance_m" : 1.6231224833407811
+      }, {
+        "coordinates" : [ -2.2308100607125456, 53.477380938080806 ],
+        "snap_distance_m" : 6.318023928897091
+      }, {
+        "coordinates" : [ -2.242602053411688, 53.48079199058213 ],
+        "snap_distance_m" : 0.9009121347629726
+      }, {
+        "coordinates" : null,
+        "snap_distance_m" : null
+      }, {
+        "coordinates" : [ -2.1435477, 53.6931291 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.7425702, 53.503344 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.8835016, 53.5387714 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791596666666667, 53.4630698 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791870333333332, 53.4630711 ],
+        "snap_distance_m" : 1.4699102749470313E-11
+      }, {
+        "coordinates" : [ -2.2383877716893843, 53.482489863895125 ],
+        "snap_distance_m" : 26.500760707451747
+      }, {
+        "coordinates" : [ -2.2503212763896965, 53.48303613068626 ],
+        "snap_distance_m" : 5.393848108281744
+      }, {
+        "coordinates" : [ -2.2331243, 53.4749425 ],
+        "snap_distance_m" : 18.81277700397871
+      }, {
+        "coordinates" : [ -2.238226430695356, 53.47754559851392 ],
+        "snap_distance_m" : 1.612246655414825
+      }, {
+        "coordinates" : [ -2.2431788973675495, 53.48530104686031 ],
+        "snap_distance_m" : 15.689422570208999
+      }, {
+        "coordinates" : [ -2.238132433310738, 53.48782176753902 ],
+        "snap_distance_m" : 2.7462961011390603
+      }, {
+        "coordinates" : [ -2.244362301419404, 53.47484768526951 ],
+        "snap_distance_m" : 11.4145251069009
+      }, {
+        "coordinates" : [ -2.2404687614490646, 53.4851865651211 ],
+        "snap_distance_m" : 7.676416489610111
+      }, {
+        "coordinates" : [ -2.004486, 53.5336895 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5032173, 53.5471849 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.176137506153704, 53.37987157413875 ],
+        "snap_distance_m" : 2.3157222959554713
+      }, {
+        "coordinates" : [ -2.1458682, 53.5463684 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3785585, 53.4181313 ],
+        "snap_distance_m" : 14.462965441609477
+      }, {
+        "coordinates" : [ -2.2301703, 53.4851609 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1903917, 53.5064554 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3463887, 53.5100713 ],
+        "snap_distance_m" : 43.7905157068175
+      }, {
+        "coordinates" : [ -2.1417187, 53.4018049 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1633431, 53.598596 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1329944, 53.5269779 ],
+        "snap_distance_m" : 7.205540390784822
+      }, {
+        "coordinates" : [ -2.1656813, 53.6188452 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1436836, 53.6016702 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.4793012, 53.5281394 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5213073, 53.5114672 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.142816426955317, 53.53484828831699 ],
+        "snap_distance_m" : 8.691274250945154
+      } ],
+      "to_snapped_points" : [ {
+        "coordinates" : [ -2.2308100607125456, 53.477380938080806 ],
+        "snap_distance_m" : 6.318023928897091
+      }, {
+        "coordinates" : [ -2.242602053411688, 53.48079199058213 ],
+        "snap_distance_m" : 0.9009121347629726
+      }, {
+        "coordinates" : [ -2.254269452338291, 53.47612825439584 ],
+        "snap_distance_m" : 11.645890560647143
+      }, {
+        "coordinates" : [ -2.2419762923887103, 53.487496245503145 ],
+        "snap_distance_m" : 1.6231224833407811
+      }, {
+        "coordinates" : [ -2.2308100607125456, 53.477380938080806 ],
+        "snap_distance_m" : 6.318023928897091
+      }, {
+        "coordinates" : [ -2.242602053411688, 53.48079199058213 ],
+        "snap_distance_m" : 0.9009121347629726
+      }, {
+        "coordinates" : null,
+        "snap_distance_m" : null
+      }, {
+        "coordinates" : [ -2.1435477, 53.6931291 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.7425702, 53.503344 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.8835016, 53.5387714 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791596666666667, 53.4630698 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791870333333332, 53.4630711 ],
+        "snap_distance_m" : 1.4699102749470313E-11
+      }, {
+        "coordinates" : [ -2.2383877716893843, 53.482489863895125 ],
+        "snap_distance_m" : 26.500760707451747
+      }, {
+        "coordinates" : [ -2.2503212763896965, 53.48303613068626 ],
+        "snap_distance_m" : 5.393848108281744
+      }, {
+        "coordinates" : [ -2.2331243, 53.4749425 ],
+        "snap_distance_m" : 18.81277700397871
+      }, {
+        "coordinates" : [ -2.238226430695356, 53.47754559851392 ],
+        "snap_distance_m" : 1.612246655414825
+      }, {
+        "coordinates" : [ -2.2431788973675495, 53.48530104686031 ],
+        "snap_distance_m" : 15.689422570208999
+      }, {
+        "coordinates" : [ -2.238132433310738, 53.48782176753902 ],
+        "snap_distance_m" : 2.7462961011390603
+      }, {
+        "coordinates" : [ -2.244362301419404, 53.47484768526951 ],
+        "snap_distance_m" : 11.4145251069009
+      }, {
+        "coordinates" : [ -2.2404687614490646, 53.4851865651211 ],
+        "snap_distance_m" : 7.676416489610111
+      }, {
+        "coordinates" : [ -2.004486, 53.5336895 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5032173, 53.5471849 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.176137506153704, 53.37987157413875 ],
+        "snap_distance_m" : 2.3157222959554713
+      }, {
+        "coordinates" : [ -2.1458682, 53.5463684 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3785585, 53.4181313 ],
+        "snap_distance_m" : 14.462965441609477
+      }, {
+        "coordinates" : [ -2.2301703, 53.4851609 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1903917, 53.5064554 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3463887, 53.5100713 ],
+        "snap_distance_m" : 43.7905157068175
+      }, {
+        "coordinates" : [ -2.1417187, 53.4018049 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1633431, 53.598596 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1329944, 53.5269779 ],
+        "snap_distance_m" : 7.205540390784822
+      }, {
+        "coordinates" : [ -2.1656813, 53.6188452 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1436836, 53.6016702 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.4793012, 53.5281394 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5213073, 53.5114672 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.142816426955317, 53.53484828831699 ],
+        "snap_distance_m" : 8.691274250945154
+      } ],
+      "timings_ms" : {
+        "query_graph" : 31.2416,
+        "total" : 17595.0424,
+        "snapping" : 88.8798,
+        "search_and_output" : 17473.1763
+      }
+    },
+    "reference_metadata" : {
+      "contract_version" : "1.0",
+      "algorithm" : "reference",
+      "profile" : "foot",
+      "turn_costs" : false,
+      "origin_count" : 36,
+      "destination_count" : 36,
+      "unique_origin_count" : 34,
+      "searches" : 1225,
+      "visited_states" : 230045427,
+      "visited_states_known" : 230045427,
+      "visited_states_complete" : true,
+      "threads" : 1,
+      "units" : {
+        "times_ms" : "milliseconds",
+        "times" : "seconds",
+        "weights" : "profile_cost",
+        "distances" : "metres"
+      },
+      "graph_fingerprint" : "0174eed0d93c2ca9feb7526b0fc9234720eac1e0dcd64f98c1f54aa89568268e",
+      "profile_fingerprint" : "85fcd281306fb543ea6f9c9b074304895dafa83ee439a58047d6305642c6ad0f",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points" : [ {
+        "coordinates" : [ -2.2308100607125456, 53.477380938080806 ],
+        "snap_distance_m" : 6.318023928897091
+      }, {
+        "coordinates" : [ -2.242602053411688, 53.48079199058213 ],
+        "snap_distance_m" : 0.9009121347629726
+      }, {
+        "coordinates" : [ -2.254269452338291, 53.47612825439584 ],
+        "snap_distance_m" : 11.645890560647143
+      }, {
+        "coordinates" : [ -2.2419762923887103, 53.487496245503145 ],
+        "snap_distance_m" : 1.6231224833407811
+      }, {
+        "coordinates" : [ -2.2308100607125456, 53.477380938080806 ],
+        "snap_distance_m" : 6.318023928897091
+      }, {
+        "coordinates" : [ -2.242602053411688, 53.48079199058213 ],
+        "snap_distance_m" : 0.9009121347629726
+      }, {
+        "coordinates" : null,
+        "snap_distance_m" : null
+      }, {
+        "coordinates" : [ -2.1435477, 53.6931291 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.7425702, 53.503344 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.8835016, 53.5387714 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791596666666667, 53.4630698 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791870333333332, 53.4630711 ],
+        "snap_distance_m" : 1.4699102749470313E-11
+      }, {
+        "coordinates" : [ -2.2383877716893843, 53.482489863895125 ],
+        "snap_distance_m" : 26.500760707451747
+      }, {
+        "coordinates" : [ -2.2503212763896965, 53.48303613068626 ],
+        "snap_distance_m" : 5.393848108281744
+      }, {
+        "coordinates" : [ -2.2331243, 53.4749425 ],
+        "snap_distance_m" : 18.81277700397871
+      }, {
+        "coordinates" : [ -2.238226430695356, 53.47754559851392 ],
+        "snap_distance_m" : 1.612246655414825
+      }, {
+        "coordinates" : [ -2.2431788973675495, 53.48530104686031 ],
+        "snap_distance_m" : 15.689422570208999
+      }, {
+        "coordinates" : [ -2.238132433310738, 53.48782176753902 ],
+        "snap_distance_m" : 2.7462961011390603
+      }, {
+        "coordinates" : [ -2.244362301419404, 53.47484768526951 ],
+        "snap_distance_m" : 11.4145251069009
+      }, {
+        "coordinates" : [ -2.2404687614490646, 53.4851865651211 ],
+        "snap_distance_m" : 7.676416489610111
+      }, {
+        "coordinates" : [ -2.004486, 53.5336895 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5032173, 53.5471849 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.176137506153704, 53.37987157413875 ],
+        "snap_distance_m" : 2.3157222959554713
+      }, {
+        "coordinates" : [ -2.1458682, 53.5463684 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3785585, 53.4181313 ],
+        "snap_distance_m" : 14.462965441609477
+      }, {
+        "coordinates" : [ -2.2301703, 53.4851609 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1903917, 53.5064554 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3463887, 53.5100713 ],
+        "snap_distance_m" : 43.7905157068175
+      }, {
+        "coordinates" : [ -2.1417187, 53.4018049 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1633431, 53.598596 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1329944, 53.5269779 ],
+        "snap_distance_m" : 7.205540390784822
+      }, {
+        "coordinates" : [ -2.1656813, 53.6188452 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1436836, 53.6016702 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.4793012, 53.5281394 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5213073, 53.5114672 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.142816426955317, 53.53484828831699 ],
+        "snap_distance_m" : 8.691274250945154
+      } ],
+      "to_snapped_points" : [ {
+        "coordinates" : [ -2.2308100607125456, 53.477380938080806 ],
+        "snap_distance_m" : 6.318023928897091
+      }, {
+        "coordinates" : [ -2.242602053411688, 53.48079199058213 ],
+        "snap_distance_m" : 0.9009121347629726
+      }, {
+        "coordinates" : [ -2.254269452338291, 53.47612825439584 ],
+        "snap_distance_m" : 11.645890560647143
+      }, {
+        "coordinates" : [ -2.2419762923887103, 53.487496245503145 ],
+        "snap_distance_m" : 1.6231224833407811
+      }, {
+        "coordinates" : [ -2.2308100607125456, 53.477380938080806 ],
+        "snap_distance_m" : 6.318023928897091
+      }, {
+        "coordinates" : [ -2.242602053411688, 53.48079199058213 ],
+        "snap_distance_m" : 0.9009121347629726
+      }, {
+        "coordinates" : null,
+        "snap_distance_m" : null
+      }, {
+        "coordinates" : [ -2.1435477, 53.6931291 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.7425702, 53.503344 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.8835016, 53.5387714 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791596666666667, 53.4630698 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791870333333332, 53.4630711 ],
+        "snap_distance_m" : 1.4699102749470313E-11
+      }, {
+        "coordinates" : [ -2.2383877716893843, 53.482489863895125 ],
+        "snap_distance_m" : 26.500760707451747
+      }, {
+        "coordinates" : [ -2.2503212763896965, 53.48303613068626 ],
+        "snap_distance_m" : 5.393848108281744
+      }, {
+        "coordinates" : [ -2.2331243, 53.4749425 ],
+        "snap_distance_m" : 18.81277700397871
+      }, {
+        "coordinates" : [ -2.238226430695356, 53.47754559851392 ],
+        "snap_distance_m" : 1.612246655414825
+      }, {
+        "coordinates" : [ -2.2431788973675495, 53.48530104686031 ],
+        "snap_distance_m" : 15.689422570208999
+      }, {
+        "coordinates" : [ -2.238132433310738, 53.48782176753902 ],
+        "snap_distance_m" : 2.7462961011390603
+      }, {
+        "coordinates" : [ -2.244362301419404, 53.47484768526951 ],
+        "snap_distance_m" : 11.4145251069009
+      }, {
+        "coordinates" : [ -2.2404687614490646, 53.4851865651211 ],
+        "snap_distance_m" : 7.676416489610111
+      }, {
+        "coordinates" : [ -2.004486, 53.5336895 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5032173, 53.5471849 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.176137506153704, 53.37987157413875 ],
+        "snap_distance_m" : 2.3157222959554713
+      }, {
+        "coordinates" : [ -2.1458682, 53.5463684 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3785585, 53.4181313 ],
+        "snap_distance_m" : 14.462965441609477
+      }, {
+        "coordinates" : [ -2.2301703, 53.4851609 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1903917, 53.5064554 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3463887, 53.5100713 ],
+        "snap_distance_m" : 43.7905157068175
+      }, {
+        "coordinates" : [ -2.1417187, 53.4018049 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1633431, 53.598596 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1329944, 53.5269779 ],
+        "snap_distance_m" : 7.205540390784822
+      }, {
+        "coordinates" : [ -2.1656813, 53.6188452 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1436836, 53.6016702 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.4793012, 53.5281394 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5213073, 53.5114672 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.142816426955317, 53.53484828831699 ],
+        "snap_distance_m" : 8.691274250945154
+      } ],
+      "timings_ms" : {
+        "query_graph" : 0.1286,
+        "total" : 193304.3386,
+        "snapping" : 26.6584,
+        "search_and_output" : 193277.4502
+      }
+    },
+    "status" : "PASS_WITH_CLASSIFIED_SPLIT_PRECISION"
+  }, {
+    "case" : "stratified_regional_square",
+    "profile" : "car",
+    "origin_coordinates_lon_lat" : [ [ -2.2309, 53.4774 ], [ -2.2426, 53.4808 ], [ -2.2541, 53.4761 ], [ -2.242, 53.4875 ], [ -2.2309, 53.4774 ], [ -2.2426, 53.4808 ], [ -2.3953385, 53.0131832 ], [ -2.1435477, 53.6931291 ], [ -2.7425702, 53.503344 ], [ -1.8835016, 53.5387714 ], [ -1.9791596666666667, 53.4630698 ], [ -1.9791870333333335, 53.4630711 ], [ -2.238493536475323, 53.48225999726532 ], [ -2.250293408307704, 53.483081716076306 ], [ -2.233401972042957, 53.474906272976185 ], [ -2.2382428808591093, 53.477534903522574 ], [ -2.2432376881488323, 53.48516435381162 ], [ -2.2381099855752837, 53.48780099247865 ], [ -2.244287997706924, 53.4747550464384 ], [ -2.240516838527936, 53.485123735643135 ], [ -2.004486, 53.5336895 ], [ -2.5032173, 53.5471849 ], [ -2.1761565, 53.3798541 ], [ -2.1458682, 53.5463684 ], [ -2.3786689, 53.4182435 ], [ -2.2301703, 53.4851609 ], [ -2.1903917, 53.5064554 ], [ -2.3469504, 53.5098627 ], [ -2.1417187, 53.4018049 ], [ -2.1633431, 53.598596 ], [ -2.132995, 53.5269131 ], [ -2.1656813, 53.6188452 ], [ -2.1436836, 53.6016702 ], [ -2.4793012, 53.5281394 ], [ -2.5213073, 53.5114672 ], [ -2.1428552, 53.5347736 ] ],
+    "destination_coordinates_lon_lat" : [ [ -2.2309, 53.4774 ], [ -2.2426, 53.4808 ], [ -2.2541, 53.4761 ], [ -2.242, 53.4875 ], [ -2.2309, 53.4774 ], [ -2.2426, 53.4808 ], [ -2.3953385, 53.0131832 ], [ -2.1435477, 53.6931291 ], [ -2.7425702, 53.503344 ], [ -1.8835016, 53.5387714 ], [ -1.9791596666666667, 53.4630698 ], [ -1.9791870333333335, 53.4630711 ], [ -2.238493536475323, 53.48225999726532 ], [ -2.250293408307704, 53.483081716076306 ], [ -2.233401972042957, 53.474906272976185 ], [ -2.2382428808591093, 53.477534903522574 ], [ -2.2432376881488323, 53.48516435381162 ], [ -2.2381099855752837, 53.48780099247865 ], [ -2.244287997706924, 53.4747550464384 ], [ -2.240516838527936, 53.485123735643135 ], [ -2.004486, 53.5336895 ], [ -2.5032173, 53.5471849 ], [ -2.1761565, 53.3798541 ], [ -2.1458682, 53.5463684 ], [ -2.3786689, 53.4182435 ], [ -2.2301703, 53.4851609 ], [ -2.1903917, 53.5064554 ], [ -2.3469504, 53.5098627 ], [ -2.1417187, 53.4018049 ], [ -2.1633431, 53.598596 ], [ -2.132995, 53.5269131 ], [ -2.1656813, 53.6188452 ], [ -2.1436836, 53.6016702 ], [ -2.4793012, 53.5281394 ], [ -2.5213073, 53.5114672 ], [ -2.1428552, 53.5347736 ] ],
+    "requested_arrays" : [ "times", "times_ms", "distances", "weights" ],
+    "pairs" : 1296,
+    "reachable_pairs" : 936,
+    "null_pairs" : 360,
+    "asymmetric_reciprocal_weight_pairs" : 441,
+    "mismatches_above_fixed_thresholds" : 29,
+    "explained_by_path_evidence" : 19,
+    "unexplained_mismatches" : 10,
+    "flexible_ms" : 25912.1328,
+    "reference_ms" : 268962.5691,
+    "flexible_metadata" : {
+      "contract_version" : "1.0",
+      "algorithm" : "flexible",
+      "profile" : "car",
+      "turn_costs" : true,
+      "origin_count" : 36,
+      "destination_count" : 36,
+      "unique_origin_count" : 34,
+      "searches" : 33,
+      "visited_states" : 17353951,
+      "visited_states_known" : 17353951,
+      "visited_states_complete" : true,
+      "threads" : 1,
+      "units" : {
+        "times_ms" : "milliseconds",
+        "times" : "seconds",
+        "weights" : "profile_cost",
+        "distances" : "metres"
+      },
+      "graph_fingerprint" : "0174eed0d93c2ca9feb7526b0fc9234720eac1e0dcd64f98c1f54aa89568268e",
+      "profile_fingerprint" : "56138ceb7d37a0e374e3280e8e5ad1ecf42c7a2ce48891f20b75f4602e16a36d",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points" : [ {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      }, {
+        "coordinates" : [ -2.2427956503716446, 53.48715960170464 ],
+        "snap_distance_m" : 64.8363015986992
+      }, {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : null,
+        "snap_distance_m" : null
+      }, {
+        "coordinates" : [ -2.1318506, 53.6797298 ],
+        "snap_distance_m" : 1677.2586808898693
+      }, {
+        "coordinates" : [ -2.7425702, 53.503344 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9082094, 53.5549716 ],
+        "snap_distance_m" : 2430.9862030836957
+      }, {
+        "coordinates" : [ -1.9791596666666667, 53.4630698 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791870333333332, 53.4630711 ],
+        "snap_distance_m" : 1.4699102749470313E-11
+      }, {
+        "coordinates" : [ -2.2383829148722763, 53.48250762413692 ],
+        "snap_distance_m" : 28.491156207242845
+      }, {
+        "coordinates" : [ -2.2500405, 53.4832449 ],
+        "snap_distance_m" : 24.683732500883462
+      }, {
+        "coordinates" : [ -2.233572778277553, 53.47516008184839 ],
+        "snap_distance_m" : 30.401910824150757
+      }, {
+        "coordinates" : [ -2.238303060421537, 53.477497494850454 ],
+        "snap_distance_m" : 5.758710134604939
+      }, {
+        "coordinates" : [ -2.2427069602212635, 53.484740546883025 ],
+        "snap_distance_m" : 58.76971637392056
+      }, {
+        "coordinates" : [ -2.2384667, 53.4878291 ],
+        "snap_distance_m" : 23.80637886051754
+      }, {
+        "coordinates" : [ -2.2443848387155683, 53.47488526744408 ],
+        "snap_distance_m" : 15.834870193884896
+      }, {
+        "coordinates" : [ -2.240444395436846, 53.48477808151877 ],
+        "snap_distance_m" : 38.73270760174945
+      }, {
+        "coordinates" : [ -2.004486, 53.5336895 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5032173, 53.5471849 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1752818, 53.3796361 ],
+        "snap_distance_m" : 62.8781379732409
+      }, {
+        "coordinates" : [ -2.1458682, 53.5463684 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3794576, 53.418295 ],
+        "snap_distance_m" : 52.57891262799564
+      }, {
+        "coordinates" : [ -2.2301703, 53.4851609 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1903917, 53.5064554 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3463887, 53.5100713 ],
+        "snap_distance_m" : 43.7905157068175
+      }, {
+        "coordinates" : [ -2.1417187, 53.4018049 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1633431, 53.598596 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1329944, 53.5269779 ],
+        "snap_distance_m" : 7.205540390784822
+      }, {
+        "coordinates" : [ -2.1656813, 53.6188452 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1436836, 53.6016702 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.4793012, 53.5281394 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5213073, 53.5114672 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.142816426955317, 53.53484828831699 ],
+        "snap_distance_m" : 8.691274250945154
+      } ],
+      "to_snapped_points" : [ {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      }, {
+        "coordinates" : [ -2.2427956503716446, 53.48715960170464 ],
+        "snap_distance_m" : 64.8363015986992
+      }, {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : null,
+        "snap_distance_m" : null
+      }, {
+        "coordinates" : [ -2.1318506, 53.6797298 ],
+        "snap_distance_m" : 1677.2586808898693
+      }, {
+        "coordinates" : [ -2.7425702, 53.503344 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9082094, 53.5549716 ],
+        "snap_distance_m" : 2430.9862030836957
+      }, {
+        "coordinates" : [ -1.9791596666666667, 53.4630698 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791870333333332, 53.4630711 ],
+        "snap_distance_m" : 1.4699102749470313E-11
+      }, {
+        "coordinates" : [ -2.2383829148722763, 53.48250762413692 ],
+        "snap_distance_m" : 28.491156207242845
+      }, {
+        "coordinates" : [ -2.2500405, 53.4832449 ],
+        "snap_distance_m" : 24.683732500883462
+      }, {
+        "coordinates" : [ -2.233572778277553, 53.47516008184839 ],
+        "snap_distance_m" : 30.401910824150757
+      }, {
+        "coordinates" : [ -2.238303060421537, 53.477497494850454 ],
+        "snap_distance_m" : 5.758710134604939
+      }, {
+        "coordinates" : [ -2.2427069602212635, 53.484740546883025 ],
+        "snap_distance_m" : 58.76971637392056
+      }, {
+        "coordinates" : [ -2.2384667, 53.4878291 ],
+        "snap_distance_m" : 23.80637886051754
+      }, {
+        "coordinates" : [ -2.2443848387155683, 53.47488526744408 ],
+        "snap_distance_m" : 15.834870193884896
+      }, {
+        "coordinates" : [ -2.240444395436846, 53.48477808151877 ],
+        "snap_distance_m" : 38.73270760174945
+      }, {
+        "coordinates" : [ -2.004486, 53.5336895 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5032173, 53.5471849 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1752818, 53.3796361 ],
+        "snap_distance_m" : 62.8781379732409
+      }, {
+        "coordinates" : [ -2.1458682, 53.5463684 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3794576, 53.418295 ],
+        "snap_distance_m" : 52.57891262799564
+      }, {
+        "coordinates" : [ -2.2301703, 53.4851609 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1903917, 53.5064554 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3463887, 53.5100713 ],
+        "snap_distance_m" : 43.7905157068175
+      }, {
+        "coordinates" : [ -2.1417187, 53.4018049 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1633431, 53.598596 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1329944, 53.5269779 ],
+        "snap_distance_m" : 7.205540390784822
+      }, {
+        "coordinates" : [ -2.1656813, 53.6188452 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1436836, 53.6016702 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.4793012, 53.5281394 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5213073, 53.5114672 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.142816426955317, 53.53484828831699 ],
+        "snap_distance_m" : 8.691274250945154
+      } ],
+      "timings_ms" : {
+        "query_graph" : 0.3935,
+        "total" : 25911.8766,
+        "snapping" : 23.1261,
+        "search_and_output" : 25888.2676
+      }
+    },
+    "reference_metadata" : {
+      "contract_version" : "1.0",
+      "algorithm" : "reference",
+      "profile" : "car",
+      "turn_costs" : true,
+      "origin_count" : 36,
+      "destination_count" : 36,
+      "unique_origin_count" : 34,
+      "searches" : 1225,
+      "visited_states" : 286706186,
+      "visited_states_known" : 286706186,
+      "visited_states_complete" : true,
+      "threads" : 1,
+      "units" : {
+        "times_ms" : "milliseconds",
+        "times" : "seconds",
+        "weights" : "profile_cost",
+        "distances" : "metres"
+      },
+      "graph_fingerprint" : "0174eed0d93c2ca9feb7526b0fc9234720eac1e0dcd64f98c1f54aa89568268e",
+      "profile_fingerprint" : "56138ceb7d37a0e374e3280e8e5ad1ecf42c7a2ce48891f20b75f4602e16a36d",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points" : [ {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      }, {
+        "coordinates" : [ -2.2427956503716446, 53.48715960170464 ],
+        "snap_distance_m" : 64.8363015986992
+      }, {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : null,
+        "snap_distance_m" : null
+      }, {
+        "coordinates" : [ -2.1318506, 53.6797298 ],
+        "snap_distance_m" : 1677.2586808898693
+      }, {
+        "coordinates" : [ -2.7425702, 53.503344 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9082094, 53.5549716 ],
+        "snap_distance_m" : 2430.9862030836957
+      }, {
+        "coordinates" : [ -1.9791596666666667, 53.4630698 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791870333333332, 53.4630711 ],
+        "snap_distance_m" : 1.4699102749470313E-11
+      }, {
+        "coordinates" : [ -2.2383829148722763, 53.48250762413692 ],
+        "snap_distance_m" : 28.491156207242845
+      }, {
+        "coordinates" : [ -2.2500405, 53.4832449 ],
+        "snap_distance_m" : 24.683732500883462
+      }, {
+        "coordinates" : [ -2.233572778277553, 53.47516008184839 ],
+        "snap_distance_m" : 30.401910824150757
+      }, {
+        "coordinates" : [ -2.238303060421537, 53.477497494850454 ],
+        "snap_distance_m" : 5.758710134604939
+      }, {
+        "coordinates" : [ -2.2427069602212635, 53.484740546883025 ],
+        "snap_distance_m" : 58.76971637392056
+      }, {
+        "coordinates" : [ -2.2384667, 53.4878291 ],
+        "snap_distance_m" : 23.80637886051754
+      }, {
+        "coordinates" : [ -2.2443848387155683, 53.47488526744408 ],
+        "snap_distance_m" : 15.834870193884896
+      }, {
+        "coordinates" : [ -2.240444395436846, 53.48477808151877 ],
+        "snap_distance_m" : 38.73270760174945
+      }, {
+        "coordinates" : [ -2.004486, 53.5336895 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5032173, 53.5471849 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1752818, 53.3796361 ],
+        "snap_distance_m" : 62.8781379732409
+      }, {
+        "coordinates" : [ -2.1458682, 53.5463684 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3794576, 53.418295 ],
+        "snap_distance_m" : 52.57891262799564
+      }, {
+        "coordinates" : [ -2.2301703, 53.4851609 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1903917, 53.5064554 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3463887, 53.5100713 ],
+        "snap_distance_m" : 43.7905157068175
+      }, {
+        "coordinates" : [ -2.1417187, 53.4018049 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1633431, 53.598596 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1329944, 53.5269779 ],
+        "snap_distance_m" : 7.205540390784822
+      }, {
+        "coordinates" : [ -2.1656813, 53.6188452 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1436836, 53.6016702 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.4793012, 53.5281394 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5213073, 53.5114672 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.142816426955317, 53.53484828831699 ],
+        "snap_distance_m" : 8.691274250945154
+      } ],
+      "to_snapped_points" : [ {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      }, {
+        "coordinates" : [ -2.2427956503716446, 53.48715960170464 ],
+        "snap_distance_m" : 64.8363015986992
+      }, {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : null,
+        "snap_distance_m" : null
+      }, {
+        "coordinates" : [ -2.1318506, 53.6797298 ],
+        "snap_distance_m" : 1677.2586808898693
+      }, {
+        "coordinates" : [ -2.7425702, 53.503344 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9082094, 53.5549716 ],
+        "snap_distance_m" : 2430.9862030836957
+      }, {
+        "coordinates" : [ -1.9791596666666667, 53.4630698 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -1.9791870333333332, 53.4630711 ],
+        "snap_distance_m" : 1.4699102749470313E-11
+      }, {
+        "coordinates" : [ -2.2383829148722763, 53.48250762413692 ],
+        "snap_distance_m" : 28.491156207242845
+      }, {
+        "coordinates" : [ -2.2500405, 53.4832449 ],
+        "snap_distance_m" : 24.683732500883462
+      }, {
+        "coordinates" : [ -2.233572778277553, 53.47516008184839 ],
+        "snap_distance_m" : 30.401910824150757
+      }, {
+        "coordinates" : [ -2.238303060421537, 53.477497494850454 ],
+        "snap_distance_m" : 5.758710134604939
+      }, {
+        "coordinates" : [ -2.2427069602212635, 53.484740546883025 ],
+        "snap_distance_m" : 58.76971637392056
+      }, {
+        "coordinates" : [ -2.2384667, 53.4878291 ],
+        "snap_distance_m" : 23.80637886051754
+      }, {
+        "coordinates" : [ -2.2443848387155683, 53.47488526744408 ],
+        "snap_distance_m" : 15.834870193884896
+      }, {
+        "coordinates" : [ -2.240444395436846, 53.48477808151877 ],
+        "snap_distance_m" : 38.73270760174945
+      }, {
+        "coordinates" : [ -2.004486, 53.5336895 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5032173, 53.5471849 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1752818, 53.3796361 ],
+        "snap_distance_m" : 62.8781379732409
+      }, {
+        "coordinates" : [ -2.1458682, 53.5463684 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3794576, 53.418295 ],
+        "snap_distance_m" : 52.57891262799564
+      }, {
+        "coordinates" : [ -2.2301703, 53.4851609 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1903917, 53.5064554 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.3463887, 53.5100713 ],
+        "snap_distance_m" : 43.7905157068175
+      }, {
+        "coordinates" : [ -2.1417187, 53.4018049 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1633431, 53.598596 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1329944, 53.5269779 ],
+        "snap_distance_m" : 7.205540390784822
+      }, {
+        "coordinates" : [ -2.1656813, 53.6188452 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.1436836, 53.6016702 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.4793012, 53.5281394 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.5213073, 53.5114672 ],
+        "snap_distance_m" : 0.0
+      }, {
+        "coordinates" : [ -2.142816426955317, 53.53484828831699 ],
+        "snap_distance_m" : 8.691274250945154
+      } ],
+      "timings_ms" : {
+        "query_graph" : 0.0915,
+        "total" : 268962.3873,
+        "snapping" : 7.1485,
+        "search_and_output" : 268955.0355
+      }
+    },
+    "status" : "FAIL"
+  }, {
+    "case" : "manchester_square.json",
+    "profile" : "car",
+    "origin_coordinates_lon_lat" : [ [ -2.2309, 53.4774 ], [ -2.2426, 53.4808 ], [ -2.2541, 53.4761 ] ],
+    "destination_coordinates_lon_lat" : [ [ -2.2309, 53.4774 ], [ -2.2426, 53.4808 ], [ -2.2541, 53.4761 ] ],
+    "requested_arrays" : [ "times", "distances" ],
+    "pairs" : 9,
+    "reachable_pairs" : 9,
+    "null_pairs" : 0,
+    "asymmetric_reciprocal_weight_pairs" : 0,
+    "mismatches_above_fixed_thresholds" : 0,
+    "explained_by_path_evidence" : 0,
+    "unexplained_mismatches" : 0,
+    "flexible_ms" : 50.7383,
+    "reference_ms" : 38.4855,
+    "flexible_metadata" : {
+      "contract_version" : "1.0",
+      "algorithm" : "flexible",
+      "profile" : "car",
+      "turn_costs" : true,
+      "origin_count" : 3,
+      "destination_count" : 3,
+      "unique_origin_count" : 3,
+      "searches" : 3,
+      "visited_states" : 34662,
+      "visited_states_known" : 34662,
+      "visited_states_complete" : true,
+      "threads" : 1,
+      "units" : {
+        "times_ms" : "milliseconds",
+        "times" : "seconds",
+        "weights" : "profile_cost",
+        "distances" : "metres"
+      },
+      "graph_fingerprint" : "0174eed0d93c2ca9feb7526b0fc9234720eac1e0dcd64f98c1f54aa89568268e",
+      "profile_fingerprint" : "56138ceb7d37a0e374e3280e8e5ad1ecf42c7a2ce48891f20b75f4602e16a36d",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points" : [ {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      } ],
+      "to_snapped_points" : [ {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      } ],
+      "timings_ms" : {
+        "query_graph" : 0.1681,
+        "total" : 50.6552,
+        "snapping" : 0.9958,
+        "search_and_output" : 49.4525
+      }
+    },
+    "reference_metadata" : {
+      "contract_version" : "1.0",
+      "algorithm" : "reference",
+      "profile" : "car",
+      "turn_costs" : true,
+      "origin_count" : 3,
+      "destination_count" : 3,
+      "unique_origin_count" : 3,
+      "searches" : 9,
+      "visited_states" : 51382,
+      "visited_states_known" : 51382,
+      "visited_states_complete" : true,
+      "threads" : 1,
+      "units" : {
+        "times_ms" : "milliseconds",
+        "times" : "seconds",
+        "weights" : "profile_cost",
+        "distances" : "metres"
+      },
+      "graph_fingerprint" : "0174eed0d93c2ca9feb7526b0fc9234720eac1e0dcd64f98c1f54aa89568268e",
+      "profile_fingerprint" : "56138ceb7d37a0e374e3280e8e5ad1ecf42c7a2ce48891f20b75f4602e16a36d",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points" : [ {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      } ],
+      "to_snapped_points" : [ {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      } ],
+      "timings_ms" : {
+        "query_graph" : 0.0313,
+        "total" : 38.4361,
+        "snapping" : 0.6347,
+        "search_and_output" : 37.749
+      }
+    },
+    "status" : "PASS",
+    "request_sha256" : "48045ebfac743eddb72d737dc80d601c96d776a666b44d933dca91c066d2dbb4"
+  }, {
+    "case" : "manchester_rectangular.json",
+    "profile" : "car",
+    "origin_coordinates_lon_lat" : [ [ -2.2309, 53.4774 ], [ -2.242, 53.4875 ], [ -2.2309, 53.4774 ] ],
+    "destination_coordinates_lon_lat" : [ [ -2.2541, 53.4761 ], [ -2.2426, 53.4808 ], [ -2.2309, 53.4774 ], [ -2.2541, 53.4761 ] ],
+    "requested_arrays" : [ "times", "times_ms", "distances", "weights" ],
+    "pairs" : 12,
+    "reachable_pairs" : 12,
+    "null_pairs" : 0,
+    "asymmetric_reciprocal_weight_pairs" : 0,
+    "mismatches_above_fixed_thresholds" : 0,
+    "explained_by_path_evidence" : 0,
+    "unexplained_mismatches" : 0,
+    "flexible_ms" : 71.4202,
+    "reference_ms" : 106.4586,
+    "flexible_metadata" : {
+      "contract_version" : "1.0",
+      "algorithm" : "flexible",
+      "profile" : "car",
+      "turn_costs" : true,
+      "origin_count" : 3,
+      "destination_count" : 4,
+      "unique_origin_count" : 2,
+      "searches" : 2,
+      "visited_states" : 36046,
+      "visited_states_known" : 36046,
+      "visited_states_complete" : true,
+      "threads" : 1,
+      "units" : {
+        "times_ms" : "milliseconds",
+        "times" : "seconds",
+        "weights" : "profile_cost",
+        "distances" : "metres"
+      },
+      "graph_fingerprint" : "0174eed0d93c2ca9feb7526b0fc9234720eac1e0dcd64f98c1f54aa89568268e",
+      "profile_fingerprint" : "56138ceb7d37a0e374e3280e8e5ad1ecf42c7a2ce48891f20b75f4602e16a36d",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points" : [ {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2427956503716446, 53.48715960170464 ],
+        "snap_distance_m" : 64.8363015986992
+      }, {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      } ],
+      "to_snapped_points" : [ {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      } ],
+      "timings_ms" : {
+        "query_graph" : 0.1093,
+        "total" : 71.3346,
+        "snapping" : 1.071,
+        "search_and_output" : 70.1266
+      }
+    },
+    "reference_metadata" : {
+      "contract_version" : "1.0",
+      "algorithm" : "reference",
+      "profile" : "car",
+      "turn_costs" : true,
+      "origin_count" : 3,
+      "destination_count" : 4,
+      "unique_origin_count" : 2,
+      "searches" : 12,
+      "visited_states" : 139641,
+      "visited_states_known" : 139641,
+      "visited_states_complete" : true,
+      "threads" : 1,
+      "units" : {
+        "times_ms" : "milliseconds",
+        "times" : "seconds",
+        "weights" : "profile_cost",
+        "distances" : "metres"
+      },
+      "graph_fingerprint" : "0174eed0d93c2ca9feb7526b0fc9234720eac1e0dcd64f98c1f54aa89568268e",
+      "profile_fingerprint" : "56138ceb7d37a0e374e3280e8e5ad1ecf42c7a2ce48891f20b75f4602e16a36d",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points" : [ {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2427956503716446, 53.48715960170464 ],
+        "snap_distance_m" : 64.8363015986992
+      }, {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      } ],
+      "to_snapped_points" : [ {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      }, {
+        "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+        "snap_distance_m" : 2.9771196426161306
+      }, {
+        "coordinates" : [ -2.2307744, 53.4768826 ],
+        "snap_distance_m" : 58.12956877664705
+      }, {
+        "coordinates" : [ -2.2543387, 53.4761414 ],
+        "snap_distance_m" : 16.453913043408097
+      } ],
+      "timings_ms" : {
+        "query_graph" : 0.0279,
+        "total" : 106.4046,
+        "snapping" : 0.886,
+        "search_and_output" : 105.4663
+      }
+    },
+    "status" : "PASS",
+    "request_sha256" : "fbe9d2fdd21a88710ea7b5d25670880b6f5af97621f9e45467296faeeee5b6f5"
+  }, {
+    "case" : "manchester_one_to_many.json",
+    "profile" : "foot",
+    "origin_coordinates_lon_lat" : [ [ -2.2309, 53.4774 ] ],
+    "destination_coordinates_lon_lat" : [ [ -2.2426, 53.4808 ], [ -2.242, 53.4875 ], [ -2.2541, 53.4761 ] ],
+    "requested_arrays" : [ "times", "times_ms", "distances", "weights" ],
+    "pairs" : 3,
+    "reachable_pairs" : 3,
+    "null_pairs" : 0,
+    "asymmetric_reciprocal_weight_pairs" : 0,
+    "mismatches_above_fixed_thresholds" : 0,
+    "explained_by_path_evidence" : 0,
+    "unexplained_mismatches" : 0,
+    "flexible_ms" : 43.2364,
+    "reference_ms" : 31.08,
+    "flexible_metadata" : {
+      "contract_version" : "1.0",
+      "algorithm" : "flexible",
+      "profile" : "foot",
+      "turn_costs" : false,
+      "origin_count" : 1,
+      "destination_count" : 3,
+      "unique_origin_count" : 1,
+      "searches" : 1,
+      "visited_states" : 22891,
+      "visited_states_known" : 22891,
+      "visited_states_complete" : true,
+      "threads" : 1,
+      "units" : {
+        "times_ms" : "milliseconds",
+        "times" : "seconds",
+        "weights" : "profile_cost",
+        "distances" : "metres"
+      },
+      "graph_fingerprint" : "0174eed0d93c2ca9feb7526b0fc9234720eac1e0dcd64f98c1f54aa89568268e",
+      "profile_fingerprint" : "85fcd281306fb543ea6f9c9b074304895dafa83ee439a58047d6305642c6ad0f",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points" : [ {
+        "coordinates" : [ -2.2308100607125456, 53.477380938080806 ],
+        "snap_distance_m" : 6.318023928897091
+      } ],
+      "to_snapped_points" : [ {
+        "coordinates" : [ -2.242602053411688, 53.48079199058213 ],
+        "snap_distance_m" : 0.9009121347629726
+      }, {
+        "coordinates" : [ -2.2419762923887103, 53.487496245503145 ],
+        "snap_distance_m" : 1.6231224833407811
+      }, {
+        "coordinates" : [ -2.254269452338291, 53.47612825439584 ],
+        "snap_distance_m" : 11.645890560647143
+      } ],
+      "timings_ms" : {
+        "query_graph" : 0.0899,
+        "total" : 43.1693,
+        "snapping" : 2.4809,
+        "search_and_output" : 40.5516
+      }
+    },
+    "reference_metadata" : {
+      "contract_version" : "1.0",
+      "algorithm" : "reference",
+      "profile" : "foot",
+      "turn_costs" : false,
+      "origin_count" : 1,
+      "destination_count" : 3,
+      "unique_origin_count" : 1,
+      "searches" : 3,
+      "visited_states" : 47746,
+      "visited_states_known" : 47746,
+      "visited_states_complete" : true,
+      "threads" : 1,
+      "units" : {
+        "times_ms" : "milliseconds",
+        "times" : "seconds",
+        "weights" : "profile_cost",
+        "distances" : "metres"
+      },
+      "graph_fingerprint" : "0174eed0d93c2ca9feb7526b0fc9234720eac1e0dcd64f98c1f54aa89568268e",
+      "profile_fingerprint" : "85fcd281306fb543ea6f9c9b074304895dafa83ee439a58047d6305642c6ad0f",
+      "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points" : [ {
+        "coordinates" : [ -2.2308100607125456, 53.477380938080806 ],
+        "snap_distance_m" : 6.318023928897091
+      } ],
+      "to_snapped_points" : [ {
+        "coordinates" : [ -2.242602053411688, 53.48079199058213 ],
+        "snap_distance_m" : 0.9009121347629726
+      }, {
+        "coordinates" : [ -2.2419762923887103, 53.487496245503145 ],
+        "snap_distance_m" : 1.6231224833407811
+      }, {
+        "coordinates" : [ -2.254269452338291, 53.47612825439584 ],
+        "snap_distance_m" : 11.645890560647143
+      } ],
+      "timings_ms" : {
+        "query_graph" : 0.0623,
+        "total" : 30.9852,
+        "snapping" : 2.3853,
+        "search_and_output" : 28.5143
+      }
+    },
+    "status" : "PASS",
+    "request_sha256" : "c8a35c3c1374a85af08253eb46b747c247266f647d4f1d138fffbbaa48fb7c4a"
+  } ],
+  "failure_replay_path" : "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\regional-failure-replays.jsonl",
+  "limitations" : [ "A regional extract can clip routes near its boundary; comparisons use the identical imported graph.", "The stratified sample is not exhaustive proof over the imported network." ],
+  "import_ms" : 17249.1935,
+  "graph_nodes" : 500226,
+  "graph_edges" : 636908,
+  "graph_location" : "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\target\\matrix-regional-fc016823-e37c-4e94-a8c1-b4ce078225e5",
+  "car_u_turn_cost_seconds" : 60,
+  "profile_custom_model_sha256" : {
+    "car.json" : "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90",
+    "foot.json" : "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f"
+  },
+  "strata" : {
+    "boundary_extreme_node_ids_south_north_west_east" : [ 492341, 47883, 403439, 45616 ],
+    "one_way_edge_key" : 130,
+    "one_way_forward_access" : true,
+    "seeded_random_node_ids" : [ 21420, 365782, 473418, 137080, 411772, 206235, 217486, 329146, 458943, 113919, 157186, 52871, 117405, 365350, 355393, 162997 ],
+    "point_index_ranges" : {
+      "same_directed_edge_interior" : [ 10, 11 ],
+      "seeded_regional_nodes" : [ 20, 35 ],
+      "duplicate_anchors" : [ 4, 5 ],
+      "boundary_extremes" : [ 6, 9 ],
+      "supplied_manchester_anchors" : [ 0, 3 ],
+      "local_city_jitter" : [ 12, 19 ]
+    }
+  },
+  "stratified_point_count" : 36,
+  "unique_stratified_point_count" : 34,
+  "unique_stratified_pairs_per_profile" : 1156,
+  "unexplained_mismatches" : 10,
+  "explained_by_path_evidence" : 41,
+  "failure" : "org.opentest4j.AssertionFailedError: Inspect C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\regional-failure-replays.jsonl ==> expected: <0> but was: <10>",
+  "completed_utc" : "2026-10-19T18:22:28.923299800Z"
+}

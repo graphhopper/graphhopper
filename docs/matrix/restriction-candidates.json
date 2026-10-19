@@ -1,0 +1,675 @@
+{
+  "status" : "CANDIDATES_NOT_YET_ROUTED",
+  "started_utc" : "2026-10-19T18:55:45.939706300Z",
+  "source_pbf" : "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\..\\data\\greater-manchester-11f9b3f5b1d63cdf.osm.pbf",
+  "source_sha256" : "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+  "ignored_relation_manifest" : "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\osm-import-warnings.json",
+  "ignored_relation_manifest_sha256" : "e24cad5925fac095f5f5d2ffab3c036fc700ffeee5e5a2bfd0769b000a94255f",
+  "worker_threads" : 1,
+  "java_runtime" : "22.0.2+9-70",
+  "graph_imported" : false,
+  "bounds" : {
+    "max_relations" : 5000,
+    "max_central_relations" : 80,
+    "max_retained_way_nodes" : 100000
+  },
+  "simple_nonignored_relations" : 1160,
+  "selected_central_relations" : 80,
+  "candidate_count" : 10,
+  "candidates" : [ {
+    "relation_id" : 13779398,
+    "relation_url" : "https://www.openstreetmap.org/relation/13779398",
+    "restriction" : "no_left_turn",
+    "relation_tags" : {
+      "restriction" : "no_left_turn",
+      "type" : "restriction"
+    },
+    "via_osm_node" : 643143,
+    "via_coordinate_lon_lat" : [ -2.2409794, 53.4779903 ],
+    "from_osm_way" : 1029653569,
+    "from_way_tags" : {
+      "foot" : "yes",
+      "highway" : "service",
+      "maxspeed" : "20 mph",
+      "name" : "St James Street",
+      "oneway" : "no"
+    },
+    "to_osm_way" : 662336268,
+    "to_way_tags" : {
+      "busway" : "opposite_lane",
+      "cycleway:left" : "share_busway",
+      "cycleway:right" : "lane",
+      "highway" : "primary",
+      "lane_markings" : "yes",
+      "lanes" : "2",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Princess Street",
+      "ref" : "A34",
+      "ref:GB:usrn" : "24506109;24519001",
+      "sidewalk:both" : "separate",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes",
+      "wikidata" : "Q7244836"
+    },
+    "from_way_node_ids" : [ 643143, 12431845928, 4493301692, 12449501173, 4831098 ],
+    "to_way_node_ids" : [ 643143, 4831116 ],
+    "origin_coordinate_lon_lat" : [ -2.2412641672465985, 53.477780764795625 ],
+    "destination_coordinate_lon_lat" : [ -2.2412935000000003, 53.47814877500001 ],
+    "origin_distance_from_via_m" : 29.999979959529018,
+    "destination_distance_from_via_m" : 27.280742746378344,
+    "in_recorded_ignored_relation_ids" : false,
+    "manual_import_and_detour_confirmation" : "PENDING",
+    "route_request" : {
+      "calc_points" : true,
+      "lm.disable" : true,
+      "ch.disable" : true,
+      "algorithm" : "dijkstra",
+      "snap_preventions" : [ ],
+      "instructions" : true,
+      "points_encoded" : false,
+      "profile" : "car",
+      "points" : [ [ -2.2412641672465985, 53.477780764795625 ], [ -2.2412935000000003, 53.47814877500001 ] ]
+    },
+    "matrix_request" : {
+      "from_points" : [ [ -2.2412641672465985, 53.477780764795625 ] ],
+      "fail_fast" : true,
+      "profile" : "car",
+      "local" : {
+        "algorithm" : "flexible"
+      },
+      "out_arrays" : [ "weights", "times_ms", "times", "distances" ],
+      "to_points" : [ [ -2.2412935000000003, 53.47814877500001 ] ]
+    }
+  }, {
+    "relation_id" : 1645783,
+    "relation_url" : "https://www.openstreetmap.org/relation/1645783",
+    "restriction" : "no_right_turn",
+    "relation_tags" : {
+      "restriction" : "no_right_turn",
+      "type" : "restriction"
+    },
+    "via_osm_node" : 9438229407,
+    "via_coordinate_lon_lat" : [ -2.2480036, 53.4808291 ],
+    "from_osm_way" : 154986396,
+    "from_way_tags" : {
+      "cycleway:both" : "no",
+      "highway" : "primary",
+      "lanes" : "2",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Bridge Street",
+      "ref" : "A34",
+      "sidewalk:both" : "separate",
+      "source" : "OS_OpenData_StreetView",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes"
+    },
+    "to_osm_way" : 1220701553,
+    "to_way_tags" : {
+      "cycleway:left" : "lane",
+      "cycleway:right" : "track",
+      "highway" : "tertiary",
+      "lanes" : "1",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Deansgate",
+      "oneway" : "yes",
+      "oneway:bicycle" : "no",
+      "ref" : "A56",
+      "sidewalk:both" : "separate",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes"
+    },
+    "from_way_node_ids" : [ 9438229407, 6343468400, 9438229414, 1674355395, 1826031429, 4302617025, 6343468219, 3595319785, 6343468216 ],
+    "to_way_node_ids" : [ 9438229407, 6343468403, 9438229412, 324682510 ],
+    "origin_coordinate_lon_lat" : [ -2.2484402619868145, 53.480900460291885 ],
+    "destination_coordinate_lon_lat" : [ -2.2481742719273683, 53.48057948222779 ],
+    "origin_distance_from_via_m" : 29.997847216708077,
+    "destination_distance_from_via_m" : 29.999580040128723,
+    "in_recorded_ignored_relation_ids" : false,
+    "manual_import_and_detour_confirmation" : "PENDING",
+    "route_request" : {
+      "calc_points" : true,
+      "lm.disable" : true,
+      "ch.disable" : true,
+      "algorithm" : "dijkstra",
+      "snap_preventions" : [ ],
+      "instructions" : true,
+      "points_encoded" : false,
+      "profile" : "car",
+      "points" : [ [ -2.2484402619868145, 53.480900460291885 ], [ -2.2481742719273683, 53.48057948222779 ] ]
+    },
+    "matrix_request" : {
+      "from_points" : [ [ -2.2484402619868145, 53.480900460291885 ] ],
+      "fail_fast" : true,
+      "profile" : "car",
+      "local" : {
+        "algorithm" : "flexible"
+      },
+      "out_arrays" : [ "weights", "times_ms", "times", "distances" ],
+      "to_points" : [ [ -2.2481742719273683, 53.48057948222779 ] ]
+    }
+  }, {
+    "relation_id" : 9318666,
+    "relation_url" : "https://www.openstreetmap.org/relation/9318666",
+    "restriction" : "no_left_turn",
+    "relation_tags" : {
+      "restriction" : "no_left_turn",
+      "type" : "restriction"
+    },
+    "via_osm_node" : 4830792,
+    "via_coordinate_lon_lat" : [ -2.2376148000000002, 53.479159800000005 ],
+    "from_osm_way" : 249112982,
+    "from_way_tags" : {
+      "highway" : "tertiary",
+      "lanes" : "1",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "New York Street",
+      "oneway" : "yes",
+      "sidewalk:both" : "separate",
+      "surface" : "asphalt"
+    },
+    "to_osm_way" : 250129530,
+    "to_way_tags" : {
+      "highway" : "primary",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Portland Street",
+      "ref" : "A5103",
+      "sidewalk:left" : "separate",
+      "sidewalk:right" : "no",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes",
+      "wikidata" : "Q7232052"
+    },
+    "from_way_node_ids" : [ 889324816, 889325689, 4830792 ],
+    "to_way_node_ids" : [ 2557866095, 2557866068, 2557866040, 4830792 ],
+    "origin_coordinate_lon_lat" : [ -2.2376747998770146, 53.47931061413005 ],
+    "destination_coordinate_lon_lat" : [ -2.237478544142055, 53.47925635790607 ],
+    "origin_distance_from_via_m" : 17.252759655013776,
+    "destination_distance_from_via_m" : 14.036328845378016,
+    "in_recorded_ignored_relation_ids" : false,
+    "manual_import_and_detour_confirmation" : "PENDING",
+    "route_request" : {
+      "calc_points" : true,
+      "lm.disable" : true,
+      "ch.disable" : true,
+      "algorithm" : "dijkstra",
+      "snap_preventions" : [ ],
+      "instructions" : true,
+      "points_encoded" : false,
+      "profile" : "car",
+      "points" : [ [ -2.2376747998770146, 53.47931061413005 ], [ -2.237478544142055, 53.47925635790607 ] ]
+    },
+    "matrix_request" : {
+      "from_points" : [ [ -2.2376747998770146, 53.47931061413005 ] ],
+      "fail_fast" : true,
+      "profile" : "car",
+      "local" : {
+        "algorithm" : "flexible"
+      },
+      "out_arrays" : [ "weights", "times_ms", "times", "distances" ],
+      "to_points" : [ [ -2.237478544142055, 53.47925635790607 ] ]
+    }
+  }, {
+    "relation_id" : 9318667,
+    "relation_url" : "https://www.openstreetmap.org/relation/9318667",
+    "restriction" : "no_right_turn",
+    "relation_tags" : {
+      "restriction" : "no_right_turn",
+      "type" : "restriction"
+    },
+    "via_osm_node" : 2557866095,
+    "via_coordinate_lon_lat" : [ -2.2374313000000003, 53.479287600000006 ],
+    "from_osm_way" : 249112965,
+    "from_way_tags" : {
+      "highway" : "tertiary",
+      "lanes" : "1",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "New York Street",
+      "oneway" : "yes",
+      "sidewalk:both" : "separate",
+      "surface" : "asphalt"
+    },
+    "to_osm_way" : 250129530,
+    "to_way_tags" : {
+      "highway" : "primary",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Portland Street",
+      "ref" : "A5103",
+      "sidewalk:left" : "separate",
+      "sidewalk:right" : "no",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes",
+      "wikidata" : "Q7232052"
+    },
+    "from_way_node_ids" : [ 889324816, 2557866050, 2557866095 ],
+    "to_way_node_ids" : [ 2557866095, 2557866068, 2557866040, 4830792 ],
+    "origin_coordinate_lon_lat" : [ -2.2376425251832806, 53.479339179846484 ],
+    "destination_coordinate_lon_lat" : [ -2.2375694603983267, 53.47919202599381 ],
+    "origin_distance_from_via_m" : 15.125470229355036,
+    "destination_distance_from_via_m" : 14.034584653758666,
+    "in_recorded_ignored_relation_ids" : false,
+    "manual_import_and_detour_confirmation" : "PENDING",
+    "route_request" : {
+      "calc_points" : true,
+      "lm.disable" : true,
+      "ch.disable" : true,
+      "algorithm" : "dijkstra",
+      "snap_preventions" : [ ],
+      "instructions" : true,
+      "points_encoded" : false,
+      "profile" : "car",
+      "points" : [ [ -2.2376425251832806, 53.479339179846484 ], [ -2.2375694603983267, 53.47919202599381 ] ]
+    },
+    "matrix_request" : {
+      "from_points" : [ [ -2.2376425251832806, 53.479339179846484 ] ],
+      "fail_fast" : true,
+      "profile" : "car",
+      "local" : {
+        "algorithm" : "flexible"
+      },
+      "out_arrays" : [ "weights", "times_ms", "times", "distances" ],
+      "to_points" : [ [ -2.2375694603983267, 53.47919202599381 ] ]
+    }
+  }, {
+    "relation_id" : 1996173,
+    "relation_url" : "https://www.openstreetmap.org/relation/1996173",
+    "restriction" : "no_right_turn",
+    "relation_tags" : {
+      "name" : "Portland Street to Princess St NRT",
+      "restriction" : "no_right_turn",
+      "type" : "restriction"
+    },
+    "via_osm_node" : 643142,
+    "via_coordinate_lon_lat" : [ -2.2401727, 53.4775361 ],
+    "from_osm_way" : 248215545,
+    "from_way_tags" : {
+      "cycleway:both" : "no",
+      "highway" : "primary",
+      "lane_markings" : "yes",
+      "lanes" : "3",
+      "lanes:backward" : "1",
+      "lanes:forward" : "2",
+      "lanes:psv:forward" : "1",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Portland Street",
+      "psv:lanes:forward" : "designated|yes",
+      "ref" : "A5103",
+      "sidewalk:both" : "separate",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes",
+      "wikidata" : "Q7232052"
+    },
+    "to_osm_way" : 141271852,
+    "to_way_tags" : {
+      "cycleway:left" : "shared_lane",
+      "cycleway:left:lane" : "pictogram",
+      "highway" : "primary",
+      "lane_markings" : "no",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Princess Street",
+      "oneway" : "yes",
+      "ref" : "A34",
+      "ref:GB:usrn" : "24506109;24519001",
+      "sidewalk:both" : "separate",
+      "source" : "GPS survey",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes",
+      "wikidata" : "Q7244836"
+    },
+    "from_way_node_ids" : [ 1674309237, 1674309238, 9439524443, 9439524442, 9439524430, 643142 ],
+    "to_way_node_ids" : [ 643142, 9494070656, 6549315115, 6550176017, 6549315116, 309486802, 6549315117, 4835325, 3365245 ],
+    "origin_coordinate_lon_lat" : [ -2.2404865597662713, 53.477341852546196 ],
+    "destination_coordinate_lon_lat" : [ -2.2399306886476196, 53.4773084632811 ],
+    "origin_distance_from_via_m" : 29.999176350363697,
+    "destination_distance_from_via_m" : 29.986902448861265,
+    "in_recorded_ignored_relation_ids" : false,
+    "manual_import_and_detour_confirmation" : "PENDING",
+    "route_request" : {
+      "calc_points" : true,
+      "lm.disable" : true,
+      "ch.disable" : true,
+      "algorithm" : "dijkstra",
+      "snap_preventions" : [ ],
+      "instructions" : true,
+      "points_encoded" : false,
+      "profile" : "car",
+      "points" : [ [ -2.2404865597662713, 53.477341852546196 ], [ -2.2399306886476196, 53.4773084632811 ] ]
+    },
+    "matrix_request" : {
+      "from_points" : [ [ -2.2404865597662713, 53.477341852546196 ] ],
+      "fail_fast" : true,
+      "profile" : "car",
+      "local" : {
+        "algorithm" : "flexible"
+      },
+      "out_arrays" : [ "weights", "times_ms", "times", "distances" ],
+      "to_points" : [ [ -2.2399306886476196, 53.4773084632811 ] ]
+    }
+  }, {
+    "relation_id" : 18142658,
+    "relation_url" : "https://www.openstreetmap.org/relation/18142658",
+    "restriction" : "no_right_turn",
+    "relation_tags" : {
+      "restriction" : "no_right_turn",
+      "type" : "restriction"
+    },
+    "via_osm_node" : 344239323,
+    "via_coordinate_lon_lat" : [ -2.2360467, 53.480128 ],
+    "from_osm_way" : 249112983,
+    "from_way_tags" : {
+      "cycleway:both" : "lane",
+      "cycleway:both:lane" : "advisory",
+      "highway" : "primary",
+      "lane_markings" : "yes",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Portland Street",
+      "ref" : "A6",
+      "sidewalk:both" : "separate",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes",
+      "wikidata" : "Q7232052"
+    },
+    "to_osm_way" : 999880453,
+    "to_way_tags" : {
+      "highway" : "service",
+      "lit" : "yes",
+      "oneway" : "yes",
+      "surface" : "asphalt"
+    },
+    "from_way_node_ids" : [ 344239323, 2557866088, 9229913829, 889327226 ],
+    "to_way_node_ids" : [ 344239323, 9229913820, 9229913821, 9229913822, 9229913819 ],
+    "origin_coordinate_lon_lat" : [ -2.2357182954344865, 53.480313559635384 ],
+    "destination_coordinate_lon_lat" : [ -2.236153148832911, 53.480192615421466 ],
+    "origin_distance_from_via_m" : 30.0000038961732,
+    "destination_distance_from_via_m" : 10.073136800162578,
+    "in_recorded_ignored_relation_ids" : false,
+    "manual_import_and_detour_confirmation" : "PENDING",
+    "route_request" : {
+      "calc_points" : true,
+      "lm.disable" : true,
+      "ch.disable" : true,
+      "algorithm" : "dijkstra",
+      "snap_preventions" : [ ],
+      "instructions" : true,
+      "points_encoded" : false,
+      "profile" : "car",
+      "points" : [ [ -2.2357182954344865, 53.480313559635384 ], [ -2.236153148832911, 53.480192615421466 ] ]
+    },
+    "matrix_request" : {
+      "from_points" : [ [ -2.2357182954344865, 53.480313559635384 ] ],
+      "fail_fast" : true,
+      "profile" : "car",
+      "local" : {
+        "algorithm" : "flexible"
+      },
+      "out_arrays" : [ "weights", "times_ms", "times", "distances" ],
+      "to_points" : [ [ -2.236153148832911, 53.480192615421466 ] ]
+    }
+  }, {
+    "relation_id" : 16164922,
+    "relation_url" : "https://www.openstreetmap.org/relation/16164922",
+    "restriction" : "no_right_turn",
+    "relation_tags" : {
+      "restriction" : "no_right_turn",
+      "type" : "restriction"
+    },
+    "via_osm_node" : 11092968580,
+    "via_coordinate_lon_lat" : [ -2.2389455000000003, 53.48473430000001 ],
+    "from_osm_way" : 1195184091,
+    "from_way_tags" : {
+      "highway" : "tertiary",
+      "lanes" : "2",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Shudehill",
+      "sidewalk:both" : "separate",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes"
+    },
+    "to_osm_way" : 1195184089,
+    "to_way_tags" : {
+      "highway" : "service",
+      "oneway" : "yes",
+      "surface" : "concrete"
+    },
+    "from_way_node_ids" : [ 31495788, 11092968580 ],
+    "to_way_node_ids" : [ 11092968580, 11092968579, 11092968578 ],
+    "origin_coordinate_lon_lat" : [ -2.2390932500000003, 53.484690425000004 ],
+    "destination_coordinate_lon_lat" : [ -2.238904314684647, 53.4846741843112 ],
+    "origin_distance_from_via_m" : 10.937931379251769,
+    "destination_distance_from_via_m" : 7.226785479634811,
+    "in_recorded_ignored_relation_ids" : false,
+    "manual_import_and_detour_confirmation" : "PENDING",
+    "route_request" : {
+      "calc_points" : true,
+      "lm.disable" : true,
+      "ch.disable" : true,
+      "algorithm" : "dijkstra",
+      "snap_preventions" : [ ],
+      "instructions" : true,
+      "points_encoded" : false,
+      "profile" : "car",
+      "points" : [ [ -2.2390932500000003, 53.484690425000004 ], [ -2.238904314684647, 53.4846741843112 ] ]
+    },
+    "matrix_request" : {
+      "from_points" : [ [ -2.2390932500000003, 53.484690425000004 ] ],
+      "fail_fast" : true,
+      "profile" : "car",
+      "local" : {
+        "algorithm" : "flexible"
+      },
+      "out_arrays" : [ "weights", "times_ms", "times", "distances" ],
+      "to_points" : [ [ -2.238904314684647, 53.4846741843112 ] ]
+    }
+  }, {
+    "relation_id" : 12733108,
+    "relation_url" : "https://www.openstreetmap.org/relation/12733108",
+    "restriction" : "no_right_turn",
+    "relation_tags" : {
+      "restriction" : "no_right_turn",
+      "type" : "restriction"
+    },
+    "via_osm_node" : 8746796430,
+    "via_coordinate_lon_lat" : [ -2.2450613, 53.476531400000006 ],
+    "from_osm_way" : 221608201,
+    "from_way_tags" : {
+      "highway" : "primary",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Lower Mosley Street",
+      "oneway" : "yes",
+      "ref" : "A5103",
+      "sidewalk:both" : "no",
+      "tfgmcitycentre" : "yes"
+    },
+    "to_osm_way" : 944791910,
+    "to_way_tags" : {
+      "highway" : "primary",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Lower Mosley Street",
+      "oneway" : "yes",
+      "ref" : "A5103",
+      "sidewalk:left" : "separate",
+      "sidewalk:right" : "no",
+      "tfgmcitycentre" : "yes"
+    },
+    "from_way_node_ids" : [ 1825972540, 8746796437, 8746796436, 8746796435, 8746796429, 8746796438, 8746796430 ],
+    "to_way_node_ids" : [ 8746796430, 8746796434, 8746796421, 8746796433, 9779572040, 8746796423, 9779572046, 8746796432, 8746796431, 4833857 ],
+    "origin_coordinate_lon_lat" : [ -2.245342273339418, 53.47639403332345 ],
+    "destination_coordinate_lon_lat" : [ -2.2453279866151945, 53.47631531821925 ],
+    "origin_distance_from_via_m" : 24.090645891524787,
+    "destination_distance_from_via_m" : 29.846054217390936,
+    "in_recorded_ignored_relation_ids" : false,
+    "manual_import_and_detour_confirmation" : "PENDING",
+    "route_request" : {
+      "calc_points" : true,
+      "lm.disable" : true,
+      "ch.disable" : true,
+      "algorithm" : "dijkstra",
+      "snap_preventions" : [ ],
+      "instructions" : true,
+      "points_encoded" : false,
+      "profile" : "car",
+      "points" : [ [ -2.245342273339418, 53.47639403332345 ], [ -2.2453279866151945, 53.47631531821925 ] ]
+    },
+    "matrix_request" : {
+      "from_points" : [ [ -2.245342273339418, 53.47639403332345 ] ],
+      "fail_fast" : true,
+      "profile" : "car",
+      "local" : {
+        "algorithm" : "flexible"
+      },
+      "out_arrays" : [ "weights", "times_ms", "times", "distances" ],
+      "to_points" : [ [ -2.2453279866151945, 53.47631531821925 ] ]
+    }
+  }, {
+    "relation_id" : 7200362,
+    "relation_url" : "https://www.openstreetmap.org/relation/7200362",
+    "restriction" : "no_right_turn",
+    "relation_tags" : {
+      "restriction" : "no_right_turn",
+      "type" : "restriction"
+    },
+    "via_osm_node" : 9446128602,
+    "via_coordinate_lon_lat" : [ -2.2426069, 53.4762003 ],
+    "from_osm_way" : 1414408120,
+    "from_way_tags" : {
+      "highway" : "tertiary",
+      "lanes" : "4",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Chepstow Street",
+      "source:name" : "OS_OpenData_Locator",
+      "surface" : "asphalt"
+    },
+    "to_osm_way" : 28047781,
+    "to_way_tags" : {
+      "cycleway:left" : "lane",
+      "cycleway:left:lane" : "advisory",
+      "cycleway:right" : "track",
+      "highway" : "secondary",
+      "lanes" : "2",
+      "lanes:backward" : "1",
+      "lanes:forward" : "2",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Oxford Street",
+      "sidewalk:both" : "separate",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes"
+    },
+    "from_way_node_ids" : [ 6566085340, 1826450762, 6566085339, 303129484, 9446129029, 9446129030, 5402450439, 9446128602 ],
+    "to_way_node_ids" : [ 9446128602, 249390248, 9446128603, 643132, 4462199307, 4462199306, 307985471 ],
+    "origin_coordinate_lon_lat" : [ -2.243011866054911, 53.47607983055838 ],
+    "destination_coordinate_lon_lat" : [ -2.242392672112921, 53.475962879786586 ],
+    "origin_distance_from_via_m" : 29.995078960575423,
+    "destination_distance_from_via_m" : 29.999548713309,
+    "in_recorded_ignored_relation_ids" : false,
+    "manual_import_and_detour_confirmation" : "PENDING",
+    "route_request" : {
+      "calc_points" : true,
+      "lm.disable" : true,
+      "ch.disable" : true,
+      "algorithm" : "dijkstra",
+      "snap_preventions" : [ ],
+      "instructions" : true,
+      "points_encoded" : false,
+      "profile" : "car",
+      "points" : [ [ -2.243011866054911, 53.47607983055838 ], [ -2.242392672112921, 53.475962879786586 ] ]
+    },
+    "matrix_request" : {
+      "from_points" : [ [ -2.243011866054911, 53.47607983055838 ] ],
+      "fail_fast" : true,
+      "profile" : "car",
+      "local" : {
+        "algorithm" : "flexible"
+      },
+      "out_arrays" : [ "weights", "times_ms", "times", "distances" ],
+      "to_points" : [ [ -2.242392672112921, 53.475962879786586 ] ]
+    }
+  }, {
+    "relation_id" : 2639545,
+    "relation_url" : "https://www.openstreetmap.org/relation/2639545",
+    "restriction" : "no_left_turn",
+    "relation_tags" : {
+      "restriction" : "no_left_turn",
+      "type" : "restriction"
+    },
+    "via_osm_node" : 4830027,
+    "via_coordinate_lon_lat" : [ -2.2335188, 53.4814434 ],
+    "from_osm_way" : 196371315,
+    "from_way_tags" : {
+      "busway:right" : "opposite_lane",
+      "cycleway:left" : "lane",
+      "cycleway:left:lane" : "advisory",
+      "highway" : "primary",
+      "lanes" : "2",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Dale Street",
+      "oneway" : "yes",
+      "ref" : "A6",
+      "sidewalk:both" : "separate",
+      "smoothness" : "good",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes"
+    },
+    "to_osm_way" : 468023826,
+    "to_way_tags" : {
+      "cycleway:both" : "no",
+      "highway" : "primary",
+      "lanes" : "2",
+      "lit" : "yes",
+      "maxspeed" : "20 mph",
+      "name" : "Newton Street",
+      "ref" : "A62",
+      "sidewalk:both" : "separate",
+      "surface" : "asphalt",
+      "tfgmcitycentre" : "yes"
+    },
+    "from_way_node_ids" : [ 4830023, 11286913107, 9813067268, 4830026, 9491094482, 9491094483, 4830027 ],
+    "to_way_node_ids" : [ 1827300884, 5685718673, 9813067277, 9491094481, 5685718672, 4830027 ],
+    "origin_coordinate_lon_lat" : [ -2.233871087532562, 53.4816127425964 ],
+    "destination_coordinate_lon_lat" : [ -2.23323004358986, 53.48165099775425 ],
+    "origin_distance_from_via_m" : 29.99982492018733,
+    "destination_distance_from_via_m" : 29.999372224638176,
+    "in_recorded_ignored_relation_ids" : false,
+    "manual_import_and_detour_confirmation" : "PENDING",
+    "route_request" : {
+      "calc_points" : true,
+      "lm.disable" : true,
+      "ch.disable" : true,
+      "algorithm" : "dijkstra",
+      "snap_preventions" : [ ],
+      "instructions" : true,
+      "points_encoded" : false,
+      "profile" : "car",
+      "points" : [ [ -2.233871087532562, 53.4816127425964 ], [ -2.23323004358986, 53.48165099775425 ] ]
+    },
+    "matrix_request" : {
+      "from_points" : [ [ -2.233871087532562, 53.4816127425964 ] ],
+      "fail_fast" : true,
+      "profile" : "car",
+      "local" : {
+        "algorithm" : "flexible"
+      },
+      "out_arrays" : [ "weights", "times_ms", "times", "distances" ],
+      "to_points" : [ [ -2.23323004358986, 53.48165099775425 ] ]
+    }
+  } ],
+  "retained_way_count" : 128,
+  "retained_node_count" : 1340,
+  "scan_ms" : 9381.4388,
+  "completed_utc" : "2026-10-19T18:55:55.320968200Z",
+  "limitations" : [ "Absence from ignored-relation warnings is supporting evidence, not proof that the restriction was imported.", "Coordinates follow actual member-way geometry approximately 30 metres from the via node. Verify snaps and the detour on the running imported graph.", "Use two-point routes for the turn check. Adding the via node as a route waypoint can reset endpoint turn history." ]
+}

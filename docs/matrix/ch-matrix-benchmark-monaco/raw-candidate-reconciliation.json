@@ -1,0 +1,1010 @@
+{
+  "status": "RAW_CANDIDATE_FLAGS_REJECTED_BY_MANDATORY_CERTIFICATE",
+  "dataset": "monaco",
+  "scope": "Every indexed raw candidate flag is a rejected diagnostic result. The actual BucketCHMatrix path was not captured. Linked fresh ordinary CH paths provide legal-route context and source-derived bounds only for those linked paths; they do not establish the candidate's actual edge sequence or operation count. Returned API cells exactly match flexible and pass independent plain-Dijkstra thresholds. No candidate-only exactness or optimality claim is made.",
+  "original_evidence_sha256": {
+    "metadata.json": "04cd71cbcc3016d11119b9e1be7caf7e1d5ec9e3109f0ac952a695109b99fdcf",
+    "raw-candidates.json": "a1fc6aace3cfd912af59c30ec3d03335722e46cbf1dfd73235c0f926ba4b0c2f",
+    "first-outcomes.json": "9205ae14dbbc5a74ae61c715e77a2f8e3405a2a37f8bc834e4eb6cd4ab41880d",
+    "requests.json": "d5bdca08dd7590af0e41ed1d2f993e5069e7dce960a6c98b25f9d6d843fca94d",
+    "samples.csv": "04738efadafa64387515b6ad592fdb5a235747c1c5d1610c192c843773460596",
+    "pairwise-ch-reconciliation.json": "d0d1b7011406dc238c9d29c099797aa29db8d193f62c72df3f6e45fbd03f057f",
+    "pairwise-ch-witnesses.jsonl.gz": "c834885bebeb7bdc0dff0825d7e5c9d0d4891ea436ecdf210273ba4471c7104a"
+  },
+  "raw_flagged_cells": 16,
+  "rejected_indexed_cases": [
+    {
+      "workload": "100x10",
+      "origin_index": 68,
+      "destination_index": 1,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4311269,
+        43.7423148
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 852.684,
+        "times_ms": 754132,
+        "distances": 1047.403
+      },
+      "independent_plain_dijkstra": {
+        "weights": 852.6839999999999,
+        "times_ms": 756021,
+        "distances": 1050.0269999999998
+      },
+      "returned_certified": {
+        "weights": 852.6839999999999,
+        "times_ms": 756021,
+        "distances": 1050.027
+      },
+      "returned_flexible": {
+        "weights": 852.6839999999999,
+        "times_ms": 756021,
+        "distances": 1050.027
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x10-proof-1735",
+      "linked_witness_line_sha256": "a016dad7b8782a9e8b4a9f1885e323c7a70f489c4ff56cc6c6af96e893298d7b",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "1920073672332391959/2251799813685248",
+          "context_path_nonnegative_term_count": 25,
+          "context_path_binary_addition_operation_bound": 24,
+          "context_path_sum_association_absolute_bound_fraction": "5760221016997175877/2535301200456452047593965355008",
+          "observed_raw_minus_context_exact_sum_fraction": "-23/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "2358541880253369825/2251799813685248",
+          "context_path_nonnegative_term_count": 25,
+          "context_path_binary_addition_operation_bound": 24,
+          "context_path_sum_association_absolute_bound_fraction": "7075625640760109475/2535301200456452047593965355008",
+          "observed_raw_minus_context_exact_sum_fraction": "31/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 1,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4311269,
+        43.7423148
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 852.684,
+        "times_ms": 754132,
+        "distances": 1047.403
+      },
+      "independent_plain_dijkstra": {
+        "weights": 852.6839999999999,
+        "times_ms": 756021,
+        "distances": 1050.0269999999998
+      },
+      "returned_certified": {
+        "weights": 852.6839999999999,
+        "times_ms": 756021,
+        "distances": 1050.027
+      },
+      "returned_flexible": {
+        "weights": 852.6839999999999,
+        "times_ms": 756021,
+        "distances": 1050.027
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8375",
+      "linked_witness_line_sha256": "a666a8267098e8cb86d3f5fcca28aef4134ff24b1992044bb19bb477df07f75b",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "1920073672332391959/2251799813685248",
+          "context_path_nonnegative_term_count": 25,
+          "context_path_binary_addition_operation_bound": 24,
+          "context_path_sum_association_absolute_bound_fraction": "5760221016997175877/2535301200456452047593965355008",
+          "observed_raw_minus_context_exact_sum_fraction": "-23/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "2358541880253369825/2251799813685248",
+          "context_path_nonnegative_term_count": 25,
+          "context_path_binary_addition_operation_bound": 24,
+          "context_path_sum_association_absolute_bound_fraction": "7075625640760109475/2535301200456452047593965355008",
+          "observed_raw_minus_context_exact_sum_fraction": "31/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 18,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4385495,
+        43.749225
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 1608.6151,
+        "times_ms": 1563190,
+        "distances": 2149.814
+      },
+      "independent_plain_dijkstra": {
+        "weights": 1608.6151,
+        "times_ms": 1565079,
+        "distances": 2152.4379999999996
+      },
+      "returned_certified": {
+        "weights": 1608.6151,
+        "times_ms": 1565079,
+        "distances": 2152.438
+      },
+      "returned_flexible": {
+        "weights": 1608.6151,
+        "times_ms": 1565079,
+        "distances": 2152.438
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8392",
+      "linked_witness_line_sha256": "d0e7d983661ce5b5d92d1c728bc4b4161e5a261ee36be4e3be3844d05d54f12e",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "1811139591235638147/1125899906842624",
+          "context_path_nonnegative_term_count": 35,
+          "context_path_binary_addition_operation_bound": 34,
+          "context_path_sum_association_absolute_bound_fraction": "30789373051005848499/5070602400912898465688396496896",
+          "observed_raw_minus_context_exact_sum_fraction": "125/1125899906842624",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "4840950764657937681/2251799813685248",
+          "context_path_nonnegative_term_count": 35,
+          "context_path_binary_addition_operation_bound": 34,
+          "context_path_sum_association_absolute_bound_fraction": "82296162999184940577/10141204801825796931376792993792",
+          "observed_raw_minus_context_exact_sum_fraction": "-273/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 20,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4348609,
+        43.7473876
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 1239.0839999999998,
+        "times_ms": 1248333,
+        "distances": 1733.7930000000001
+      },
+      "independent_plain_dijkstra": {
+        "weights": 1239.0839999999998,
+        "times_ms": 1250222,
+        "distances": 1736.4170000000001
+      },
+      "returned_certified": {
+        "weights": 1239.0839999999998,
+        "times_ms": 1250222,
+        "distances": 1736.417
+      },
+      "returned_flexible": {
+        "weights": 1239.0839999999998,
+        "times_ms": 1250222,
+        "distances": 1736.417
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8394",
+      "linked_witness_line_sha256": "c8a760b53d41b29459ba888ded782d772c9e8467e15555705ae578b40a8c46c0",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "1395084560170185763/1125899906842624",
+          "context_path_nonnegative_term_count": 26,
+          "context_path_binary_addition_operation_bound": 25,
+          "context_path_sum_association_absolute_bound_fraction": "34877114004254644075/10141204801825807064475954577408",
+          "observed_raw_minus_context_exact_sum_fraction": "-35/1125899906842624",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "3904154754368787101/2251799813685248",
+          "context_path_nonnegative_term_count": 26,
+          "context_path_binary_addition_operation_bound": 25,
+          "context_path_sum_association_absolute_bound_fraction": "97603868859219677525/20282409603651614128951909154816",
+          "observed_raw_minus_context_exact_sum_fraction": "355/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 23,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4299486,
+        43.7417336
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 825.5721,
+        "times_ms": 710816,
+        "distances": 987.2429999999999
+      },
+      "independent_plain_dijkstra": {
+        "weights": 825.5721,
+        "times_ms": 712705,
+        "distances": 989.8669999999998
+      },
+      "returned_certified": {
+        "weights": 825.5721,
+        "times_ms": 712705,
+        "distances": 989.8670000000001
+      },
+      "returned_flexible": {
+        "weights": 825.5721,
+        "times_ms": 712705,
+        "distances": 989.8670000000001
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8397",
+      "linked_witness_line_sha256": "9ac6c0e3bffe18a913d84a61f15d369288060f54cee3fa7ce70c77fd341ff754",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "1859023100963738895/2251799813685248",
+          "context_path_nonnegative_term_count": 23,
+          "context_path_binary_addition_operation_bound": 22,
+          "context_path_sum_association_absolute_bound_fraction": "4089850822120225569/2028240960365162088435135021056",
+          "observed_raw_minus_context_exact_sum_fraction": "-15/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "2223073603462065313/2251799813685248",
+          "context_path_nonnegative_term_count": 23,
+          "context_path_binary_addition_operation_bound": 22,
+          "context_path_sum_association_absolute_bound_fraction": "24453809638082718443/10141204801825810442175675105280",
+          "observed_raw_minus_context_exact_sum_fraction": "-161/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 26,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4305188,
+        43.7429141
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 923.262,
+        "times_ms": 791749,
+        "distances": 1099.649
+      },
+      "independent_plain_dijkstra": {
+        "weights": 923.2620000000001,
+        "times_ms": 793638,
+        "distances": 1102.273
+      },
+      "returned_certified": {
+        "weights": 923.2620000000001,
+        "times_ms": 793638,
+        "distances": 1102.2730000000001
+      },
+      "returned_flexible": {
+        "weights": 923.2620000000001,
+        "times_ms": 793638,
+        "distances": 1102.2730000000001
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8400",
+      "linked_witness_line_sha256": "cad8bc6178c30a90f76923184e738fbe87fc35c0fdbaefd88ef1d307ebed48b0",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "2079001199582669423/2251799813685248",
+          "context_path_nonnegative_term_count": 27,
+          "context_path_binary_addition_operation_bound": 26,
+          "context_path_sum_association_absolute_bound_fraction": "27027015594574702499/10141204801825805938576047734784",
+          "observed_raw_minus_context_exact_sum_fraction": "-111/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "2476189413319169289/2251799813685248",
+          "context_path_nonnegative_term_count": 27,
+          "context_path_binary_addition_operation_bound": 26,
+          "context_path_sum_association_absolute_bound_fraction": "10730154124383066919/3380401600608601979525349244928",
+          "observed_raw_minus_context_exact_sum_fraction": "-265/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 55,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4300559,
+        43.7428136
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 933.2904,
+        "times_ms": 806957,
+        "distances": 1120.772
+      },
+      "independent_plain_dijkstra": {
+        "weights": 933.2904,
+        "times_ms": 808846,
+        "distances": 1123.396
+      },
+      "returned_certified": {
+        "weights": 933.2904,
+        "times_ms": 808846,
+        "distances": 1123.396
+      },
+      "returned_flexible": {
+        "weights": 933.2904,
+        "times_ms": 808846,
+        "distances": 1123.396
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8426",
+      "linked_witness_line_sha256": "36e3d69daf2b432c4b73bb66cdc73a85b4fb7edf56a06c9e75a86c3e81daa748",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "2101583148834230539/2251799813685248",
+          "context_path_nonnegative_term_count": 26,
+          "context_path_binary_addition_operation_bound": 25,
+          "context_path_sum_association_absolute_bound_fraction": "52539578720855763475/20282409603651614128951909154816",
+          "observed_raw_minus_context_exact_sum_fraction": "-11/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "2523754180783642777/2251799813685248",
+          "context_path_nonnegative_term_count": 26,
+          "context_path_binary_addition_operation_bound": 25,
+          "context_path_sum_association_absolute_bound_fraction": "63093854519591069425/20282409603651614128951909154816",
+          "observed_raw_minus_context_exact_sum_fraction": "-153/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 58,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4270545,
+        43.7374531
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 258.6567,
+        "times_ms": 257283,
+        "distances": 357.337
+      },
+      "independent_plain_dijkstra": {
+        "weights": 258.6567,
+        "times_ms": 259172,
+        "distances": 359.961
+      },
+      "returned_certified": {
+        "weights": 258.6567,
+        "times_ms": 259172,
+        "distances": 359.96099999999996
+      },
+      "returned_flexible": {
+        "weights": 258.6567,
+        "times_ms": 259172,
+        "distances": 359.96099999999996
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8429",
+      "linked_witness_line_sha256": "21e3de85762e5dbcf6feaaf546ff28049e419a31f47eb4f7581a8aec416af850",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "582443108868441057/2251799813685248",
+          "context_path_nonnegative_term_count": 14,
+          "context_path_binary_addition_operation_bound": 13,
+          "context_path_sum_association_absolute_bound_fraction": "7571760415289733741/20282409603651641150549673377792",
+          "observed_raw_minus_context_exact_sum_fraction": "31/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "402325695011422731/1125899906842624",
+          "context_path_nonnegative_term_count": 14,
+          "context_path_binary_addition_operation_bound": 13,
+          "context_path_sum_association_absolute_bound_fraction": "5230234035148495503/10141204801825820575274836688896",
+          "observed_raw_minus_context_exact_sum_fraction": "-11/1125899906842624",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 73,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4308199,
+        43.7420109
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 825.9551999999999,
+        "times_ms": 722057,
+        "distances": 1002.855
+      },
+      "independent_plain_dijkstra": {
+        "weights": 825.9551999999999,
+        "times_ms": 723946,
+        "distances": 1005.4789999999998
+      },
+      "returned_certified": {
+        "weights": 825.9551999999999,
+        "times_ms": 723946,
+        "distances": 1005.479
+      },
+      "returned_flexible": {
+        "weights": 825.9551999999999,
+        "times_ms": 723946,
+        "distances": 1005.479
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8440",
+      "linked_witness_line_sha256": "9290477cd7a1f408f5616fe25ae754071539f8474be08fc23cee1d21c6fb945b",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "1859885765472361703/2251799813685248",
+          "context_path_nonnegative_term_count": 24,
+          "context_path_binary_addition_operation_bound": 23,
+          "context_path_sum_association_absolute_bound_fraction": "42777372605864319169/20282409603651618632551536525312",
+          "observed_raw_minus_context_exact_sum_fraction": "-231/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "2258228702153319393/2251799813685248",
+          "context_path_nonnegative_term_count": 24,
+          "context_path_binary_addition_operation_bound": 23,
+          "context_path_sum_association_absolute_bound_fraction": "17313086716508782013/6760803201217206210850512175104",
+          "observed_raw_minus_context_exact_sum_fraction": "31/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 76,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4316296,
+        43.7430245
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 888.646,
+        "times_ms": 827807,
+        "distances": 1135.621
+      },
+      "independent_plain_dijkstra": {
+        "weights": 888.646,
+        "times_ms": 829696,
+        "distances": 1138.245
+      },
+      "returned_certified": {
+        "weights": 888.646,
+        "times_ms": 829696,
+        "distances": 1138.2450000000001
+      },
+      "returned_flexible": {
+        "weights": 888.646,
+        "times_ms": 829696,
+        "distances": 1138.2450000000001
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8443",
+      "linked_witness_line_sha256": "0ba97b4a46f41ca330c952571533b17575a6d1e138492b2c20a50e59be1c3b47",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "500263224308035199/562949953421312",
+          "context_path_nonnegative_term_count": 22,
+          "context_path_binary_addition_operation_bound": 21,
+          "context_path_sum_association_absolute_bound_fraction": "10505527710468739179/5070602400912905784037790973952",
+          "observed_raw_minus_context_exact_sum_fraction": "1/562949953421312",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "2557191156217055013/2251799813685248",
+          "context_path_nonnegative_term_count": 22,
+          "context_path_binary_addition_operation_bound": 21,
+          "context_path_sum_association_absolute_bound_fraction": "53701014280558155273/20282409603651623136151163895808",
+          "observed_raw_minus_context_exact_sum_fraction": "219/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 90,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4313758,
+        43.7431514
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 903.5229999999999,
+        "times_ms": 845659,
+        "distances": 1160.416
+      },
+      "independent_plain_dijkstra": {
+        "weights": 903.5229999999999,
+        "times_ms": 847548,
+        "distances": 1163.04
+      },
+      "returned_certified": {
+        "weights": 903.5229999999999,
+        "times_ms": 847548,
+        "distances": 1163.0400000000002
+      },
+      "returned_flexible": {
+        "weights": 903.5229999999999,
+        "times_ms": 847548,
+        "distances": 1163.0400000000002
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8454",
+      "linked_witness_line_sha256": "3c86db20e13e6cc685cd90aa9aac2f76f4ca01e3718bed9a60f278c91a9f8182",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "254319115382542029/281474976710656",
+          "context_path_nonnegative_term_count": 23,
+          "context_path_binary_addition_operation_bound": 22,
+          "context_path_sum_association_absolute_bound_fraction": "2797510269207962319/1267650600228226305271959388160",
+          "observed_raw_minus_context_exact_sum_fraction": "-13/281474976710656",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "2613024532597380741/2251799813685248",
+          "context_path_nonnegative_term_count": 23,
+          "context_path_binary_addition_operation_bound": 22,
+          "context_path_sum_association_absolute_bound_fraction": "28743269858571188151/10141204801825810442175675105280",
+          "observed_raw_minus_context_exact_sum_fraction": "-133/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 92,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4312824,
+        43.7430443
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 905.4327999999999,
+        "times_ms": 847951,
+        "distances": 1163.599
+      },
+      "independent_plain_dijkstra": {
+        "weights": 905.4327999999999,
+        "times_ms": 849840,
+        "distances": 1166.2229999999997
+      },
+      "returned_certified": {
+        "weights": 905.4327999999999,
+        "times_ms": 849840,
+        "distances": 1166.2230000000002
+      },
+      "returned_flexible": {
+        "weights": 905.4327999999999,
+        "times_ms": 849840,
+        "distances": 1166.2230000000002
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8456",
+      "linked_witness_line_sha256": "5ffd871202abc6a57a317292c5f9c4b82448a88f8be365a2216ea50d78e744c5",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "509713352586128077/562949953421312",
+          "context_path_nonnegative_term_count": 23,
+          "context_path_binary_addition_operation_bound": 22,
+          "context_path_sum_association_absolute_bound_fraction": "5606846878447408847/2535301200456452610543918776320",
+          "observed_raw_minus_context_exact_sum_fraction": "-13/562949953421312",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "2620192011404340885/2251799813685248",
+          "context_path_nonnegative_term_count": 23,
+          "context_path_binary_addition_operation_bound": 22,
+          "context_path_sum_association_absolute_bound_fraction": "5764422425089549947/2028240960365162088435135021056",
+          "observed_raw_minus_context_exact_sum_fraction": "-149/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 95,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4347073,
+        43.7475117
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 1288.1061999999997,
+        "times_ms": 1300494,
+        "distances": 1784.9609999999998
+      },
+      "independent_plain_dijkstra": {
+        "weights": 1288.1062,
+        "times_ms": 1302383,
+        "distances": 1787.5850000000003
+      },
+      "returned_certified": {
+        "weights": 1288.1062,
+        "times_ms": 1302383,
+        "distances": 1787.585
+      },
+      "returned_flexible": {
+        "weights": 1288.1062,
+        "times_ms": 1302383,
+        "distances": 1787.585
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8458",
+      "linked_witness_line_sha256": "5086007a1a98ecd4fe3407772bac93f576d553d22a6ab7ce0850f6e5fb1b9fb5",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "45321207830731445/35184372088832",
+          "context_path_nonnegative_term_count": 28,
+          "context_path_binary_addition_operation_bound": 27,
+          "context_path_sum_association_absolute_bound_fraction": "244734522285949803/63382530011411280079225880576",
+          "observed_raw_minus_context_exact_sum_fraction": "-5/35184372088832",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "4019374847235433869/2251799813685248",
+          "context_path_nonnegative_term_count": 28,
+          "context_path_binary_addition_operation_bound": 27,
+          "context_path_sum_association_absolute_bound_fraction": "108523120875356714463/20282409603651609625352281784320",
+          "observed_raw_minus_context_exact_sum_fraction": "-397/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 96,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4296081,
+        43.7409781
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 772.3692,
+        "times_ms": 679711,
+        "distances": 944.0409999999999
+      },
+      "independent_plain_dijkstra": {
+        "weights": 772.3691999999999,
+        "times_ms": 681600,
+        "distances": 946.6649999999998
+      },
+      "returned_certified": {
+        "weights": 772.3691999999999,
+        "times_ms": 681600,
+        "distances": 946.665
+      },
+      "returned_flexible": {
+        "weights": 772.3691999999999,
+        "times_ms": 681600,
+        "distances": 946.665
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8459",
+      "linked_witness_line_sha256": "063f8bbe1a0089c310ec57e7ad2c48ee33baa865e0a51e994c19f2bfbbf7136d",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "1739220820656224013/2251799813685248",
+          "context_path_nonnegative_term_count": 23,
+          "context_path_binary_addition_operation_bound": 22,
+          "context_path_sum_association_absolute_bound_fraction": "19131429027218464143/10141204801825810442175675105280",
+          "observed_raw_minus_context_exact_sum_fraction": "-13/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "2125791347911235217/2251799813685248",
+          "context_path_nonnegative_term_count": 23,
+          "context_path_binary_addition_operation_bound": 22,
+          "context_path_sum_association_absolute_bound_fraction": "23383704827023587387/10141204801825810442175675105280",
+          "observed_raw_minus_context_exact_sum_fraction": "-145/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 68,
+      "destination_index": 98,
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4254828,
+        43.7372437
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 142.85459999999998,
+        "times_ms": 164641,
+        "distances": 228.668
+      },
+      "independent_plain_dijkstra": {
+        "weights": 142.85459999999998,
+        "times_ms": 166530,
+        "distances": 231.292
+      },
+      "returned_certified": {
+        "weights": 142.85459999999998,
+        "times_ms": 166530,
+        "distances": 231.29199999999997
+      },
+      "returned_flexible": {
+        "weights": 142.85459999999998,
+        "times_ms": 166530,
+        "distances": 231.29199999999997
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-8461",
+      "linked_witness_line_sha256": "be28ac28df8ac65dacca49bf0b706709d9e0b3e55bc2a0af14afb60982d139a2",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "321679961664080585/2251799813685248",
+          "context_path_nonnegative_term_count": 11,
+          "context_path_binary_addition_operation_bound": 10,
+          "context_path_sum_association_absolute_bound_fraction": "1608399808320402925/10141204801825823952974557216768",
+          "observed_raw_minus_context_exact_sum_fraction": "-9/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "257457279897889139/1125899906842624",
+          "context_path_nonnegative_term_count": 11,
+          "context_path_binary_addition_operation_bound": 10,
+          "context_path_sum_association_absolute_bound_fraction": "67751915762602405/266873810574363788236172558336",
+          "observed_raw_minus_context_exact_sum_fraction": "13/1125899906842624",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    },
+    {
+      "workload": "100x100",
+      "origin_index": 98,
+      "destination_index": 68,
+      "from": [
+        7.4254828,
+        43.7372437
+      ],
+      "to": [
+        7.4231414,
+        43.7369886
+      ],
+      "classification": "REJECTED_BY_MANDATORY_FLEXIBLE_CERTIFICATE",
+      "raw_candidate": {
+        "weights": 142.85459999999998,
+        "times_ms": 164641,
+        "distances": 228.668
+      },
+      "independent_plain_dijkstra": {
+        "weights": 142.85459999999998,
+        "times_ms": 166530,
+        "distances": 231.29199999999997
+      },
+      "returned_certified": {
+        "weights": 142.85459999999998,
+        "times_ms": 166530,
+        "distances": 231.292
+      },
+      "returned_flexible": {
+        "weights": 142.85459999999998,
+        "times_ms": 166530,
+        "distances": 231.292
+      },
+      "original_raw_issues": [
+        "distance",
+        "duration"
+      ],
+      "returned_certified_exactly_matches_flexible": true,
+      "returned_certified_matches_independent_oracle_fixed_thresholds": true,
+      "actual_raw_candidate_path_captured": false,
+      "linked_legal_ordinary_ch_context_proof_id": "100x100-proof-11215",
+      "linked_witness_line_sha256": "3815a8704f095c7d6c0a1026c4f3364d3bcf2318bebfb7c53a71af8850e8be15",
+      "legal_ch_context_time_exactly_matches_raw_candidate": true,
+      "legal_ch_context_scalar_association": {
+        "weights": {
+          "exact_legal_path_terms_sum_fraction": "321679961664080585/2251799813685248",
+          "context_path_nonnegative_term_count": 11,
+          "context_path_binary_addition_operation_bound": 10,
+          "context_path_sum_association_absolute_bound_fraction": "1608399808320402925/10141204801825823952974557216768",
+          "observed_raw_minus_context_exact_sum_fraction": "-9/2251799813685248",
+          "raw_scalar_within_context_path_association_bound": true
+        },
+        "distances": {
+          "exact_legal_path_terms_sum_fraction": "257457279897889139/1125899906842624",
+          "context_path_nonnegative_term_count": 11,
+          "context_path_binary_addition_operation_bound": 10,
+          "context_path_sum_association_absolute_bound_fraction": "67751915762602405/266873810574363788236172558336",
+          "observed_raw_minus_context_exact_sum_fraction": "13/1125899906842624",
+          "raw_scalar_within_context_path_association_bound": true
+        }
+      }
+    }
+  ],
+  "remaining_unhandled_raw_flags": 0
+}

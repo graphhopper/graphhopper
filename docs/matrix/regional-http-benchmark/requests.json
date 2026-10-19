@@ -1,0 +1,274 @@
+{
+  "seed": null,
+  "coordinate_order": "longitude,latitude",
+  "coordinate_policy": "Unchanged axes from the supplied pack examples; each run with both configured profiles.",
+  "sources_sha256": {
+    "docs\\matrix\\examples\\manchester_one_to_many.json": "c8a35c3c1374a85af08253eb46b747c247266f647d4f1d138fffbbaa48fb7c4a",
+    "docs\\matrix\\examples\\manchester_rectangular.json": "fbe9d2fdd21a88710ea7b5d25670880b6f5af97621f9e45467296faeeee5b6f5",
+    "docs\\matrix\\examples\\manchester_square.json": "48045ebfac743eddb72d737dc80d601c96d776a666b44d933dca91c066d2dbb4"
+  },
+  "workloads": [
+    {
+      "name": "manchester_one_to_many",
+      "profile": "foot",
+      "request": {
+        "profile": "foot",
+        "from_points": [
+          [
+            -2.2309,
+            53.4774
+          ]
+        ],
+        "to_points": [
+          [
+            -2.2426,
+            53.4808
+          ],
+          [
+            -2.242,
+            53.4875
+          ],
+          [
+            -2.2541,
+            53.4761
+          ]
+        ],
+        "out_arrays": [
+          "times",
+          "times_ms",
+          "distances",
+          "weights"
+        ],
+        "fail_fast": false,
+        "local": {
+          "algorithm": "flexible"
+        }
+      }
+    },
+    {
+      "name": "manchester_one_to_many",
+      "profile": "car",
+      "request": {
+        "profile": "car",
+        "from_points": [
+          [
+            -2.2309,
+            53.4774
+          ]
+        ],
+        "to_points": [
+          [
+            -2.2426,
+            53.4808
+          ],
+          [
+            -2.242,
+            53.4875
+          ],
+          [
+            -2.2541,
+            53.4761
+          ]
+        ],
+        "out_arrays": [
+          "times",
+          "times_ms",
+          "distances",
+          "weights"
+        ],
+        "fail_fast": false,
+        "local": {
+          "algorithm": "flexible"
+        }
+      }
+    },
+    {
+      "name": "manchester_rectangular",
+      "profile": "foot",
+      "request": {
+        "profile": "foot",
+        "from_points": [
+          [
+            -2.2309,
+            53.4774
+          ],
+          [
+            -2.242,
+            53.4875
+          ],
+          [
+            -2.2309,
+            53.4774
+          ]
+        ],
+        "to_points": [
+          [
+            -2.2541,
+            53.4761
+          ],
+          [
+            -2.2426,
+            53.4808
+          ],
+          [
+            -2.2309,
+            53.4774
+          ],
+          [
+            -2.2541,
+            53.4761
+          ]
+        ],
+        "out_arrays": [
+          "times",
+          "times_ms",
+          "distances",
+          "weights"
+        ],
+        "fail_fast": false,
+        "local": {
+          "algorithm": "flexible"
+        }
+      }
+    },
+    {
+      "name": "manchester_rectangular",
+      "profile": "car",
+      "request": {
+        "profile": "car",
+        "from_points": [
+          [
+            -2.2309,
+            53.4774
+          ],
+          [
+            -2.242,
+            53.4875
+          ],
+          [
+            -2.2309,
+            53.4774
+          ]
+        ],
+        "to_points": [
+          [
+            -2.2541,
+            53.4761
+          ],
+          [
+            -2.2426,
+            53.4808
+          ],
+          [
+            -2.2309,
+            53.4774
+          ],
+          [
+            -2.2541,
+            53.4761
+          ]
+        ],
+        "out_arrays": [
+          "times",
+          "times_ms",
+          "distances",
+          "weights"
+        ],
+        "fail_fast": false,
+        "local": {
+          "algorithm": "flexible"
+        }
+      }
+    },
+    {
+      "name": "manchester_square",
+      "profile": "foot",
+      "request": {
+        "profile": "foot",
+        "out_arrays": [
+          "times",
+          "times_ms",
+          "distances",
+          "weights"
+        ],
+        "fail_fast": false,
+        "from_points": [
+          [
+            -2.2309,
+            53.4774
+          ],
+          [
+            -2.2426,
+            53.4808
+          ],
+          [
+            -2.2541,
+            53.4761
+          ]
+        ],
+        "to_points": [
+          [
+            -2.2309,
+            53.4774
+          ],
+          [
+            -2.2426,
+            53.4808
+          ],
+          [
+            -2.2541,
+            53.4761
+          ]
+        ],
+        "local": {
+          "algorithm": "flexible"
+        }
+      }
+    },
+    {
+      "name": "manchester_square",
+      "profile": "car",
+      "request": {
+        "profile": "car",
+        "out_arrays": [
+          "times",
+          "times_ms",
+          "distances",
+          "weights"
+        ],
+        "fail_fast": false,
+        "from_points": [
+          [
+            -2.2309,
+            53.4774
+          ],
+          [
+            -2.2426,
+            53.4808
+          ],
+          [
+            -2.2541,
+            53.4761
+          ]
+        ],
+        "to_points": [
+          [
+            -2.2309,
+            53.4774
+          ],
+          [
+            -2.2426,
+            53.4808
+          ],
+          [
+            -2.2541,
+            53.4761
+          ]
+        ],
+        "local": {
+          "algorithm": "flexible"
+        }
+      }
+    }
+  ]
+}

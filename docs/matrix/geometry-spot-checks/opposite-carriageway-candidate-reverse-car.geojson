@@ -1,0 +1,93 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -2.241327,
+            53.480011
+          ],
+          [
+            -2.241327,
+            53.480011
+          ]
+        ]
+      },
+      "properties": {
+        "case": "opposite-carriageway-candidate-reverse",
+        "profile": "car",
+        "distance_m": 0.0,
+        "time_ms": 0,
+        "weight": 0.0,
+        "manual_review_status": "PENDING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.241185571812168,
+          53.48011598976691
+        ]
+      },
+      "properties": {
+        "kind": "raw",
+        "index": 0,
+        "case": "opposite-carriageway-candidate-reverse",
+        "profile": "car"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.2414694281878313,
+          53.47990601023309
+        ]
+      },
+      "properties": {
+        "kind": "raw",
+        "index": 1,
+        "case": "opposite-carriageway-candidate-reverse",
+        "profile": "car"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.241327,
+          53.480011
+        ]
+      },
+      "properties": {
+        "kind": "snapped",
+        "index": 0,
+        "case": "opposite-carriageway-candidate-reverse",
+        "profile": "car"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.241327,
+          53.480011
+        ]
+      },
+      "properties": {
+        "kind": "snapped",
+        "index": 1,
+        "case": "opposite-carriageway-candidate-reverse",
+        "profile": "car"
+      }
+    }
+  ]
+}
