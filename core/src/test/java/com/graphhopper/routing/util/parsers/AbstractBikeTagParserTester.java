@@ -541,7 +541,7 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway:right:oneway", "-1");
-        assertAccess(way, false, true);
+        assertAccess(way, true, true);
 
         way.clearTags();
         way.setTag("highway", "tertiary");
@@ -621,6 +621,16 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("oneway", "yes");
         way.setTag("cycleway:both", "no");
         assertAccess(way, true, false);
+
+        // cycleways on both sides of a oneway road go with the traffic unless cycleway:*:oneway or oneway:bicycle say otherwise, see #3416
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway:both", "lane");
+        // this tagging combination does not appear often in the field without an additional oneway:bicycle=no, see #3418.
+        assertAccess(way, true, false);
+        way.setTag("cycleway:both", "separate");
+        assertAccess(way, true, false);
     }
 
     @Test
@@ -684,7 +694,7 @@ public abstract class AbstractBikeTagParserTester {
         int edge = 0;
         IntsRef relationFlags = new IntsRef(1);
         accessParser.handleWayTags(edge, edgeIntAccess, way, relationFlags);
-        if (fwd) assertTrue(accessEnc.getBool(false, edge, edgeIntAccess));
-        if (bwd) assertTrue(accessEnc.getBool(true, edge, edgeIntAccess));
+        assertEquals(fwd, accessEnc.getBool(false, edge, edgeIntAccess));
+        assertEquals(bwd, accessEnc.getBool(true, edge, edgeIntAccess));
     }
 }
