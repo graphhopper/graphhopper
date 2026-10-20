@@ -1,0 +1,565 @@
+{
+  "generated_utc": "2026-10-19T19:04:30.176244+00:00",
+  "base_url": "http://localhost:8999",
+  "automated_export_status": "PASS",
+  "manual_geometry_review": "PASS",
+  "foot_only_encoded_segment_found": true,
+  "opposite_carriageway_candidates_exported": 2,
+  "opposite_carriageway_distinct_snaps": true,
+  "preserved_same_snap_observations": [
+    {
+      "response_file": "opposite-carriageway-candidate-forward-car.response.json",
+      "distance_m": 0.0,
+      "snapped_coordinates": [
+        [
+          -2.241327,
+          53.480011
+        ],
+        [
+          -2.241327,
+          53.480011
+        ]
+      ]
+    },
+    {
+      "response_file": "opposite-carriageway-candidate-reverse-car.response.json",
+      "distance_m": 0.0,
+      "snapped_coordinates": [
+        [
+          -2.241327,
+          53.480011
+        ],
+        [
+          -2.241327,
+          53.480011
+        ]
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "case": "piccadilly-to-victoria",
+      "profile": "car",
+      "points": [
+        [
+          -2.2309,
+          53.4774
+        ],
+        [
+          -2.242,
+          53.4875
+        ]
+      ],
+      "purpose": "Station-area route; inspect street sequence and endpoint snaps.",
+      "coordinate_provenance": "Coordinates copied from the supplied Manchester examples.",
+      "file_prefix": "piccadilly-to-victoria-car-run2",
+      "manual_review": "PENDING",
+      "http_status": 200,
+      "snapped_points_identical": false,
+      "status": "EXPORTED",
+      "copyrights": [
+        "GraphHopper",
+        "OpenStreetMap contributors"
+      ]
+    },
+    {
+      "case": "irwell-blackfriars-approaches",
+      "profile": "car",
+      "points": [
+        [
+          -2.2490419999999998,
+          53.48441
+        ],
+        [
+          -2.246642,
+          53.48321
+        ]
+      ],
+      "purpose": "Bridge-crossing candidate. Inspect whether geometry actually crosses the River Irwell on the expected bridge.",
+      "coordinate_provenance": {
+        "official_bridge_marker_lon_lat": [
+          -2.247842,
+          53.48381
+        ],
+        "source": "https://www.planning.data.gov.uk/entity/31735750",
+        "method": "Approach candidates offset from the official marker; these raw points are not assertions of road location."
+      },
+      "file_prefix": "irwell-blackfriars-approaches-car-run2",
+      "manual_review": "PENDING",
+      "http_status": 200,
+      "snapped_points_identical": false,
+      "status": "EXPORTED",
+      "copyrights": [
+        "GraphHopper",
+        "OpenStreetMap contributors"
+      ]
+    },
+    {
+      "case": "piccadilly-to-victoria",
+      "profile": "foot",
+      "points": [
+        [
+          -2.2309,
+          53.4774
+        ],
+        [
+          -2.242,
+          53.4875
+        ]
+      ],
+      "purpose": "Station-area route; inspect street sequence and endpoint snaps.",
+      "coordinate_provenance": "Coordinates copied from the supplied Manchester examples.",
+      "file_prefix": "piccadilly-to-victoria-foot-run2",
+      "manual_review": "PENDING",
+      "http_status": 200,
+      "snapped_points_identical": false,
+      "status": "EXPORTED",
+      "copyrights": [
+        "GraphHopper",
+        "OpenStreetMap contributors"
+      ]
+    },
+    {
+      "case": "irwell-blackfriars-approaches",
+      "profile": "foot",
+      "points": [
+        [
+          -2.2490419999999998,
+          53.48441
+        ],
+        [
+          -2.246642,
+          53.48321
+        ]
+      ],
+      "purpose": "Bridge-crossing candidate. Inspect whether geometry actually crosses the River Irwell on the expected bridge.",
+      "coordinate_provenance": {
+        "official_bridge_marker_lon_lat": [
+          -2.247842,
+          53.48381
+        ],
+        "source": "https://www.planning.data.gov.uk/entity/31735750",
+        "method": "Approach candidates offset from the official marker; these raw points are not assertions of road location."
+      },
+      "file_prefix": "irwell-blackfriars-approaches-foot-run2",
+      "manual_review": "PENDING",
+      "http_status": 200,
+      "snapped_points_identical": false,
+      "status": "EXPORTED",
+      "copyrights": [
+        "GraphHopper",
+        "OpenStreetMap contributors"
+      ]
+    },
+    {
+      "case": "opposite-carriageways-source-forward",
+      "profile": "car",
+      "points": [
+        [
+          -2.2384752500000005,
+          53.47151515
+        ],
+        [
+          -2.238532575468136,
+          53.471607526670134
+        ]
+      ],
+      "purpose": "Actual separate opposing motorway carriageways from pinned OSM source geometry. Check distinct imported snaps and the permitted-direction detour.",
+      "coordinate_provenance": {
+        "source_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+        "metadata_report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-candidates.json",
+        "source_pair": {
+          "first_way_id": 121174584,
+          "first_way_tags": {
+            "bicycle": "no",
+            "bridge": "yes",
+            "highway": "motorway",
+            "lanes": "3",
+            "layer": "1",
+            "lit": "yes",
+            "maxspeed": "30 mph",
+            "name": "Mancunian Way",
+            "not:name": "Mancunian Way (Elevated Road)",
+            "oneway": "yes",
+            "operator": "Manchester City Council",
+            "ref": "A57(M)",
+            "surface": "asphalt"
+          },
+          "first_segment_node_ids": [
+            3351263,
+            3350617
+          ],
+          "first_permitted_tangent": [
+            -0.9543407429068519,
+            -0.2987201808180994
+          ],
+          "second_way_id": 1128395117,
+          "second_way_tags": {
+            "bicycle": "no",
+            "bridge": "yes",
+            "highway": "motorway",
+            "lane_markings": "yes",
+            "lanes": "3",
+            "layer": "1",
+            "lit": "yes",
+            "maxspeed": "30 mph",
+            "name": "Mancunian Way",
+            "not:name": "Mancunian Way (Elevated Road)",
+            "oneway": "yes",
+            "operator": "Manchester City Council",
+            "ref": "A57(M)",
+            "source": "bing",
+            "source:name": "OS_OpenData_Locator",
+            "source:ref": "OS_OpenData_Locator",
+            "surface": "asphalt",
+            "turn:lanes": "slight_left|through|through"
+          },
+          "second_segment_node_ids": [
+            2870425365,
+            1663075703
+          ],
+          "second_permitted_tangent": [
+            0.9380532687064318,
+            0.3464910750209575
+          ],
+          "points_lon_lat": [
+            [
+              -2.2384752500000005,
+              53.47151515
+            ],
+            [
+              -2.238532575468136,
+              53.471607526670134
+            ]
+          ],
+          "separation_m": 10.962457981856243,
+          "permitted_tangent_dot_product": -0.998726329925615,
+          "distance_from_city_anchor_m": 1069.1058859712916,
+          "confirmation": "SOURCE_GEOMETRY_CONFIRMED; IMPORTED_SNAPS_AND_ROUTE_PENDING"
+        }
+      },
+      "file_prefix": "opposite-carriageways-source-forward-car",
+      "manual_review": "PENDING",
+      "http_status": 200,
+      "snapped_points_identical": false,
+      "status": "EXPORTED",
+      "copyrights": [
+        "GraphHopper",
+        "OpenStreetMap contributors"
+      ]
+    },
+    {
+      "case": "opposite-carriageways-source-reverse",
+      "profile": "car",
+      "points": [
+        [
+          -2.238532575468136,
+          53.471607526670134
+        ],
+        [
+          -2.2384752500000005,
+          53.47151515
+        ]
+      ],
+      "purpose": "Actual separate opposing motorway carriageways from pinned OSM source geometry. Check distinct imported snaps and the permitted-direction detour.",
+      "coordinate_provenance": {
+        "source_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+        "metadata_report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-candidates.json",
+        "source_pair": {
+          "first_way_id": 121174584,
+          "first_way_tags": {
+            "bicycle": "no",
+            "bridge": "yes",
+            "highway": "motorway",
+            "lanes": "3",
+            "layer": "1",
+            "lit": "yes",
+            "maxspeed": "30 mph",
+            "name": "Mancunian Way",
+            "not:name": "Mancunian Way (Elevated Road)",
+            "oneway": "yes",
+            "operator": "Manchester City Council",
+            "ref": "A57(M)",
+            "surface": "asphalt"
+          },
+          "first_segment_node_ids": [
+            3351263,
+            3350617
+          ],
+          "first_permitted_tangent": [
+            -0.9543407429068519,
+            -0.2987201808180994
+          ],
+          "second_way_id": 1128395117,
+          "second_way_tags": {
+            "bicycle": "no",
+            "bridge": "yes",
+            "highway": "motorway",
+            "lane_markings": "yes",
+            "lanes": "3",
+            "layer": "1",
+            "lit": "yes",
+            "maxspeed": "30 mph",
+            "name": "Mancunian Way",
+            "not:name": "Mancunian Way (Elevated Road)",
+            "oneway": "yes",
+            "operator": "Manchester City Council",
+            "ref": "A57(M)",
+            "source": "bing",
+            "source:name": "OS_OpenData_Locator",
+            "source:ref": "OS_OpenData_Locator",
+            "surface": "asphalt",
+            "turn:lanes": "slight_left|through|through"
+          },
+          "second_segment_node_ids": [
+            2870425365,
+            1663075703
+          ],
+          "second_permitted_tangent": [
+            0.9380532687064318,
+            0.3464910750209575
+          ],
+          "points_lon_lat": [
+            [
+              -2.2384752500000005,
+              53.47151515
+            ],
+            [
+              -2.238532575468136,
+              53.471607526670134
+            ]
+          ],
+          "separation_m": 10.962457981856243,
+          "permitted_tangent_dot_product": -0.998726329925615,
+          "distance_from_city_anchor_m": 1069.1058859712916,
+          "confirmation": "SOURCE_GEOMETRY_CONFIRMED; IMPORTED_SNAPS_AND_ROUTE_PENDING"
+        }
+      },
+      "file_prefix": "opposite-carriageways-source-reverse-car",
+      "manual_review": "PENDING",
+      "http_status": 200,
+      "snapped_points_identical": false,
+      "status": "EXPORTED",
+      "copyrights": [
+        "GraphHopper",
+        "OpenStreetMap contributors"
+      ]
+    },
+    {
+      "case": "foot-only-source-way-29419166",
+      "profile": "foot",
+      "points": [
+        [
+          -2.250961475,
+          53.482605575
+        ],
+        [
+          -2.2507744250000004,
+          53.482370325000005
+        ]
+      ],
+      "purpose": "Actual OSM footway geometry. Confirm imported foot_access=true and car_access=false; this does not certify real-world access.",
+      "coordinate_provenance": {
+        "source_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+        "metadata_report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-candidates.json",
+        "source_way": {
+          "osm_way_id": 29419166,
+          "way_tags": {
+            "bridge": "yes",
+            "highway": "footway",
+            "layer": "1",
+            "lit": "yes",
+            "name": "Trinity Bridge",
+            "smoothness": "excellent",
+            "source": "GPS survey",
+            "surface": "asphalt",
+            "tfgmcitycentre": "yes"
+          },
+          "way_node_ids": [
+            1364844269,
+            324233382
+          ],
+          "way_geometry_lon_lat": [
+            [
+              -2.251055,
+              53.4827232
+            ],
+            [
+              -2.2506809000000003,
+              53.482252700000004
+            ]
+          ],
+          "points_lon_lat": [
+            [
+              -2.250961475,
+              53.482605575
+            ],
+            [
+              -2.2507744250000004,
+              53.482370325000005
+            ]
+          ],
+          "way_length_m": 57.94286054491089,
+          "distance_from_city_anchor_m": 579.0405974480793,
+          "confirmation": "OSM_FOOTWAY_GEOMETRY_CONFIRMED; IMPORTED_ACCESS_AND_ROUTE_PENDING"
+        }
+      },
+      "file_prefix": "foot-only-source-way-29419166-foot",
+      "manual_review": "PENDING",
+      "http_status": 200,
+      "snapped_points_identical": false,
+      "status": "EXPORTED",
+      "copyrights": [
+        "GraphHopper",
+        "OpenStreetMap contributors"
+      ]
+    },
+    {
+      "case": "restriction-1645783",
+      "profile": "car",
+      "points": [
+        [
+          -2.2484402619868145,
+          53.480900460291885
+        ],
+        [
+          -2.2481742719273683,
+          53.48057948222779
+        ]
+      ],
+      "purpose": "Actual OSM relation candidate. Inspect whether car detours around the prohibited approach turn; compare foot geometry without claiming street legality.",
+      "coordinate_provenance": {
+        "candidate_report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\restriction-candidates.json",
+        "candidate_index": 1,
+        "source_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3"
+      },
+      "file_prefix": "restriction-1645783-car-run2",
+      "manual_review": "PENDING",
+      "restriction_context": {
+        "relation_id": 1645783,
+        "restriction": "no_right_turn",
+        "relation_tags": {
+          "restriction": "no_right_turn",
+          "type": "restriction"
+        },
+        "via_osm_node": 9438229407,
+        "via_coordinate_lon_lat": [
+          -2.2480036,
+          53.4808291
+        ],
+        "from_osm_way": 154986396,
+        "from_way_tags": {
+          "cycleway:both": "no",
+          "highway": "primary",
+          "lanes": "2",
+          "lit": "yes",
+          "maxspeed": "20 mph",
+          "name": "Bridge Street",
+          "ref": "A34",
+          "sidewalk:both": "separate",
+          "source": "OS_OpenData_StreetView",
+          "surface": "asphalt",
+          "tfgmcitycentre": "yes"
+        },
+        "to_osm_way": 1220701553,
+        "to_way_tags": {
+          "cycleway:left": "lane",
+          "cycleway:right": "track",
+          "highway": "tertiary",
+          "lanes": "1",
+          "lit": "yes",
+          "maxspeed": "20 mph",
+          "name": "Deansgate",
+          "oneway": "yes",
+          "oneway:bicycle": "no",
+          "ref": "A56",
+          "sidewalk:both": "separate",
+          "surface": "asphalt",
+          "tfgmcitycentre": "yes"
+        },
+        "confirmation": "PENDING"
+      },
+      "http_status": 200,
+      "snapped_points_identical": false,
+      "status": "EXPORTED",
+      "copyrights": [
+        "GraphHopper",
+        "OpenStreetMap contributors"
+      ]
+    },
+    {
+      "case": "restriction-1645783",
+      "profile": "foot",
+      "points": [
+        [
+          -2.2484402619868145,
+          53.480900460291885
+        ],
+        [
+          -2.2481742719273683,
+          53.48057948222779
+        ]
+      ],
+      "purpose": "Actual OSM relation candidate. Inspect whether car detours around the prohibited approach turn; compare foot geometry without claiming street legality.",
+      "coordinate_provenance": {
+        "candidate_report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\restriction-candidates.json",
+        "candidate_index": 1,
+        "source_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3"
+      },
+      "file_prefix": "restriction-1645783-foot-run2",
+      "manual_review": "PENDING",
+      "restriction_context": {
+        "relation_id": 1645783,
+        "restriction": "no_right_turn",
+        "relation_tags": {
+          "restriction": "no_right_turn",
+          "type": "restriction"
+        },
+        "via_osm_node": 9438229407,
+        "via_coordinate_lon_lat": [
+          -2.2480036,
+          53.4808291
+        ],
+        "from_osm_way": 154986396,
+        "from_way_tags": {
+          "cycleway:both": "no",
+          "highway": "primary",
+          "lanes": "2",
+          "lit": "yes",
+          "maxspeed": "20 mph",
+          "name": "Bridge Street",
+          "ref": "A34",
+          "sidewalk:both": "separate",
+          "source": "OS_OpenData_StreetView",
+          "surface": "asphalt",
+          "tfgmcitycentre": "yes"
+        },
+        "to_osm_way": 1220701553,
+        "to_way_tags": {
+          "cycleway:left": "lane",
+          "cycleway:right": "track",
+          "highway": "tertiary",
+          "lanes": "1",
+          "lit": "yes",
+          "maxspeed": "20 mph",
+          "name": "Deansgate",
+          "oneway": "yes",
+          "oneway:bicycle": "no",
+          "ref": "A56",
+          "sidewalk:both": "separate",
+          "surface": "asphalt",
+          "tfgmcitycentre": "yes"
+        },
+        "confirmation": "PENDING"
+      },
+      "http_status": 200,
+      "snapped_points_identical": false,
+      "status": "EXPORTED",
+      "copyrights": [
+        "GraphHopper",
+        "OpenStreetMap contributors"
+      ]
+    }
+  ],
+  "manual_review_report": "../manual-geometry-review.json"
+}

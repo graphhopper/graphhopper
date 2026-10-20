@@ -1,0 +1,174 @@
+{
+  "status" : "FAIL",
+  "started_utc" : "2026-10-19T22:29:54.038875600Z",
+  "dataset" : "monaco",
+  "seed" : 20261019,
+  "warmups" : 5,
+  "repeats" : 20,
+  "experimental_algorithm" : "ch_experimental",
+  "prepared_graph" : "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\target\\matrix-monaco-server",
+  "prepared_graph_read_only" : true,
+  "new_imports" : 0,
+  "new_ch_preparations" : 0,
+  "thresholds" : {
+    "weight_absolute" : 1.0E-7,
+    "duration_ms" : 1,
+    "weight_relative" : 1.0E-10,
+    "distance_m" : 0.002
+  },
+  "timing_scope" : "Single-JVM serial in-process complete requests; JSON serialization is timed separately for matrix responses. Ordinary CH includes one GraphHopper routing call and path extraction per cell. Import and CH preparation are excluded and were not rerun.",
+  "memory_scope" : "Current-thread allocated bytes are allocation volume, not retained heap or RSS. Heap pool peak sums are not simultaneous peak heap or RSS. Counter access and result checks occur outside request timers.",
+  "comparison_scope" : "First measured outcome per workload/backend is exported in full and compared cell by cell. Every measured repetition is checked against its own backend's first outcome. Pairwise CH differences remain raw; no rounding or alternative-path explanation is inferred from small magnitude alone.",
+  "jvm_arguments" : [ "-Xmx2g", "-Xms190m", "-Duser.language=en" ],
+  "java_version" : "22.0.2",
+  "java_vm" : "Java HotSpot(TM) 64-Bit Server VM",
+  "os" : "Windows 11 10.0 amd64",
+  "available_processors" : 8,
+  "thread_allocation_enabled" : true,
+  "source_sha256" : {
+    "core/src/main/java/com/graphhopper/routing/matrix/BucketCHMatrix.java" : "dc45bd3bb875394c9207ed5cfd9aec150670e064849b242ec60f95f92cdcc470",
+    "core/src/main/java/com/graphhopper/routing/matrix/MatrixEngine.java" : "18293a0fa4c690dba0e5aa7ed96a500515430a6d9f540a2dc2bc27529123faf2",
+    "core/src/main/java/com/graphhopper/routing/matrix/MatrixProvenance.java" : "d2cca7d8f1f8744fcdbf229f84027bc70b12cf019cc95e3424b5651ab725e508",
+    "core/src/main/java/com/graphhopper/routing/matrix/TargetSetDijkstra.java" : "342c768ccc6a172a5d44208ac75e26c45855363fd583d417f6633b32f1cda95d",
+    "core/src/test/java/com/graphhopper/routing/matrix/MatrixCHMatrixBenchmarkTest.java" : "6c428d7298f485d6a5e209f2ce8e9d53d2d4575af0b1d3b9d06a3c40189a2872",
+    "core/src/test/java/com/graphhopper/routing/matrix/CHWeightAudit.java" : "f1e3d8dca1ee3f737353e4fa70d5e47e9b53b4dd0cb768917d457807f07b6ff4",
+    "core/src/test/java/com/graphhopper/routing/matrix/CHMatrixPairwiseAudit.java" : "77ec4def3a9ad6b75582e11191aa138b40b34517a8719e8a9db750d7becc9975",
+    "core/src/test/java/com/graphhopper/routing/matrix/MatrixPrecisionDiagnostics.java" : "b93c5a7e9b8ae44672c312bef61f62010319a6aafa0455ea419bfac793edbba9"
+  },
+  "compiled_class_sha256" : {
+    "core/target/classes/com/graphhopper/routing/matrix/BucketCHMatrix$Bucket.class" : "c248b40ee872e6b42d340ffb5af54f9a740f893c3a72a3f53875150a9c976141",
+    "core/target/classes/com/graphhopper/routing/matrix/BucketCHMatrix$DirectedArc.class" : "5ed0e09a67701c626caa2f98a66dbd2290a4bb96c05544deaf114e1b3493ddaa",
+    "core/target/classes/com/graphhopper/routing/matrix/BucketCHMatrix$Label.class" : "94654f656485243c2dea8d1cfd23c33f3ef66097997165c53428692355bf1b55",
+    "core/target/classes/com/graphhopper/routing/matrix/BucketCHMatrix$Metrics.class" : "19fcd8f47f21678ef85885e7daa938352e4283a01e0ea6ba78fb0f89b5badd04",
+    "core/target/classes/com/graphhopper/routing/matrix/BucketCHMatrix$Row.class" : "a4eb735a85579bfb2a955e813d130d39fa24cb57a7ae85745c74d6cb98343828",
+    "core/target/classes/com/graphhopper/routing/matrix/BucketCHMatrix$Statistics.class" : "63ebc6e4627d32e88a82347dcc93900b536ef1f4e114d19f008585e76f028785",
+    "core/target/classes/com/graphhopper/routing/matrix/BucketCHMatrix.class" : "d815faf81da40bfbad6d456d928ba37dd340c18f936e6bce2d75fb3fa6b314f1",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixEngine$Backend.class" : "cf626abce507e2e089e2718b6cb87a453fb2147eef9eaf411d3dd95dc1c70763",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixEngine$Cell.class" : "7b880511c99e31e00f4d67ea400b9387f96c68409d7babb6c16fd3d669b84429",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixEngine$CertifiedCHBackend.class" : "116267b45c7f8a5496416c0c9a55f412bafc544099f215394548703c5b38d6ff",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixEngine$Context.class" : "ec65a3b6d09c06d652649a0f7e2c3aa984c209af88458c575e19ce3e949630b1",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixEngine$Coordinate.class" : "01c9363f1edf674954d9b3d50f2dfd10f41b1f40f705ea93df14c118b4b43154",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixEngine$Counters.class" : "12cad57829e49e0fd2915554221ffbd3db56460c86dc5fd9594f8864adb18b34",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixEngine$FlexibleBackend.class" : "00385e6782f08e8a2c2b3b3d9b72e7542c15fb05a3e611f3cc3afe2faba442fe",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixEngine$Limits.class" : "31145ee90688dcdb737a5be5ff2ae133b52d11121358da02e59e43ca6dfca841",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixEngine$ReferenceBackend.class" : "e5f36739dfc1a1a8764219deac18e456a36358d632a016adb87a6c4df6400145",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixEngine$Row.class" : "4e0e9f8346656fc394a26c9a0a85edd79a303a2e19425454049f248977e089ba",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixEngine.class" : "1e051526f15cf9e3c1b22e5f63cfe9e4b9a765315022668e3e03d34fb96b1bf7",
+    "core/target/classes/com/graphhopper/routing/matrix/MatrixProvenance.class" : "ea7c4c526ebbf478ac665f3b1f484ab8db9bd5a6a6aac2025db2f71b44e3dd71",
+    "core/target/classes/com/graphhopper/routing/matrix/TargetSetDijkstra$Failure.class" : "afb8708091a61bfe6032c27ee1ee03e8bf830765ff3a7023a2694eadacce2499",
+    "core/target/classes/com/graphhopper/routing/matrix/TargetSetDijkstra$Label.class" : "22643da6da2a6971e72359c6ed60ac9195bccc9fa851c91faf558c93ff8666b5",
+    "core/target/classes/com/graphhopper/routing/matrix/TargetSetDijkstra$Metrics.class" : "60bf1008781e12e1dc2c433d1d223a98b32553d7b67b1c2884322b80ec73a745",
+    "core/target/classes/com/graphhopper/routing/matrix/TargetSetDijkstra$Result.class" : "e609ec68b87d1ee82c13d2963f8db93bc8166297184d2d7bf7f5cb4b23074c31",
+    "core/target/classes/com/graphhopper/routing/matrix/TargetSetDijkstra$SearchException.class" : "896a8bd8e656f7215a20097bc89f4b679d52f242bf78d29c6ed740dc82917839",
+    "core/target/classes/com/graphhopper/routing/matrix/TargetSetDijkstra$Step.class" : "bad41ee80f1b180e1c1eaefecdcf5ad8f9224d29aebf009354a0914c16c58335",
+    "core/target/classes/com/graphhopper/routing/matrix/TargetSetDijkstra.class" : "13cddb40f7ac3daace0f58aedc73e868ad034f1ff1da10cd12e0f049e5312cea",
+    "core/target/test-classes/com/graphhopper/routing/matrix/CHMatrixPairwiseAudit$Audit.class" : "0816c465d62e87389426fa79aa19128112d2debc3da1bf6e349a4ab2be4ce0de",
+    "core/target/test-classes/com/graphhopper/routing/matrix/CHMatrixPairwiseAudit$Description.class" : "dd8a1bcac238fe9b969c3048ce897578ca74a8c57fdacb67f5d568afcd47956c",
+    "core/target/test-classes/com/graphhopper/routing/matrix/CHMatrixPairwiseAudit$Metrics.class" : "2d3f0150c1dc58c9f42aed17548f78c24b762b9277c2efe7cfdeba2feb96e1c1",
+    "core/target/test-classes/com/graphhopper/routing/matrix/CHMatrixPairwiseAudit.class" : "ff3c69dfc9784e886ca8d874a61cb5615e3c199988a4843011ac2d7b491ceb94",
+    "core/target/test-classes/com/graphhopper/routing/matrix/CHWeightAudit$Audit.class" : "dc1af0f796637f1ca22663927131d1be75e019560d3ec34140958bf8b6031733",
+    "core/target/test-classes/com/graphhopper/routing/matrix/CHWeightAudit$ShortcutCost.class" : "0b57a72fa4e0181c12580d0f7e9fd0742233ba08f900a49cfa8565051c2fe8a4",
+    "core/target/test-classes/com/graphhopper/routing/matrix/CHWeightAudit$Totals.class" : "89e151017c96488b9b3c3c4defa0ce63c4a5a242abc16c32d6d6096a8012a3c8",
+    "core/target/test-classes/com/graphhopper/routing/matrix/CHWeightAudit.class" : "964548948b19ea433ef0b1aa51b61ff0faa8dfb01e8f0b3a8df3690380bb12c5",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixCHMatrixBenchmarkTest$Coordinate.class" : "a6fdecb6a79615e8b184d8875dd96d0e3cd79a0b022197bbe7efe083322dace1",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixCHMatrixBenchmarkTest$CoordinatePair.class" : "1179d240eced90e6b49c31575c16aa96770cf89f7de7d0949a198c502f04ccbe",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixCHMatrixBenchmarkTest$Measured.class" : "cac270845dd563ee3639d81b808a9f5a722cb5f4974eaf4fd2c069bbd377a7b1",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixCHMatrixBenchmarkTest$Workload.class" : "19f55d622df20ba4680c17984233baca467212725dd0b3edb15c0f0481317d1a",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixCHMatrixBenchmarkTest.class" : "3ee4e61b0682aa39c885754229d24225f40afd81a4f926f9db80352a1723ca05",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixPrecisionDiagnostics$Coordinate.class" : "26245b11c68997d43d6e04cf4c8f72fe42e4dfe3fe0483ae46949068e1814086",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixPrecisionDiagnostics$CopyIdentity.class" : "9b756f8653c9b55a65f0e09a3186478160859a9a844f7a22aa71fef520388bf2",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixPrecisionDiagnostics$Description.class" : "bb7e4a47e5676bcdd78f13507c4181143c8af3cb5b2c7d2b69eab037014abbf4",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixPrecisionDiagnostics$Evidence.class" : "88dfa0c67765c998854a480a4bc849513e9dde6b53a9cb31a85962ad7fa2e99f",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixPrecisionDiagnostics$PathMetrics.class" : "ee535e9e29bec5ffe483b2d94dd222b5600f15fd4473efdd30ad0b9db41d5b4b",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixPrecisionDiagnostics$Search.class" : "f8fe35a0e2e74f2a2702ea1f00df34236d99e9150dba875a9ee5b37cfb0288f8",
+    "core/target/test-classes/com/graphhopper/routing/matrix/MatrixPrecisionDiagnostics.class" : "292b3455cdcaa965471fcc087fd39d4f086fa72f8c5f82449e4a95e3bfd47740",
+    "web-api/target/classes/com/graphhopper/matrix/MatrixException.class" : "9fe453719707caa82655376d09ece019df22fbbd8e1dfbb734b01e9ec08aca5f",
+    "web-api/target/classes/com/graphhopper/matrix/MatrixRequest.class" : "23ecdc2b0d0ffbc013d9cb7c17633d7deaedba62f350c94d88689592b2d337d2",
+    "web-api/target/classes/com/graphhopper/matrix/MatrixSnappedPoint.class" : "9dc0aaeb933dc0462bc954e01935dd029187ba7be0fe6e672e46c12ff26db933"
+  },
+  "prepared_graph_load_ms" : 753.3761,
+  "graph_nodes" : 1217,
+  "graph_edges" : 1619,
+  "graph_fingerprint" : "1083b022ae027331fc44c977e023d282f2b5605ddf81ee77a9ce1547471bfdeb",
+  "profile_fingerprints" : {
+    "car" : "f56d09abf8c90ec47148807174471d361baffa5b3d98c57ab04afcbec9406c1b",
+    "foot" : "c6fe6ee1c661a318525ad0399b038bde4cdc2c83220ad947a49e2f467e76a55b"
+  },
+  "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+  "cache_file_manifest" : [ {
+    "bytes" : 8292,
+    "sha256" : "1ef7a836050c27207e8403255f493535725bfe56fc9bd6766e19f83e54e3a08b",
+    "file" : "edgekv_keys"
+  }, {
+    "bytes" : 1048676,
+    "sha256" : "40632b126aa39a4a3ffa2e040126c9ee2f5ec8ceb898b931040ddfe73f6a5fbd",
+    "file" : "edgekv_vals"
+  }, {
+    "bytes" : 1048676,
+    "sha256" : "4f5b5b3dd9b33828f3cef0086a8fd821380e2d14dfe0c4761b7899158ac80d44",
+    "file" : "edges"
+  }, {
+    "bytes" : 1048676,
+    "sha256" : "3b206039015cf4dbaa79e3f3e6e43e1f1bf94f7b7eaad5d78c4c7d64a4990a57",
+    "file" : "geometry"
+  }, {
+    "bytes" : 1048676,
+    "sha256" : "62e8331cf2622e77dd3f616a16f8034e1132b4e5760398e8c8566365b7dc9829",
+    "file" : "location_index"
+  }, {
+    "bytes" : 1048676,
+    "sha256" : "1494120cecab88c9333e14a18b6c5ca12a7c163aa4ca374875635de57cbfdefc",
+    "file" : "nodes"
+  }, {
+    "bytes" : 1048676,
+    "sha256" : "db30ac216b2a100250f3f14ffd4441fca30a171ace8f67da8e97eaec10f1664a",
+    "file" : "nodes_ch_car"
+  }, {
+    "bytes" : 1048676,
+    "sha256" : "d2ca04d2c92b2529ae0262dcd9c98309d6d896c5da6627c752b8f1939a37135b",
+    "file" : "nodes_ch_foot"
+  }, {
+    "bytes" : 32868,
+    "sha256" : "05dd3a780a197435e53accba05e425fc62e879a6ba0f4ab398828b453e26efd3",
+    "file" : "properties"
+  }, {
+    "bytes" : 8074,
+    "sha256" : "308132f865272f2cbbc3cd7efed9f5289a0843c3e26dffca4e6656019b1f1b53",
+    "file" : "properties.txt"
+  }, {
+    "bytes" : 1048676,
+    "sha256" : "9cb4e4c8b0f270f1e2bbc0d6e7fbcfa268d49f55f39a005f0c70afd97872484a",
+    "file" : "shortcuts_car"
+  }, {
+    "bytes" : 1048676,
+    "sha256" : "3255120fe0e647a5fd178d247c9a8cff799a9b7ff0f2c05c926b965129179f11",
+    "file" : "shortcuts_foot"
+  }, {
+    "bytes" : 1048676,
+    "sha256" : "0fb69393a3a99c2e4bdb2eeb5fc47cf6c7d5798dcebfa5d53d80f9c696a15296",
+    "file" : "turn_costs"
+  } ],
+  "requests_sha256" : "d5bdca08dd7590af0e41ed1d2f993e5069e7dce960a6c98b25f9d6d843fca94d",
+  "coordinate_policy" : "Seed-shuffled imported tower-node coordinates; first 100 are used, plus a nearest-ten local axis and exact duplicates.",
+  "independent_oracle_vs_flexible_flagged_cells" : 0,
+  "pairwise_ch_indexed_flag_cases" : 16939,
+  "pairwise_ch_unique_case_proofs" : 11353,
+  "pairwise_ch_unexplained_unique_case_proofs" : 16,
+  "experimental_vs_flexible_mismatched_cells" : 0,
+  "experimental_vs_flexible_exact_metric_equality" : true,
+  "completed_measured_samples" : 480,
+  "expected_measured_samples" : 480,
+  "failure" : "org.opentest4j.AssertionFailedError: Every new ordinary CH baseline flag needs fresh independent path evidence; inspect the compressed witnesses ==> expected: <0> but was: <16>",
+  "cache_file_bytes_unchanged_after_close" : true,
+  "completed_utc" : "2026-10-19T22:32:44.105956Z",
+  "evidence_sha256" : {
+    "requests.json" : "d5bdca08dd7590af0e41ed1d2f993e5069e7dce960a6c98b25f9d6d843fca94d",
+    "first-outcomes.json" : "9205ae14dbbc5a74ae61c715e77a2f8e3405a2a37f8bc834e4eb6cd4ab41880d",
+    "comparisons.json" : "34c5889e8be406acb5b7d2b5785f2b54f72db2279ded1d7058200187cb99cdd5",
+    "samples.csv" : "04738efadafa64387515b6ad592fdb5a235747c1c5d1610c192c843773460596",
+    "car-fallback.json" : "6298c78d16642ec409121801374fb52c80b9eb814146fd75e386e6c46852cc02",
+    "raw-candidates.json" : "a1fc6aace3cfd912af59c30ec3d03335722e46cbf1dfd73235c0f926ba4b0c2f",
+    "pairwise-ch-reconciliation.json" : "d0d1b7011406dc238c9d29c099797aa29db8d193f62c72df3f6e45fbd03f057f",
+    "pairwise-ch-witnesses.jsonl.gz" : "c834885bebeb7bdc0dff0825d7e5c9d0d4891ea436ecdf210273ba4471c7104a"
+  }
+}

@@ -1,0 +1,40 @@
+# Run from the repository root with the checksum-pinned acquired PBF in ../data.
+graphhopper:
+  datareader.file: ../data/greater-manchester-11f9b3f5b1d63cdf.osm.pbf
+  graph.location: target/matrix-manchester-server
+  graph.dataaccess.default_type: RAM_STORE
+  graph.encoded_values: car_access,car_average_speed,road_access,foot_access,foot_priority,foot_average_speed,foot_road_access,hike_rating,mtb_rating,country,road_class
+  profiles:
+    - name: foot
+      custom_model_files: [foot.json]
+    - name: car
+      custom_model_files: [car.json]
+      turn_costs:
+        vehicle_types: [motorcar, motor_vehicle]
+        u_turn_costs: 60
+  profiles_ch:
+    - profile: foot
+    - profile: car
+  profiles_lm: []
+  prepare.min_network_size: 0
+  prepare.subnetworks.threads: 1
+  prepare.ch.threads: 1
+  import.osm.ignored_highways: construction
+  routing.snap_preventions_default: ""
+  routing.timeout_ms: 60000
+  routing.max_visited_nodes: 1000000
+server:
+  application_connectors:
+    - type: http
+      port: 8999
+      bind_host: localhost
+  admin_connectors:
+    - type: http
+      port: 9000
+      bind_host: localhost
+  request_log:
+    appenders: []
+logging:
+  appenders:
+    - type: console
+      time_zone: UTC

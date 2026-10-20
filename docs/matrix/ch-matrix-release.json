@@ -1,0 +1,562 @@
+{
+  "status": "PASS_WITH_SCOPED_LIMITATIONS",
+  "created_utc": "2026-10-19T23:26:43.570242+00:00",
+  "repository": "https://github.com/hulsiejames/graphhopper",
+  "pr_base": "matrix-base-11.1",
+  "upstream_base_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c",
+  "source_commit": "a9102e2039b079a43dcb1494d77619e4e989acaa",
+  "head_at_recording": "d38816ad1f7b94aabac3daf931809047365dcf3f",
+  "evidence_input_commit": "d38816ad1f7b94aabac3daf931809047365dcf3f",
+  "evidence_inputs_equal_commit": true,
+  "evidence_identity_note": "The evidence commit binds current Python tools, final documents and captured request/response bytes separately from the clean compiled-artifact source commit. The release record itself is written afterward.",
+  "worktree_status": "",
+  "artifact": "web/target/graphhopper-web-11.0-SNAPSHOT.jar",
+  "artifact_size_bytes": 47401798,
+  "artifact_sha256": "7bba4abeb278529c9a8d1d52dad6336ca1a14d9532e0462642f14a55c9a84b70",
+  "artifact_crc": "PASS",
+  "graphhopper_artifact_identity": {
+    "entry": "com/graphhopper/gitinfo",
+    "commit": "a9102e2039b079a43dcb1494d77619e4e989acaa",
+    "commit_time": "2026-10-20T00:16:20+0100",
+    "commit_message": "Rebuild shaded server from a fresh web artifact",
+    "branch": "feature/local-matrix",
+    "dirty": "false",
+    "version": "11.0-SNAPSHOT",
+    "builddate": "2026-10-19T23:16:23Z",
+    "resource_sha256": {
+      "com/graphhopper/gitinfo": "6fd53ea7c5969571fa3611ab9da33d3bb7afc3253a6b65cc422ac29eaa4984cb",
+      "com/graphhopper/version": "99667b79992961b80a2c24d63cec5ea4c713a0efe8b7e1cd7b2c4acdee7d83b5",
+      "com/graphhopper/builddate": "48af8acec590be9a9a3d5d3fcc04566127657f4f3318ab0aba225b380b5f63f2"
+    }
+  },
+  "ancillary_dependency_git_properties": {},
+  "analyzer_status": "MEASURED_WITH_SCOPED_BASELINE_ACCURACY_DIFFERENCES",
+  "ordinary_ch_original_rational_optimality_claimed": false,
+  "final_verification_source_commit": "a9102e2039b079a43dcb1494d77619e4e989acaa",
+  "live_smoke_checks": {
+    "captured_cases_checked": [
+      "car_experimental",
+      "car_flexible",
+      "fail_fast",
+      "foot_auto",
+      "foot_experimental",
+      "foot_flexible",
+      "invalid_snap",
+      "unsupported_request"
+    ],
+    "public_metric_equality": "exact_arrays_and_hints",
+    "experimental_selection": true,
+    "auto_stays_flexible": true,
+    "car_fallback": "TURN_COST_PROFILE_UNSUPPORTED",
+    "duplicate_axes_and_same_point_zero": true,
+    "invalid_snap_nulls_and_fail_fast": true,
+    "source_commit_in_all_successful_matrix_responses": "a9102e2039b079a43dcb1494d77619e4e989acaa"
+  },
+  "all_tracked_production_build_test_inputs_equal_source_commit": true,
+  "final_live_graph_fingerprint": "6b2e7ed216b473f0e1e2bff6f457398318ff904f3243a082b6dbf9a81e7ffc0d",
+  "final_live_profile_fingerprints": {
+    "foot": "6638f95456c938e23c87196d159bc2d5388c219858851813b26e970ad8b870d7",
+    "car": "8a953d1fc48ba37bfc6f62e6f574d26464e2bcf1651e1ddc499805aba7c6f91f"
+  },
+  "fingerprint_scope": "Graph/profile fingerprints include build identity. Historical measured fingerprints remain unchanged; actual prepared-cache file SHA manifests, matching production classes and configured models bind the release storage/code instead.",
+  "production_classes_checked": 48,
+  "production_classes": [
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/BucketCHMatrix$Bucket.class",
+      "sha256": "c248b40ee872e6b42d340ffb5af54f9a740f893c3a72a3f53875150a9c976141"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/BucketCHMatrix$DirectedArc.class",
+      "sha256": "5ed0e09a67701c626caa2f98a66dbd2290a4bb96c05544deaf114e1b3493ddaa"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/BucketCHMatrix$Label.class",
+      "sha256": "94654f656485243c2dea8d1cfd23c33f3ef66097997165c53428692355bf1b55"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/BucketCHMatrix$Metrics.class",
+      "sha256": "19fcd8f47f21678ef85885e7daa938352e4283a01e0ea6ba78fb0f89b5badd04"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/BucketCHMatrix$Row.class",
+      "sha256": "a4eb735a85579bfb2a955e813d130d39fa24cb57a7ae85745c74d6cb98343828"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/BucketCHMatrix$Statistics.class",
+      "sha256": "63ebc6e4627d32e88a82347dcc93900b536ef1f4e114d19f008585e76f028785"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/BucketCHMatrix.class",
+      "sha256": "d815faf81da40bfbad6d456d928ba37dd340c18f936e6bce2d75fb3fa6b314f1"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixEngine$Backend.class",
+      "sha256": "cf626abce507e2e089e2718b6cb87a453fb2147eef9eaf411d3dd95dc1c70763"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixEngine$Cell.class",
+      "sha256": "7b880511c99e31e00f4d67ea400b9387f96c68409d7babb6c16fd3d669b84429"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixEngine$CertifiedCHBackend.class",
+      "sha256": "116267b45c7f8a5496416c0c9a55f412bafc544099f215394548703c5b38d6ff"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixEngine$Context.class",
+      "sha256": "ec65a3b6d09c06d652649a0f7e2c3aa984c209af88458c575e19ce3e949630b1"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixEngine$Coordinate.class",
+      "sha256": "01c9363f1edf674954d9b3d50f2dfd10f41b1f40f705ea93df14c118b4b43154"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixEngine$Counters.class",
+      "sha256": "12cad57829e49e0fd2915554221ffbd3db56460c86dc5fd9594f8864adb18b34"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixEngine$FlexibleBackend.class",
+      "sha256": "00385e6782f08e8a2c2b3b3d9b72e7542c15fb05a3e611f3cc3afe2faba442fe"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixEngine$Limits.class",
+      "sha256": "31145ee90688dcdb737a5be5ff2ae133b52d11121358da02e59e43ca6dfca841"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixEngine$ReferenceBackend.class",
+      "sha256": "e5f36739dfc1a1a8764219deac18e456a36358d632a016adb87a6c4df6400145"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixEngine$Row.class",
+      "sha256": "4e0e9f8346656fc394a26c9a0a85edd79a303a2e19425454049f248977e089ba"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixEngine.class",
+      "sha256": "1e051526f15cf9e3c1b22e5f63cfe9e4b9a765315022668e3e03d34fb96b1bf7"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/MatrixProvenance.class",
+      "sha256": "ea7c4c526ebbf478ac665f3b1f484ab8db9bd5a6a6aac2025db2f71b44e3dd71"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/TargetSetDijkstra$Failure.class",
+      "sha256": "afb8708091a61bfe6032c27ee1ee03e8bf830765ff3a7023a2694eadacce2499"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/TargetSetDijkstra$Label.class",
+      "sha256": "22643da6da2a6971e72359c6ed60ac9195bccc9fa851c91faf558c93ff8666b5"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/TargetSetDijkstra$Metrics.class",
+      "sha256": "60bf1008781e12e1dc2c433d1d223a98b32553d7b67b1c2884322b80ec73a745"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/TargetSetDijkstra$Result.class",
+      "sha256": "e609ec68b87d1ee82c13d2963f8db93bc8166297184d2d7bf7f5cb4b23074c31"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/TargetSetDijkstra$SearchException.class",
+      "sha256": "896a8bd8e656f7215a20097bc89f4b679d52f242bf78d29c6ed740dc82917839"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/TargetSetDijkstra$Step.class",
+      "sha256": "bad41ee80f1b180e1c1eaefecdcf5ad8f9224d29aebf009354a0914c16c58335"
+    },
+    {
+      "module": "core",
+      "entry": "com/graphhopper/routing/matrix/TargetSetDijkstra.class",
+      "sha256": "13cddb40f7ac3daace0f58aedc73e868ad034f1ff1da10cd12e0f049e5312cea"
+    },
+    {
+      "module": "web-api",
+      "entry": "com/graphhopper/matrix/MatrixException.class",
+      "sha256": "9fe453719707caa82655376d09ece019df22fbbd8e1dfbb734b01e9ec08aca5f"
+    },
+    {
+      "module": "web-api",
+      "entry": "com/graphhopper/matrix/MatrixRequest.class",
+      "sha256": "23ecdc2b0d0ffbc013d9cb7c17633d7deaedba62f350c94d88689592b2d337d2"
+    },
+    {
+      "module": "web-api",
+      "entry": "com/graphhopper/matrix/MatrixSnappedPoint.class",
+      "sha256": "9dc0aaeb933dc0462bc954e01935dd029187ba7be0fe6e672e46c12ff26db933"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$1.class",
+      "sha256": "4eb9e86f6de9805cc3acddb0ec785e1b8327f9c580344b64f09da9c9e87eaaa4"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$2.class",
+      "sha256": "5ad4a0bbf620d2100154904af600289e40ddd0155fa8ed92fd6e9d5536079db4"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$3.class",
+      "sha256": "74548596ceb2f947b4ccb4b9a2e7ef8e7c02564b36c1de2edd19189358852bd2"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$4.class",
+      "sha256": "380b44c9a3694713c756fc1352de57697f93dbf4fa44ceaf2b03d91b113e0c2c"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$BaseGraphFactory.class",
+      "sha256": "3c981fddf3e1afff8527ea1f57eaf927b23b241ce451a253c90bcf6ae11362d2"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$EmptyRealtimeFeedFactory.class",
+      "sha256": "b1112facca4e8353d217ae125f3e19f016481fbd1d5ec5c1e344758de46e5418"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$EncodingManagerFactory.class",
+      "sha256": "b054c7bf92147982764e48f4db9ca6482377ae207d67417d3d97559b52f1be70"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$GHRequestTransformerFactory.class",
+      "sha256": "120569b83ee40d5fee1786c67c477bc681e1f25931e8ef6a923922d8c54e4684"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$GtfsStorageFactory.class",
+      "sha256": "2cfee6ecd99054a05e885b2c7a1e0f27dcb4f3a426f0b0ca2aa9c042da5edbd8"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$HasElevation.class",
+      "sha256": "b07093a3bf7a8ef34889d8de7e1f544d6037ef08e3f65d509480c8582dab4fe0"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$LocationIndexFactory.class",
+      "sha256": "1a63ebe20b3dcc7d81958be137fd93f31b33c1df5e4af8bd9ea43360b2e77a1a"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$MapMatchingRouterFactoryFactory.class",
+      "sha256": "d9b7d911ac8459cba03f996c43b72f99ba9a59681be4f8841158c2ec70e036ce"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$MatrixEngineFactory.class",
+      "sha256": "329b087e8f59805ac2e7e3f60f35aa74d9aa4102dc985dbbd7a9a840011bfaa5"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$PathDetailsBuilderFactoryFactory.class",
+      "sha256": "d76b97632aa82b8b0efe6b460727e3a50423ca89b98830cf8fa502187d52e471"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$ProfileResolverFactory.class",
+      "sha256": "031a04673a19747cdad8369caaa7a80140100432588c1b4b08750cbca7446018"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle$TranslationMapFactory.class",
+      "sha256": "2e8550a53dd805a3bfc35590b07a6dd9dc9a31e592a880b4b1222950fa3b0827"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundle.class",
+      "sha256": "c232a4fedfc693e3bc4b2593a25a1dbff898b4d64c88518689390423630ccab1"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/http/GraphHopperBundleConfiguration.class",
+      "sha256": "49791cb1ca53fb1f690352e0ed92c3ae70c7fed44f1f2d6b4ef170cd2d5ecd2a"
+    },
+    {
+      "module": "web-bundle",
+      "entry": "com/graphhopper/resources/MatrixResource.class",
+      "sha256": "7fffe87cbd3177ef4c2ae5e5fb9e0243f8b92b7a9e7559095f74410b9c0eaaa9"
+    }
+  ],
+  "configured_models": [
+    {
+      "entry": "com/graphhopper/custom_models/foot.json",
+      "sha256": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f"
+    },
+    {
+      "entry": "com/graphhopper/custom_models/car.json",
+      "sha256": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90"
+    }
+  ],
+  "source_sha256": {
+    "core/src/main/java/com/graphhopper/routing/matrix/BucketCHMatrix.java": "dc45bd3bb875394c9207ed5cfd9aec150670e064849b242ec60f95f92cdcc470",
+    "core/src/main/java/com/graphhopper/routing/matrix/MatrixEngine.java": "18293a0fa4c690dba0e5aa7ed96a500515430a6d9f540a2dc2bc27529123faf2",
+    "core/src/main/java/com/graphhopper/routing/matrix/MatrixProvenance.java": "d2cca7d8f1f8744fcdbf229f84027bc70b12cf019cc95e3424b5651ab725e508",
+    "core/src/main/java/com/graphhopper/routing/matrix/TargetSetDijkstra.java": "342c768ccc6a172a5d44208ac75e26c45855363fd583d417f6633b32f1cda95d",
+    "web-api/src/main/java/com/graphhopper/matrix/MatrixException.java": "1ddd4f5501ba641ca0c1eeb35a41e5802ebd85016b40ff1736e4293e5a2fd44e",
+    "web-api/src/main/java/com/graphhopper/matrix/MatrixRequest.java": "1a23dfd7b0d17844a76a8234c92839a27479ad1425a40b27d0b9ec480909c322",
+    "web-api/src/main/java/com/graphhopper/matrix/MatrixSnappedPoint.java": "b2e6dfe102b879b60d36f57c9fe170c3f133a525e029e2e8f9ac3488946bc386",
+    "web-bundle/src/main/java/com/graphhopper/resources/MatrixResource.java": "0f6d0ce1e663992ebb134b4fcc54e6fc241a6ed1a4e19a67820f1ca5434c0ebd",
+    "web-bundle/src/main/java/com/graphhopper/http/GraphHopperBundle.java": "434480e98b2cd84a4467ac3cfd90fe5baeeda76b980f23c47f91cf059637a866",
+    "pom.xml": "aa450096b3810018c9385ff5d4b7468de92b56a42c7b2b577b6c5814e5cfcdb8",
+    "run-matrix.cmd": "d116597eed1adb776b9d7e1342a7b39eaefbffe2c9b6fd875b41420a5aa88abf",
+    "docs/matrix/config-matrix.yml": "b394046edf588107ed1acfb34466de90809b21ab8154a598ee102241cffc9c9c",
+    "docs/matrix/config-manchester.yml": "12a53dbb28af8abbbc5b38038de70192dff07cf6767b2e3a4185a595ed4605f1",
+    "core/src/main/resources/com/graphhopper/custom_models/foot.json": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+    "core/src/main/resources/com/graphhopper/custom_models/car.json": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90"
+  },
+  "benchmark_binary_bindings": [
+    {
+      "dataset": "monaco",
+      "metadata_sha256": "04cd71cbcc3016d11119b9e1be7caf7e1d5ec9e3109f0ac952a695109b99fdcf",
+      "measured_samples": 480,
+      "benchmark_build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "current_compiled_production_classes_matching_benchmark": 29,
+      "cache_bytes_unchanged": true,
+      "original_experiment_status": "FAIL",
+      "case_bound_posthoc_approval": {
+        "dataset": "monaco",
+        "posthoc_review_sha256": "ee99620701151ac6e922eb5f260496903fa9cf3b6046810d76ad61cbc74ab29c",
+        "metadata_sha256": "04cd71cbcc3016d11119b9e1be7caf7e1d5ec9e3109f0ac952a695109b99fdcf",
+        "reconciliation_sha256": "d0d1b7011406dc238c9d29c099797aa29db8d193f62c72df3f6e45fbd03f057f",
+        "witnesses_sha256": "c834885bebeb7bdc0dff0825d7e5c9d0d4891ea436ecdf210273ba4471c7104a",
+        "raw_candidate_reconciliation_sha256": "efb0c5619a30000918d06c37dceedd7da51b8c1a1f1a161c3c8012d4f903a5a3"
+      },
+      "fresh_actual_candidate_path_approval": {
+        "dataset": "monaco",
+        "reconciliation_sha256": "dcf032db5061c5c3e6361619a06a256efb431471701e447ba512f2a4fd41994a",
+        "witnesses_sha256": "cfa11d2fa4789410f9eef2cdf7e776ea4f00d2018c6c922b4dcc16fefa71c156",
+        "raw_candidate_reconciliation_sha256": "efb0c5619a30000918d06c37dceedd7da51b8c1a1f1a161c3c8012d4f903a5a3"
+      },
+      "actual_candidate_indexed_flags": 16,
+      "actual_candidate_unique_path_proofs": 16
+    },
+    {
+      "dataset": "manchester",
+      "metadata_sha256": "439f0a839f496a531dcfc1e46af3fa2764cc7986874c13d2637a656fdcb8345b",
+      "measured_samples": 120,
+      "benchmark_build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "current_compiled_production_classes_matching_benchmark": 29,
+      "cache_bytes_unchanged": true,
+      "original_experiment_status": "MEASURED_NO_EXPERIMENTAL_FLEXIBLE_FLAGS",
+      "case_bound_posthoc_approval": null,
+      "fresh_actual_candidate_path_approval": {
+        "dataset": "manchester",
+        "reconciliation_sha256": "c676883120aa232a1100491d7250643f04608a77e5b0efe06fe943ffab6e7693",
+        "witnesses_sha256": "99fa0535fa58c187313f9a77e8d92e1861d1743a381a69b0f6a0353f9c6e2245",
+        "raw_candidate_reconciliation_sha256": "6f9802e58c23a292b6e73ebdc1e56fd5c1154a9bc6e2eb6555ae9e8473b3fdda"
+      },
+      "actual_candidate_indexed_flags": 280,
+      "actual_candidate_unique_path_proofs": 234
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/matrix/ch-matrix-benchmark-analysis.json",
+      "sha256": "3be9fa16d6c645a9c15b0dd09a7d31712b95f29e61b10dfb2514459028215a04",
+      "bytes": 114183
+    },
+    {
+      "path": "docs/matrix/ch-matrix-benchmark-report.md",
+      "sha256": "2593d8c883ec383e292c82bae7011824c53622c036286fa43c6df6b02b9ece70",
+      "bytes": 13833
+    },
+    {
+      "path": "docs/matrix/ch-matrix-benchmark-results.csv",
+      "sha256": "30e00e86b8c2c14ff411d1db1ea83822ff28c16b1ed06668cebce1ad5d5b2de0",
+      "bytes": 14785
+    },
+    {
+      "path": "docs/matrix/ch-matrix-client-flexible-smoke.json",
+      "sha256": "bc986e94f8ef0358566a87fce2efb16d5422df40b52d59241d05cf21546225ed",
+      "bytes": 2855
+    },
+    {
+      "path": "docs/matrix/ch-matrix-client-smoke.csv",
+      "sha256": "0014143f5852e1feeaa42b563e4f993732a525f220e8f91cc8db7a1258135656",
+      "bytes": 348
+    },
+    {
+      "path": "docs/matrix/ch-matrix-client-smoke.json",
+      "sha256": "97629e22f9671311398f4481b6ef3ab2d9782fa10d7f34937216960f3fc715e6",
+      "bytes": 3983
+    },
+    {
+      "path": "docs/matrix/ch-matrix-client-validation.json",
+      "sha256": "f91887cc6a046a69a2bcf0fcc9fc5047fcad0d1ce33ab929f6b522b8c6c454ee",
+      "bytes": 634
+    },
+    {
+      "path": "docs/matrix/ch-matrix-design.md",
+      "sha256": "507cc5720b8cc39faec28468925357d6ee0e414e61adeaef3b77cb5f9fe31f3f",
+      "bytes": 18951
+    },
+    {
+      "path": "docs/matrix/ch-matrix-fixture-validation-final.json",
+      "sha256": "539a39d16ef97fbc9bae1caf75c90cb7ad6ddb7c8948222ea7ab54d3f630aadd",
+      "bytes": 20725874
+    },
+    {
+      "path": "docs/matrix/ch-matrix-full-verification.json",
+      "sha256": "52c59a971b858d3eb9fb0649d356a16117bf65d96cd665a662006cfe39664145",
+      "bytes": 884210
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/car_experimental.request.json",
+      "sha256": "18e0bb1b88aaa047e14d41f0d24deb992620d57ae6be044b59ec2630ec46254c",
+      "bytes": 280
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/car_experimental.response.json",
+      "sha256": "75090520a5b80d8a19916f631b263ac895cd8531224b45ecdfec2330b0ae9f04",
+      "bytes": 1996
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/car_flexible.request.json",
+      "sha256": "cb4bd34057972d9303824f99ae54f0f60696ff32da3af2a8196358f81cf5f3df",
+      "bytes": 273
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/car_flexible.response.json",
+      "sha256": "b2b04ef00bc476db74bb3ffc1b1fa8dfd56b26668a743f44af4f93bddf9d959a",
+      "bytes": 1938
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/existing_route.response.json",
+      "sha256": "142bef4f9f0e4075432449068064c6aefbc98b975f071c52aaa44ed83de8ecfd",
+      "bytes": 330
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/fail_fast.request.json",
+      "sha256": "587abf677990248723594bbe0ada7bfe59e5f9fa901160f6fe05674c5d7b4632",
+      "bytes": 265
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/fail_fast.response.json",
+      "sha256": "0d9f71456713d451c7c9c8812876366fb53db7f03db3c7779fa4da7336ca3a56",
+      "bytes": 190
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/foot_auto.request.json",
+      "sha256": "2a0c4e9ad65a296f80a826215b1c2f68cf109054eef9a9bea094a7cc4cb9a240",
+      "bytes": 270
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/foot_auto.response.json",
+      "sha256": "df3cc580f472f0d9e103122c6d07fc4c6b1b6ba8b373d17e4f8407f0d81ccca6",
+      "bytes": 1915
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/foot_experimental.request.json",
+      "sha256": "f510dad9edba799a493c4dadb640b7f096c3e3cac53d6dcb08625f58fdaca17b",
+      "bytes": 281
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/foot_experimental.response.json",
+      "sha256": "29f1c11f945b6bf49b59f13931c04a51b0b769f4ab6116285ec87fa56c53d556",
+      "bytes": 2757
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/foot_flexible.request.json",
+      "sha256": "a56465a552dfc4505155696eddf86dfcbab0f2c4fea0ee6847714f3289b9c8f6",
+      "bytes": 274
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/foot_flexible.response.json",
+      "sha256": "9cdf8196d63df6b571eb09b858180973eab0b26b01ce7480ea7b6c6f5bbe8ce4",
+      "bytes": 1918
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/invalid_snap.request.json",
+      "sha256": "101cfddf16ef6449b9e2ab77532f029d5c711356168bdc4c3372f226819eeb70",
+      "bytes": 266
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/invalid_snap.response.json",
+      "sha256": "2e34c368cfcc9308078436a9dd6edb54a4a303dd912a244a646791f4ae181c88",
+      "bytes": 2727
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/unsupported_request.request.json",
+      "sha256": "1a55466ff8b8333923cc8806db0fbb122637b997fc3a6e6ba7970c3a89250ad8",
+      "bytes": 300
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final-raw/unsupported_request.response.json",
+      "sha256": "796a98893aa1323d89f5a981f962daa8118e0e59f991936da31d2e74abc924a2",
+      "bytes": 145
+    },
+    {
+      "path": "docs/matrix/ch-matrix-live-smoke-final.json",
+      "sha256": "068bf881372d745370f4079e147874dc9b24dc4537e4c969c77f5b92c04fe3b0",
+      "bytes": 50452
+    },
+    {
+      "path": "docs/matrix/ch-matrix-packaging-rejection.json",
+      "sha256": "f8817b99711bb8d1c13ae93be0ad5e3bba01c7000ae2392d52e8a983d63f665c",
+      "bytes": 2866
+    },
+    {
+      "path": "docs/matrix/ch-matrix-precision-diagnostics-final.json",
+      "sha256": "fc1f023bb74ef39fb9a8aba65c384ab402f869a80f2dfca6d19e7eb03215ca53",
+      "bytes": 52111
+    },
+    {
+      "path": "docs/matrix/ch-matrix-review.json",
+      "sha256": "012c8f1f7be205c5990d1b1be631ba8976aeedd541ad1c228190d3b520224e03",
+      "bytes": 4711
+    },
+    {
+      "path": "docs/matrix/ch-matrix-validation.md",
+      "sha256": "bcb2582e7ae334a169cc758ec5dd6b1f9cb42b87ce214b327462eee88a60f37f",
+      "bytes": 26081
+    },
+    {
+      "path": "scripts/record-ch-matrix-release.py",
+      "sha256": "6ac3274fc1c026a1cbadc01792b3ec92c8d0f78bdb928f6e4a33185e2127e607",
+      "bytes": 33111
+    },
+    {
+      "path": "scripts/smoke-ch-matrix-release.py",
+      "sha256": "f77ab19180a7912505986c17c3e6fc4419a5afe6ca83997f167d250adcf7dc4a",
+      "bytes": 21336
+    },
+    {
+      "path": "scripts/snapshot-matrix-verification.py",
+      "sha256": "c66e77677a1ffa4877eac29c8755eb6b59de576456d09064ec1be13a515a54ad",
+      "bytes": 14547
+    }
+  ],
+  "build_identity_note": "Measurements precede the release source commit. Their original build identities remain recorded. Production class bytes and source hashes are checked against the final artifact; no measured fingerprint is rewritten.",
+  "historical_core_release": "docs/matrix/provenance.json (a separate earlier artifact, not this JAR)",
+  "scope": [
+    "Experimental node-based fixed-profile CH candidates always receive original-weight flexible certification/correction.",
+    "auto remains flexible; turn-cost profiles report explicit flexible fallback.",
+    "Known baseline objective differences remain separate case-bound evidence, not exact-original-optimality claims.",
+    "No national-scale or concurrent-throughput claim."
+  ]
+}

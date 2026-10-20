@@ -1,0 +1,119 @@
+{
+  "workload" : "1x3",
+  "profile" : "car",
+  "actual" : "ch_experimental",
+  "expected" : "flexible",
+  "cells" : 3,
+  "expected_reachable_cells" : 3,
+  "expected_null_cells" : 0,
+  "mismatched_cells" : 0,
+  "all_mismatches" : [ ],
+  "status" : "NO_FLAGS_AT_FIXED_THRESHOLDS",
+  "requested_ch_info" : {
+    "contract_version" : "1.0",
+    "algorithm" : "flexible",
+    "requested_algorithm" : "ch_experimental",
+    "fallback_reason" : "TURN_COST_PROFILE_UNSUPPORTED",
+    "profile" : "car",
+    "turn_costs" : true,
+    "origin_count" : 1,
+    "destination_count" : 3,
+    "unique_origin_count" : 1,
+    "searches" : 1,
+    "visited_states" : 18162,
+    "visited_states_known" : 18162,
+    "visited_states_complete" : true,
+    "threads" : 1,
+    "units" : {
+      "distances" : "metres",
+      "times_ms" : "milliseconds",
+      "times" : "seconds",
+      "weights" : "profile_cost"
+    },
+    "graph_fingerprint" : "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+    "profile_fingerprint" : "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc",
+    "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+    "from_snapped_points" : [ {
+      "coordinates" : [ -2.2307744, 53.4768826 ],
+      "snap_distance_m" : 58.12956877664705
+    } ],
+    "to_snapped_points" : [ {
+      "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+      "snap_distance_m" : 2.9771196426161306
+    }, {
+      "coordinates" : [ -2.2427956503716446, 53.48715960170464 ],
+      "snap_distance_m" : 64.8363015986992
+    }, {
+      "coordinates" : [ -2.2543387, 53.4761414 ],
+      "snap_distance_m" : 16.453913043408097
+    } ],
+    "timings_ms" : {
+      "snapping" : 1.3942,
+      "query_graph" : 0.2117,
+      "backend_calls" : 33.3731,
+      "core_search" : 33.3449,
+      "scatter_output" : 0.0316,
+      "search_and_output" : 33.4589,
+      "total" : 35.0928
+    }
+  },
+  "flexible_info" : {
+    "contract_version" : "1.0",
+    "algorithm" : "flexible",
+    "requested_algorithm" : "flexible",
+    "profile" : "car",
+    "turn_costs" : true,
+    "origin_count" : 1,
+    "destination_count" : 3,
+    "unique_origin_count" : 1,
+    "searches" : 1,
+    "visited_states" : 18162,
+    "visited_states_known" : 18162,
+    "visited_states_complete" : true,
+    "threads" : 1,
+    "units" : {
+      "distances" : "metres",
+      "times_ms" : "milliseconds",
+      "times" : "seconds",
+      "weights" : "profile_cost"
+    },
+    "graph_fingerprint" : "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+    "profile_fingerprint" : "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc",
+    "build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+    "from_snapped_points" : [ {
+      "coordinates" : [ -2.2307744, 53.4768826 ],
+      "snap_distance_m" : 58.12956877664705
+    } ],
+    "to_snapped_points" : [ {
+      "coordinates" : [ -2.2425558452026872, 53.48079486158147 ],
+      "snap_distance_m" : 2.9771196426161306
+    }, {
+      "coordinates" : [ -2.2427956503716446, 53.48715960170464 ],
+      "snap_distance_m" : 64.8363015986992
+    }, {
+      "coordinates" : [ -2.2543387, 53.4761414 ],
+      "snap_distance_m" : 16.453913043408097
+    } ],
+    "timings_ms" : {
+      "snapping" : 2.6193,
+      "query_graph" : 0.5339,
+      "backend_calls" : 66.7857,
+      "core_search" : 66.7289,
+      "scatter_output" : 0.0793,
+      "search_and_output" : 66.9046,
+      "total" : 70.106
+    }
+  },
+  "requested_ch_metrics" : {
+    "times" : [ [ 161, 283, 253 ] ],
+    "times_ms" : [ [ 161831, 283336, 253101 ] ],
+    "distances" : [ [ 1309.9138543945137, 2254.966644247222, 2020.393300632565 ] ],
+    "weights" : [ [ 279.72279090335246, 486.28432925687304, 434.9345184382408 ] ]
+  },
+  "flexible_metrics" : {
+    "times" : [ [ 161, 283, 253 ] ],
+    "times_ms" : [ [ 161831, 283336, 253101 ] ],
+    "distances" : [ [ 1309.9138543945137, 2254.966644247222, 2020.393300632565 ] ],
+    "weights" : [ [ 279.72279090335246, 486.28432925687304, 434.9345184382408 ] ]
+  }
+}

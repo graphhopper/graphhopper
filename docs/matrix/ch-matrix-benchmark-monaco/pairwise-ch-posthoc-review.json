@@ -1,0 +1,2947 @@
+{
+  "status": "EXPLAINED_REPORTED_OBJECTIVE_DIFFERENCES",
+  "dataset": "monaco",
+  "created_utc": "2026-10-19T22:41:52.256536+00:00",
+  "original_experiment_status": "FAIL",
+  "metadata_sha256": "04cd71cbcc3016d11119b9e1be7caf7e1d5ec9e3109f0ac952a695109b99fdcf",
+  "reconciliation_sha256": "d0d1b7011406dc238c9d29c099797aa29db8d193f62c72df3f6e45fbd03f057f",
+  "witnesses_sha256": "c834885bebeb7bdc0dff0825d7e5c9d0d4891ea436ecdf210273ba4471c7104a",
+  "case_count": 16,
+  "classification_counts": {
+    "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA": 15,
+    "UPSTREAM_CH_ONE_ULP_ORIGINAL_OBJECTIVE_DIFFERENCE": 1
+  },
+  "original_outputs_modified": false,
+  "public_certified_matrix_changed": false,
+  "original_rational_optimality_pass_claimed": false,
+  "line_sha_binding_scope": "Each line SHA is copied from the immutable reconciliation index; the final whole-witness analyzer independently verifies actual gzip line bytes.",
+  "interpretation": "Every case has a nonzero exact rational objective difference. Fifteen actual expanded paths have identical sequential IEEE-754 double sums; one has a one-ULP larger CH sum. Both legal alternatives retain different actual time/distance. Existing CH uses float preparation costs and quantized shortcut weights; the branch float32 sums reverse ranking. The particular historical witness/shortcut omission causing selection has not been replayed or proven.",
+  "source_bindings": {
+    "review_script": "f716a33cbee65af538828f1bf943deead1bd29edcb45a1b802f23d171408e5c3",
+    "Dijkstra.java": "f8beebc1936ae33443e15b8429bb1af8c656dfe4e96b0ea79cbba10982bec13b",
+    "GHUtility.java": "3ec33b33168dc512b15a9a81dba31350767edd2df45808614c1356d51df741f0"
+  },
+  "sequential_sum_scope": "Weights are recomputed from captured selected edge/turn terms using the original Dijkstra transition-plus-current accumulation order. The original witness did not separately serialize Path.getWeight() for plain Dijkstra.",
+  "cases": [
+    {
+      "proof_id": "100x10-proof-1735",
+      "workload": "100x10",
+      "witness_line_sha256": "a016dad7b8782a9e8b4a9f1885e323c7a70f489c4ff56cc6c6af96e893298d7b",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4311269,
+        43.7423148
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "1920073672332391959/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 754132,
+            "distances": 1047.4030000000002,
+            "weights": 852.6839999999999
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792,
+            311
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "240009209041548993/281474976710656",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 756021,
+            "distances": 1050.027,
+            "weights": 852.6839999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792,
+            311
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "240009209041548993/281474976710656",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 756021,
+            "distances": 1050.027,
+            "weights": 852.6839999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792,
+            311
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "240009209041548993/281474976710656",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 756021,
+            "distances": 1050.027,
+            "weights": 852.6839999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792,
+            311
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 17,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8375",
+      "workload": "100x100",
+      "witness_line_sha256": "a666a8267098e8cb86d3f5fcca28aef4134ff24b1992044bb19bb477df07f75b",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4311269,
+        43.7423148
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "1920073672332391959/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 754132,
+            "distances": 1047.4030000000002,
+            "weights": 852.6839999999999
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792,
+            311
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "240009209041548993/281474976710656",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 756021,
+            "distances": 1050.027,
+            "weights": 852.6839999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792,
+            311
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "240009209041548993/281474976710656",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 756021,
+            "distances": 1050.027,
+            "weights": 852.6839999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792,
+            311
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "240009209041548993/281474976710656",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 756021,
+            "distances": 1050.027,
+            "weights": 852.6839999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792,
+            311
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 17,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8392",
+      "workload": "100x100",
+      "witness_line_sha256": "d0e7d983661ce5b5d92d1c728bc4b4161e5a261ee36be4e3be3844d05d54f12e",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4385495,
+        43.749225
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "1811139591235638147/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1563190,
+            "distances": 2149.8140000000003,
+            "weights": 1608.6151
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            32,
+            46,
+            48,
+            3152,
+            3154,
+            3156,
+            3166,
+            3168,
+            3230,
+            3228,
+            3215
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "3622279182471276279/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1565079,
+            "distances": 2152.438,
+            "weights": 1608.6151
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            32,
+            46,
+            48,
+            3152,
+            3154,
+            3156,
+            3166,
+            3168,
+            3230,
+            3228,
+            3215
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "3622279182471276279/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1565079,
+            "distances": 2152.438,
+            "weights": 1608.6151
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            32,
+            46,
+            48,
+            3152,
+            3154,
+            3156,
+            3166,
+            3168,
+            3230,
+            3228,
+            3215
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "3622279182471276279/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1565079,
+            "distances": 2152.438,
+            "weights": 1608.6151
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            32,
+            46,
+            48,
+            3152,
+            3154,
+            3156,
+            3166,
+            3168,
+            3230,
+            3228,
+            3215
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 27,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8394",
+      "workload": "100x100",
+      "witness_line_sha256": "c8a760b53d41b29459ba888ded782d772c9e8467e15555705ae578b40a8c46c0",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4348609,
+        43.7473876
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "1395084560170185763/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1248333,
+            "distances": 1733.7930000000001,
+            "weights": 1239.0839999999998
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            37,
+            38
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "2790169120340371511/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1250222,
+            "distances": 1736.417,
+            "weights": 1239.0839999999998
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            37,
+            38
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "2790169120340371511/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1250222,
+            "distances": 1736.417,
+            "weights": 1239.0839999999998
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            37,
+            38
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "2790169120340371511/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1250222,
+            "distances": 1736.417,
+            "weights": 1239.0839999999998
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            37,
+            38
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 18,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8397",
+      "workload": "100x100",
+      "witness_line_sha256": "9ac6c0e3bffe18a913d84a61f15d369288060f54cee3fa7ce70c77fd341ff754",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4299486,
+        43.7417336
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "1859023100963738895/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 710816,
+            "distances": 987.2430000000003,
+            "weights": 825.5721
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            754,
+            768
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "7261808988139605/8796093022208",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 712705,
+            "distances": 989.8670000000001,
+            "weights": 825.5721
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            754,
+            768
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "7261808988139605/8796093022208",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 712705,
+            "distances": 989.8670000000001,
+            "weights": 825.5721
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            754,
+            768
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "7261808988139605/8796093022208",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 712705,
+            "distances": 989.8670000000001,
+            "weights": 825.5721
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            754,
+            768
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 15,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8400",
+      "workload": "100x100",
+      "witness_line_sha256": "cad8bc6178c30a90f76923184e738fbe87fc35c0fdbaefd88ef1d307ebed48b0",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4305188,
+        43.7429141
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "2079001199582669423/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 791749,
+            "distances": 1099.6490000000003,
+            "weights": 923.2620000000001
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            326,
+            272,
+            270,
+            264
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "64968787486958419/70368744177664",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 793638,
+            "distances": 1102.2730000000001,
+            "weights": 923.2620000000001
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            326,
+            272,
+            270,
+            264
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "64968787486958419/70368744177664",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 793638,
+            "distances": 1102.2730000000001,
+            "weights": 923.2620000000001
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            326,
+            272,
+            270,
+            264
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "64968787486958419/70368744177664",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 793638,
+            "distances": 1102.2730000000001,
+            "weights": 923.2620000000001
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            326,
+            272,
+            270,
+            264
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 19,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8426",
+      "workload": "100x100",
+      "witness_line_sha256": "36e3d69daf2b432c4b73bb66cdc73a85b4fb7edf56a06c9e75a86c3e81daa748",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4300559,
+        43.7428136
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "2101583148834230539/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 806957,
+            "distances": 1120.7720000000002,
+            "weights": 933.2904
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            791,
+            257,
+            252
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "525395787208557631/562949953421312",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 808846,
+            "distances": 1123.396,
+            "weights": 933.2904
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            791,
+            257,
+            252
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "525395787208557631/562949953421312",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 808846,
+            "distances": 1123.396,
+            "weights": 933.2904
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            791,
+            257,
+            252
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "525395787208557631/562949953421312",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 808846,
+            "distances": 1123.396,
+            "weights": 933.2904
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            791,
+            257,
+            252
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 18,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8429",
+      "workload": "100x100",
+      "witness_line_sha256": "21e3de85762e5dbcf6feaaf546ff28049e419a31f47eb4f7581a8aec416af850",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4270545,
+        43.7374531
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.62399999999991,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "582443108868441057/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 257283,
+            "distances": 357.33700000000005,
+            "weights": 258.6567
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "291221554434220521/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 259172,
+            "distances": 359.96099999999996,
+            "weights": 258.6567
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "291221554434220521/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 259172,
+            "distances": 359.96099999999996,
+            "weights": 258.6567
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "291221554434220521/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 259172,
+            "distances": 359.96099999999996,
+            "weights": 258.6567
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 6,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8440",
+      "workload": "100x100",
+      "witness_line_sha256": "9290477cd7a1f408f5616fe25ae754071539f8474be08fc23cee1d21c6fb945b",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4308199,
+        43.7420109
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "1859885765472361703/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 722057,
+            "distances": 1002.8550000000002,
+            "weights": 825.9551999999999
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "232485720684045211/281474976710656",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 723946,
+            "distances": 1005.479,
+            "weights": 825.9551999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "232485720684045211/281474976710656",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 723946,
+            "distances": 1005.479,
+            "weights": 825.9551999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "232485720684045211/281474976710656",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 723946,
+            "distances": 1005.479,
+            "weights": 825.9551999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            714,
+            746,
+            750,
+            752,
+            792
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 16,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8443",
+      "workload": "100x100",
+      "witness_line_sha256": "0ba97b4a46f41ca330c952571533b17575a6d1e138492b2c20a50e59be1c3b47",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4316296,
+        43.7430245
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "500263224308035199/562949953421312",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 827807,
+            "distances": 1135.6210000000003,
+            "weights": 888.646
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "2001052897232140781/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 829696,
+            "distances": 1138.2450000000001,
+            "weights": 888.646
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "2001052897232140781/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 829696,
+            "distances": 1138.2450000000001,
+            "weights": 888.646
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "2001052897232140781/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 829696,
+            "distances": 1138.2450000000001,
+            "weights": 888.646
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 14,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8454",
+      "workload": "100x100",
+      "witness_line_sha256": "3c86db20e13e6cc685cd90aa9aac2f76f4ca01e3718bed9a60f278c91a9f8182",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4313758,
+        43.7431514
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "254319115382542029/281474976710656",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 845659,
+            "distances": 1160.4160000000004,
+            "weights": 903.5229999999999
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290,
+            287
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "2034552923060336217/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 847548,
+            "distances": 1163.0400000000002,
+            "weights": 903.5229999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290,
+            287
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "2034552923060336217/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 847548,
+            "distances": 1163.0400000000002,
+            "weights": 903.5229999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290,
+            287
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "2034552923060336217/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 847548,
+            "distances": 1163.0400000000002,
+            "weights": 903.5229999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290,
+            287
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 15,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8456",
+      "workload": "100x100",
+      "witness_line_sha256": "5ffd871202abc6a57a317292c5f9c4b82448a88f8be365a2216ea50d78e744c5",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4312824,
+        43.7430443
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "509713352586128077/562949953421312",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 847951,
+            "distances": 1163.5990000000004,
+            "weights": 905.4327999999999
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290,
+            288
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "2038853410344512293/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 849840,
+            "distances": 1166.2230000000002,
+            "weights": 905.4327999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290,
+            288
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "2038853410344512293/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 849840,
+            "distances": 1166.2230000000002,
+            "weights": 905.4327999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290,
+            288
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "2038853410344512293/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 849840,
+            "distances": 1166.2230000000002,
+            "weights": 905.4327999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            290,
+            288
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 15,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8458",
+      "workload": "100x100",
+      "witness_line_sha256": "5086007a1a98ecd4fe3407772bac93f576d553d22a6ab7ce0850f6e5fb1b9fb5",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4347073,
+        43.7475117
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6239999999997963,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "45321207830731445/35184372088832",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1300494,
+            "distances": 1784.9610000000002,
+            "weights": 1288.1062
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            32,
+            46,
+            48,
+            51
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "2900557301166812465/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1302383,
+            "distances": 1787.585,
+            "weights": 1288.1062
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            32,
+            46,
+            48,
+            51
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "2900557301166812465/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1302383,
+            "distances": 1787.585,
+            "weights": 1288.1062
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            32,
+            46,
+            48,
+            51
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "2900557301166812465/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 1302383,
+            "distances": 1787.585,
+            "weights": 1288.1062
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            716,
+            711,
+            292,
+            100,
+            99,
+            35,
+            32,
+            46,
+            48,
+            51
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 20,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8459",
+      "workload": "100x100",
+      "witness_line_sha256": "063f8bbe1a0089c310ec57e7ad2c48ee33baa865e0a51e994c19f2bfbbf7136d",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4296081,
+        43.7409781
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.62399999999991,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "1739220820656224013/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 679711,
+            "distances": 944.041,
+            "weights": 772.3691999999999
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            721,
+            718,
+            724,
+            731,
+            735
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "869610410328111999/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 681600,
+            "distances": 946.665,
+            "weights": 772.3691999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            721,
+            718,
+            724,
+            731,
+            735
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "869610410328111999/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 681600,
+            "distances": 946.665,
+            "weights": 772.3691999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            721,
+            718,
+            724,
+            731,
+            735
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "869610410328111999/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 681600,
+            "distances": 946.665,
+            "weights": 772.3691999999999
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868,
+            2870,
+            912,
+            910,
+            908,
+            696,
+            694,
+            726,
+            721,
+            718,
+            724,
+            731,
+            735
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 15,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-8461",
+      "workload": "100x100",
+      "witness_line_sha256": "be28ac28df8ac65dacca49bf0b706709d9e0b3e55bc2a0af14afb60982d139a2",
+      "from": [
+        7.4231414,
+        43.7369886
+      ],
+      "to": [
+        7.4254828,
+        43.7372437
+      ],
+      "classification": "IEEE_SEQUENTIAL_SUM_TIE_WITH_NONZERO_EXACT_DELTA",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": true,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 0.0,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.623999999999967,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "321679961664080585/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 164641,
+            "distances": 228.668,
+            "weights": 142.85459999999998
+          },
+          "directed_edge_keys": [
+            2784,
+            2813,
+            2817,
+            2815,
+            2819,
+            2849,
+            2852,
+            2854,
+            2861,
+            2873,
+            2868
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "160839980832040285/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 166530,
+            "distances": 231.29199999999997,
+            "weights": 142.85459999999998
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "160839980832040285/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 166530,
+            "distances": 231.29199999999997,
+            "weights": 142.85459999999998
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "160839980832040285/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 166530,
+            "distances": 231.29199999999997,
+            "weights": 142.85459999999998
+          },
+          "directed_edge_keys": [
+            2783,
+            2797,
+            2801,
+            2805,
+            2861,
+            2873,
+            2868
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 0,
+        "common_suffix_edges": 3,
+        "ch_alternative_directed_edge_keys": [
+          2784,
+          2813,
+          2817,
+          2815,
+          2819,
+          2849,
+          2852,
+          2854
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2783,
+          2797,
+          2801,
+          2805
+        ],
+        "alternative_source_node": 1031,
+        "alternative_target_node": 1058,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    },
+    {
+      "proof_id": "100x100-proof-11215",
+      "workload": "100x100",
+      "witness_line_sha256": "3815a8704f095c7d6c0a1026c4f3364d3bcf2318bebfb7c53a71af8850e8be15",
+      "from": [
+        7.4254828,
+        43.7372437
+      ],
+      "to": [
+        7.4231414,
+        43.7369886
+      ],
+      "classification": "UPSTREAM_CH_ONE_ULP_ORIGINAL_OBJECTIVE_DIFFERENCE",
+      "original_failure": [
+        "IllegalStateException: selected CH actual objective differs from independent pair Dijkstra exact edge/turn sum"
+      ],
+      "original_rational_optimality_proven": false,
+      "exact_rational_costs_equal": false,
+      "sequential_double_costs_equal": false,
+      "exact_ch_minus_pair_objective_fraction": "15/2251799813685248",
+      "exact_ch_minus_pair_objective_decimal": "6.661338147750939242541790008544921875E-15",
+      "ch_minus_pair_sequential_double_weight": 2.842170943040401e-14,
+      "ch_minus_pair_time_ms": -1889,
+      "ch_minus_pair_distance_m": -2.6240000000000236,
+      "shared_selected_minus_shared_plain_exact_objective_fraction": "0",
+      "actual_observed_scalars_exactly_bound": true,
+      "fresh_selected_CH_quantization_ledger_proved": true,
+      "path_facts": {
+        "ch_path": {
+          "exact_objective_fraction": "321679961664080585/2251799813685248",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 164641,
+            "distances": 228.66799999999998,
+            "weights": 142.8546
+          },
+          "directed_edge_keys": [
+            2869,
+            2872,
+            2860,
+            2855,
+            2853,
+            2848,
+            2818,
+            2814,
+            2816,
+            2812,
+            2785
+          ]
+        },
+        "pair_dijkstra_path": {
+          "exact_objective_fraction": "160839980832040285/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 166530,
+            "distances": 231.292,
+            "weights": 142.85459999999998
+          },
+          "directed_edge_keys": [
+            2869,
+            2872,
+            2860,
+            2804,
+            2800,
+            2796,
+            2782
+          ]
+        },
+        "shared_dijkstra_path": {
+          "exact_objective_fraction": "160839980832040285/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 166530,
+            "distances": 231.292,
+            "weights": 142.85459999999998
+          },
+          "directed_edge_keys": [
+            2869,
+            2872,
+            2860,
+            2804,
+            2800,
+            2796,
+            2782
+          ]
+        },
+        "shared_selected_path": {
+          "exact_objective_fraction": "160839980832040285/1125899906842624",
+          "all_terms_and_endpoint_checks_passed": true,
+          "metrics": {
+            "times_ms": 166530,
+            "distances": 231.292,
+            "weights": 142.85459999999998
+          },
+          "directed_edge_keys": [
+            2869,
+            2872,
+            2860,
+            2804,
+            2800,
+            2796,
+            2782
+          ]
+        }
+      },
+      "alternative_branch": {
+        "common_prefix_edges": 3,
+        "common_suffix_edges": 0,
+        "ch_alternative_directed_edge_keys": [
+          2855,
+          2853,
+          2848,
+          2818,
+          2814,
+          2816,
+          2812,
+          2785
+        ],
+        "plain_alternative_directed_edge_keys": [
+          2804,
+          2800,
+          2796,
+          2782
+        ],
+        "alternative_source_node": 1058,
+        "alternative_target_node": 1031,
+        "exact_ch_branch_objective": "88.184999999999989395149668780504725873470306396484375",
+        "exact_plain_branch_objective": "88.1849999999999827338115210295654833316802978515625",
+        "exact_float32_cached_ch_branch_objective": "88.18499802052974700927734375",
+        "exact_float32_cached_plain_branch_objective": "88.18500041961669921875",
+        "exact_float32_cached_ch_minus_plain_branch_objective": "-0.00000239908695220947265625",
+        "historical_witness_or_omitted_shortcut_cause_proven": false
+      },
+      "acceptance_scope": "Known ordinary-CH objective/alternative-path difference, not exact original-objective equivalence or a tolerance waiver."
+    }
+  ]
+}

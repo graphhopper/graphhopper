@@ -1,0 +1,99 @@
+{
+  "status": "PASS",
+  "completed_utc": "2026-10-19T19:06:10.848735+00:00",
+  "sequential_execution": true,
+  "executions": [
+    {
+      "case": "opposing-forward",
+      "command": [
+        "C:\\Users\\hulse\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\python.exe",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\prompt_pack\\GraphHopper_Local_Matrix_Codex_Pack\\validation\\validate_http.py",
+        "--base-url",
+        "http://localhost:8999",
+        "--request",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\opposing-forward.json",
+        "--manifest",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\opposing-forward.provenance.json",
+        "--output",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\http-smoke-geometry-opposing-forward.json"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 4.601161099970341,
+      "report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\http-smoke-geometry-opposing-forward.json",
+      "report_sha256": "2b631910548e91de68f0484cd7d3917f4b5d8045b1affc97bed8326b728b32f4",
+      "report_status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "failed_cells": 0,
+      "log": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\opposing-forward.log"
+    },
+    {
+      "case": "opposing-reverse",
+      "command": [
+        "C:\\Users\\hulse\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\python.exe",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\prompt_pack\\GraphHopper_Local_Matrix_Codex_Pack\\validation\\validate_http.py",
+        "--base-url",
+        "http://localhost:8999",
+        "--request",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\opposing-reverse.json",
+        "--manifest",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\opposing-reverse.provenance.json",
+        "--output",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\http-smoke-geometry-opposing-reverse.json"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 4.371045999985654,
+      "report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\http-smoke-geometry-opposing-reverse.json",
+      "report_sha256": "1d48a241b08448253f19b44fbbd6f5c6a2d636a52cbf7ea6107696538c34720c",
+      "report_status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "failed_cells": 0,
+      "log": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\opposing-reverse.log"
+    },
+    {
+      "case": "trinity-foot",
+      "command": [
+        "C:\\Users\\hulse\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\python.exe",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\prompt_pack\\GraphHopper_Local_Matrix_Codex_Pack\\validation\\validate_http.py",
+        "--base-url",
+        "http://localhost:8999",
+        "--request",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\trinity-foot.json",
+        "--manifest",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\trinity-foot.provenance.json",
+        "--output",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\http-smoke-geometry-trinity-foot.json"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 4.389775299991015,
+      "report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\http-smoke-geometry-trinity-foot.json",
+      "report_sha256": "77a7a13615f87d3abcfbaa81fa1ae43a5149a4cd37bfe7037f57c837a5455a9f",
+      "report_status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "failed_cells": 0,
+      "log": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\trinity-foot.log"
+    },
+    {
+      "case": "restriction-car",
+      "command": [
+        "C:\\Users\\hulse\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\python.exe",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\prompt_pack\\GraphHopper_Local_Matrix_Codex_Pack\\validation\\validate_http.py",
+        "--base-url",
+        "http://localhost:8999",
+        "--request",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\restriction-car.json",
+        "--manifest",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\restriction-car.provenance.json",
+        "--output",
+        "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\http-smoke-geometry-restriction-car.json"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 4.3694406999857165,
+      "report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\http-smoke-geometry-restriction-car.json",
+      "report_sha256": "f3e3acdf25dd400b1563410c79df1e5d075432afa852dc39f468c83060a9a2c8",
+      "report_status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "failed_cells": 0,
+      "log": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\restriction-car.log"
+    }
+  ]
+}

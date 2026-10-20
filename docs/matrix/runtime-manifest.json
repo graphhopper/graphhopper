@@ -1,0 +1,159 @@
+{
+  "servers": {
+    "manchester": {
+      "captured_utc": "2026-10-19T19:08:23.790295+00:00",
+      "pid": 95848,
+      "name": "manchester",
+      "repository_root": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix",
+      "jcmd_path": "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+      "configuration_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\config-manchester.yml",
+      "configuration_sha256": "12a53dbb28af8abbbc5b38038de70192dff07cf6767b2e3a4185a595ed4605f1",
+      "configuration_hash_scope": "File bytes at capture; JVM command line independently identifies the selected config path.",
+      "artifact_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\web\\target\\graphhopper-web-11.0-SNAPSHOT.jar",
+      "artifact_size_bytes": 47383957,
+      "artifact_sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+      "graph_directory_as_configured": "target/matrix-manchester-server",
+      "graph_directory_resolved": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\target\\matrix-manchester-server",
+      "application_port": 8999,
+      "admin_port": 9000,
+      "jcmd_command_line": {
+        "argv": [
+          "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+          "95848",
+          "VM.command_line"
+        ],
+        "exit_code": 0,
+        "stdout": "95848:\nVM Arguments:\njvm_args: -Xmx4g \njava_command: web\\target\\graphhopper-web-11.0-SNAPSHOT.jar server docs\\matrix\\config-manchester.yml\njava_class_path (initial): web\\target\\graphhopper-web-11.0-SNAPSHOT.jar\nLauncher Type: SUN_STANDARD\n",
+        "stderr": ""
+      },
+      "jcmd_flags": {
+        "argv": [
+          "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+          "95848",
+          "VM.flags"
+        ],
+        "exit_code": 0,
+        "stdout": "95848:\n-XX:CICompilerCount=4 -XX:ConcGCThreads=2 -XX:G1ConcRefinementThreads=8 -XX:G1EagerReclaimRemSetThreshold=16 -XX:G1HeapRegionSize=2097152 -XX:G1RemSetArrayOfCardsEntries=16 -XX:G1RemSetHowlMaxNumBuckets=8 -XX:G1RemSetHowlNumBuckets=8 -XX:InitialHeapSize=803209216 -XX:MarkStackSize=4194304 -XX:MaxHeapSize=4294967296 -XX:MaxNewSize=2575302656 -XX:MinHeapDeltaBytes=2097152 -XX:MinHeapSize=8388608 -XX:NonNMethodCodeHeapSize=5839372 -XX:NonProfiledCodeHeapSize=122909434 -XX:ProfiledCodeHeapSize=122909434 -XX:ReservedCodeCacheSize=251658240 -XX:+SegmentedCodeCache -XX:SoftMaxHeapSize=4294967296 -XX:+UseCompressedOops -XX:+UseFastUnorderedTimeStamps -XX:+UseG1GC -XX:-UseLargePagesIndividualAllocation \n",
+        "stderr": ""
+      },
+      "captured_text_files": {
+        "jvm-command-line": {
+          "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-manchester-jvm-command-line.txt",
+          "sha256": "d4bcd2423169d1a55e3cc500d73dbfb9af4531122baa3502186983f34c29a920",
+          "command": [
+            "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+            "95848",
+            "VM.command_line"
+          ],
+          "exit_code": 0
+        },
+        "jvm-flags": {
+          "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-manchester-jvm-flags.txt",
+          "sha256": "921bff3cc440abc777ef568b6a63725f3b99fee744ba4850ec722e6db838b71f",
+          "command": [
+            "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+            "95848",
+            "VM.flags"
+          ],
+          "exit_code": 0
+        }
+      },
+      "log": {
+        "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-manchester.log",
+        "size_bytes_at_capture": 555121,
+        "sha256_at_capture": "dc4d8056d810922d65bc0b44b5d04a7e893f7734092215ccdc9eee40a2e709d6",
+        "hash_scope": "Exactly the first size_bytes_at_capture bytes; a running server log can grow later."
+      },
+      "shutdown": {
+        "status": "STOPPED_AFTER_VALIDATION",
+        "stopped_utc": "2026-10-19T19:08:24.289+00:00",
+        "evidence": "../audit/server-manchester.log; Jetty stopped server and both connectors; subsequent jps showed no server JVM.",
+        "ports_checked_not_listening_ipv4": [
+          8999,
+          9000
+        ],
+        "recorded_utc": "2026-10-19T19:15:32.889801+00:00",
+        "heap_snapshot": "../audit/server-manchester-heap-snapshot.txt",
+        "heap_snapshot_scope": "One post-measurement JVM heap snapshot; not peak, minimum memory or RSS."
+      }
+    },
+    "monaco": {
+      "captured_utc": "2026-10-19T19:14:10.522312+00:00",
+      "pid": 93460,
+      "name": "monaco",
+      "repository_root": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix",
+      "jcmd_path": "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+      "configuration_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\config-matrix.yml",
+      "configuration_sha256": "b394046edf588107ed1acfb34466de90809b21ab8154a598ee102241cffc9c9c",
+      "configuration_hash_scope": "File bytes at capture; JVM command line independently identifies the selected config path.",
+      "artifact_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\web\\target\\graphhopper-web-11.0-SNAPSHOT.jar",
+      "artifact_size_bytes": 47383957,
+      "artifact_sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+      "graph_directory_as_configured": "target/matrix-monaco-server",
+      "graph_directory_resolved": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\target\\matrix-monaco-server",
+      "application_port": 8997,
+      "admin_port": 8998,
+      "jcmd_command_line": {
+        "argv": [
+          "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+          "93460",
+          "VM.command_line"
+        ],
+        "exit_code": 0,
+        "stdout": "93460:\nVM Arguments:\njvm_args: -Xmx2g \njava_command: web\\target\\graphhopper-web-11.0-SNAPSHOT.jar server docs\\matrix\\config-matrix.yml\njava_class_path (initial): web\\target\\graphhopper-web-11.0-SNAPSHOT.jar\nLauncher Type: SUN_STANDARD\n",
+        "stderr": ""
+      },
+      "jcmd_flags": {
+        "argv": [
+          "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+          "93460",
+          "VM.flags"
+        ],
+        "exit_code": 0,
+        "stdout": "93460:\n-XX:CICompilerCount=4 -XX:ConcGCThreads=2 -XX:G1ConcRefinementThreads=8 -XX:G1EagerReclaimRemSetThreshold=12 -XX:G1HeapRegionSize=1048576 -XX:G1RemSetArrayOfCardsEntries=12 -XX:G1RemSetHowlMaxNumBuckets=8 -XX:G1RemSetHowlNumBuckets=4 -XX:InitialHeapSize=803209216 -XX:MarkStackSize=4194304 -XX:MaxHeapSize=2147483648 -XX:MaxNewSize=1287651328 -XX:MinHeapDeltaBytes=1048576 -XX:MinHeapSize=8388608 -XX:NonNMethodCodeHeapSize=5839372 -XX:NonProfiledCodeHeapSize=122909434 -XX:ProfiledCodeHeapSize=122909434 -XX:ReservedCodeCacheSize=251658240 -XX:+SegmentedCodeCache -XX:SoftMaxHeapSize=2147483648 -XX:+UseCompressedOops -XX:+UseFastUnorderedTimeStamps -XX:+UseG1GC -XX:-UseLargePagesIndividualAllocation \n",
+        "stderr": ""
+      },
+      "captured_text_files": {
+        "jvm-command-line": {
+          "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-monaco-jvm-command-line.txt",
+          "sha256": "a44a1e416afd4837973c7cc74f0680aa236ebadcd00d8f6fabdaf9638443a1ad",
+          "command": [
+            "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+            "93460",
+            "VM.command_line"
+          ],
+          "exit_code": 0
+        },
+        "jvm-flags": {
+          "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-monaco-jvm-flags.txt",
+          "sha256": "a380d4b053df83fc3fbfa7bfdd7cf70b5ae2f89667b3099c68e4f053836188f9",
+          "command": [
+            "C:\\Program Files\\Java\\jdk-22\\bin\\jcmd.exe",
+            "93460",
+            "VM.flags"
+          ],
+          "exit_code": 0
+        }
+      },
+      "log": {
+        "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\server-monaco.log",
+        "size_bytes_at_capture": 2163020,
+        "sha256_at_capture": "5d3f190a311e73ff4b609432d4cd4117e7a7aa0a4054db4380567ef9b3ac5b72",
+        "hash_scope": "Exactly the first size_bytes_at_capture bytes; a running server log can grow later."
+      },
+      "shutdown": {
+        "status": "STOPPED_AFTER_VALIDATION",
+        "stopped_utc": "2026-10-19T19:14:11.029+00:00",
+        "evidence": "../audit/server-monaco.log; Jetty stopped server and both connectors; subsequent jps showed no server JVM.",
+        "ports_checked_not_listening_ipv4": [
+          8997,
+          8998
+        ],
+        "recorded_utc": "2026-10-19T19:15:33.926469+00:00",
+        "heap_snapshot": "../audit/server-monaco-heap-snapshot.txt",
+        "heap_snapshot_scope": "One post-measurement JVM heap snapshot; not peak, minimum memory or RSS."
+      }
+    }
+  },
+  "updated_utc": "2026-10-19T19:15:33.926469+00:00"
+}

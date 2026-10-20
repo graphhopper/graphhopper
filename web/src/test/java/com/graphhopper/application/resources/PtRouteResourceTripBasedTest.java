@@ -27,15 +27,14 @@ import com.graphhopper.resources.InfoResource;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
-import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.util.Collections;
+import java.util.UUID;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,10 +43,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests the entire app, not the resource, so that the plugging-together
  * of stuff (which is different for PT than for the rest) is under test, too.
  */
-@ExtendWith(DropwizardExtensionsSupport.class)
 public class PtRouteResourceTripBasedTest {
-    private static final String DIR = "./target/gtfs-app-gh/";
+    private static final String DIR = "./target/gtfs-trip-based-resource-gh-" + UUID.randomUUID() + "/";
     public static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
+    private static boolean appStartAttempted;
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
@@ -64,9 +63,26 @@ public class PtRouteResourceTripBasedTest {
     }
 
     @BeforeAll
+    public static void startApp() throws Exception {
+        // Clean before starting: Windows cannot delete the live MapDB mmap files.
+        File graphDirectory = new File(DIR);
+        if (graphDirectory.exists())
+            assertTrue(Helper.removeDir(graphDirectory), "Cannot clear the owned generated PT test graph");
+        appStartAttempted = true;
+        app.before();
+    }
+
     @AfterAll
-    public static void cleanUp() {
-        Helper.removeDir(new File(DIR));
+    public static void stopApp() {
+        // Lifecycle is explicit; automatic extension callbacks would stop it twice.
+        if (appStartAttempted) {
+            app.after();
+            appStartAttempted = false;
+        }
+        // MapDB mmap regions can linger until JVM exit on Windows even after close().
+        // A fresh UUID prevents reuse of a partially removed directory on the next run.
+        if (!Helper.removeDir(new File(DIR)))
+            System.err.println("Stopped PT test cache retained; cleanup may be needed after JVM exit: " + DIR);
     }
 
     @Test

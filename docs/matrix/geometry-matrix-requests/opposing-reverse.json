@@ -1,0 +1,25 @@
+{
+  "profile": "car",
+  "from_points": [
+    [
+      -2.238532575468136,
+      53.471607526670134
+    ]
+  ],
+  "to_points": [
+    [
+      -2.2384752500000005,
+      53.47151515
+    ]
+  ],
+  "out_arrays": [
+    "times",
+    "times_ms",
+    "distances",
+    "weights"
+  ],
+  "fail_fast": false,
+  "local": {
+    "algorithm": "flexible"
+  }
+}

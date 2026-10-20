@@ -1,0 +1,35 @@
+{
+  "scope": "ACTUAL_SAVED_ROUTE_INPUT_TO_MATRIX_1X1",
+  "created_utc": "2026-10-19T19:06:06.457178+00:00",
+  "case": "restriction-1645783",
+  "profile": "car",
+  "base_url": "http://localhost:8999",
+  "source_geometry_summary": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\summary.json",
+  "source_geometry_summary_sha256": "1fa5584b9474d41949f5965fa9126654da353a16cb5b4d234c9e5f5ce54a5aee",
+  "source_geometry_summary_generated_utc": "2026-10-19T19:04:30.176244+00:00",
+  "source_route_request": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\restriction-1645783-car-run2.request.json",
+  "source_route_request_sha256": "6805f194327fdab3c10dc73fae513d4f53ea912b58e86b2fa3da07124339c90d",
+  "source_route_response": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\restriction-1645783-car-run2.response.json",
+  "source_route_response_sha256": "5b00c45f8baa8840ecbb73c7bff0389e61b3764e1fd044ea88520bb9ef58a3dc",
+  "matrix_request": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\restriction-car.json",
+  "matrix_request_file_sha256": "d4f77792457411278b2c15e1f9d280634adbf036bfbb01324b3450acecdcb06f",
+  "conversion": "Retain the actual profile and exact raw endpoint coordinates; use singleton axes and the four matrix metrics.",
+  "removed_route_only_fields": [
+    "algorithm",
+    "calc_points",
+    "ch.disable",
+    "details",
+    "instructions",
+    "lm.disable",
+    "points_encoded",
+    "snap_preventions"
+  ],
+  "coordinate_provenance": {
+    "candidate_report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\restriction-candidates.json",
+    "candidate_index": 1,
+    "source_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3"
+  },
+  "validator": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\prompt_pack\\GraphHopper_Local_Matrix_Codex_Pack\\validation\\validate_http.py",
+  "validator_sha256": "36d5fd4a3dc215dff9ce87aaf06934f7986546582e3e3243f93e5cf7f9183d77",
+  "manual_review": "Recorded separately; this verifier only checks HTTP metrics/null masks."
+}

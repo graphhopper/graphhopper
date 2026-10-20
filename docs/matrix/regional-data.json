@@ -1,0 +1,45 @@
+{
+  "status": "ACQUIRED_AND_VERIFIED",
+  "acquired_utc": "2026-10-19T18:06:41.557727+00:00",
+  "acquisition_completed_utc": "2026-10-19T18:06:55.718707+00:00",
+  "source_page": "https://download.geofabrik.de/europe/united-kingdom/england/greater-manchester.html",
+  "source_url": "https://download.geofabrik.de/europe/united-kingdom/england/greater-manchester-latest.osm.pbf",
+  "resolved_url": "https://download.geofabrik.de/europe/united-kingdom/england/greater-manchester-261018.osm.pbf",
+  "local_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\data\\greater-manchester-11f9b3f5b1d63cdf.osm.pbf",
+  "size_bytes": 51632590,
+  "response_headers": {
+    "Content-Length": "51632590",
+    "Last-Modified": "Mon, 19 Oct 2026 00:49:59 GMT",
+    "ETag": "\"313d9ce-65e26e4be9674\"",
+    "Content-Type": "application/octet-stream"
+  },
+  "sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+  "md5": "0ea32b7a75d2c401addd918744cb802a",
+  "remote_md5": "0ea32b7a75d2c401addd918744cb802a",
+  "md5_verified": true,
+  "remote_md5_unchanged_during_acquisition": true,
+  "md5_source_url": "https://download.geofabrik.de/europe/united-kingdom/england/greater-manchester-latest.osm.pbf.md5",
+  "md5_local_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\data\\greater-manchester-11f9b3f5b1d63cdf.osm.pbf.md5",
+  "boundary": {
+    "source_url": "https://download.geofabrik.de/europe/united-kingdom/england/greater-manchester.poly",
+    "local_path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\data\\greater-manchester.poly",
+    "sha256": "c5ad67442b8905cbd77e90f93b95da2cb7fa1205ea13bcac6774068e3609a63a",
+    "response_headers": {
+      "Content-Length": "6927",
+      "Last-Modified": "Mon, 19 Oct 2026 00:49:42 GMT",
+      "ETag": "\"1b0f-65e26e3bec1a2\""
+    },
+    "coordinate_order": "longitude,latitude",
+    "bbox": [
+      -2.732097,
+      53.32613,
+      -1.90804,
+      53.68742
+    ],
+    "coordinate_count": 216
+  },
+  "free_disk_bytes_before_acquisition": 3599331328,
+  "free_disk_bytes_after_acquisition": 3541540864,
+  "license": "ODbL-1.0; OpenStreetMap contributors, Geofabrik extract",
+  "validation_status": "NOT_RUN"
+}

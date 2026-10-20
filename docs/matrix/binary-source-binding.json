@@ -1,0 +1,227 @@
+{
+  "status": "PASS",
+  "scope": "Current compiled matrix production classes and configured model resources exactly match the live-tested packaged JAR. Diagnostic-only test additions are outside the artifact.",
+  "artifact_sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+  "classes_checked": 40,
+  "classes": [
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/MatrixEngine$Backend.class",
+      "sha256": "cf626abce507e2e089e2718b6cb87a453fb2147eef9eaf411d3dd95dc1c70763"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/MatrixEngine$Cell.class",
+      "sha256": "801ceccded2c578c49d4f267400e5001f3416fea3f3971e98f3db63046e5573d"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/MatrixEngine$Context.class",
+      "sha256": "19779c7676e4e34b541ea28628c874fd4d0ea918056787e73b18e9ffe380deb4"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/MatrixEngine$Coordinate.class",
+      "sha256": "4612945b5b0463b5293354d712b26f283dd0a3d33211586e3f9f608a99b89f8d"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/MatrixEngine$Counters.class",
+      "sha256": "84aa570f07b0c22a8e29a2b5726e86e3c2be0bc9bb312cbfa41188ae570111c0"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/MatrixEngine$FlexibleBackend.class",
+      "sha256": "f053a13193530012913cdf9f9c7719d01c61245fe92ae4bb19a619623455bc07"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/MatrixEngine$Limits.class",
+      "sha256": "f22ff24c01182746a6aadd0ccdfdb2117ef3605636ed1f0818b8e9dc7135d53b"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/MatrixEngine$ReferenceBackend.class",
+      "sha256": "10f7e1a65be0aeaf4b9652cce3df0b8d994f3cd63289049a2dde531aa9cecf14"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/MatrixEngine$Row.class",
+      "sha256": "ab6ccf4530f7dd82dc2561d9493f7441cc51352c1c552927d88e9d43ed4f7e2c"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/MatrixEngine.class",
+      "sha256": "2db2a55b7deddb58796962988cb937c8f0ed7d2bb8beaa8c044f5401ebb7334d"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/MatrixProvenance.class",
+      "sha256": "ea7c4c526ebbf478ac665f3b1f484ab8db9bd5a6a6aac2025db2f71b44e3dd71"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Failure.class",
+      "sha256": "afb8708091a61bfe6032c27ee1ee03e8bf830765ff3a7023a2694eadacce2499"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Label.class",
+      "sha256": "22643da6da2a6971e72359c6ed60ac9195bccc9fa851c91faf558c93ff8666b5"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Metrics.class",
+      "sha256": "60bf1008781e12e1dc2c433d1d223a98b32553d7b67b1c2884322b80ec73a745"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Result.class",
+      "sha256": "e609ec68b87d1ee82c13d2963f8db93bc8166297184d2d7bf7f5cb4b23074c31"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$SearchException.class",
+      "sha256": "896a8bd8e656f7215a20097bc89f4b679d52f242bf78d29c6ed740dc82917839"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Step.class",
+      "sha256": "bad41ee80f1b180e1c1eaefecdcf5ad8f9224d29aebf009354a0914c16c58335"
+    },
+    {
+      "module": "core",
+      "class": "com/graphhopper/routing/matrix/TargetSetDijkstra.class",
+      "sha256": "13cddb40f7ac3daace0f58aedc73e868ad034f1ff1da10cd12e0f049e5312cea"
+    },
+    {
+      "module": "web-api",
+      "class": "com/graphhopper/matrix/MatrixException.class",
+      "sha256": "9fe453719707caa82655376d09ece019df22fbbd8e1dfbb734b01e9ec08aca5f"
+    },
+    {
+      "module": "web-api",
+      "class": "com/graphhopper/matrix/MatrixRequest.class",
+      "sha256": "b42be1aa1eb15fae9c1f18cad293d87264c7dc27a465aaa36a709967f527b1bb"
+    },
+    {
+      "module": "web-api",
+      "class": "com/graphhopper/matrix/MatrixSnappedPoint.class",
+      "sha256": "9dc0aaeb933dc0462bc954e01935dd029187ba7be0fe6e672e46c12ff26db933"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$1.class",
+      "sha256": "4eb9e86f6de9805cc3acddb0ec785e1b8327f9c580344b64f09da9c9e87eaaa4"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$2.class",
+      "sha256": "5ad4a0bbf620d2100154904af600289e40ddd0155fa8ed92fd6e9d5536079db4"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$3.class",
+      "sha256": "74548596ceb2f947b4ccb4b9a2e7ef8e7c02564b36c1de2edd19189358852bd2"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$4.class",
+      "sha256": "380b44c9a3694713c756fc1352de57697f93dbf4fa44ceaf2b03d91b113e0c2c"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$BaseGraphFactory.class",
+      "sha256": "3c981fddf3e1afff8527ea1f57eaf927b23b241ce451a253c90bcf6ae11362d2"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$EmptyRealtimeFeedFactory.class",
+      "sha256": "b1112facca4e8353d217ae125f3e19f016481fbd1d5ec5c1e344758de46e5418"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$EncodingManagerFactory.class",
+      "sha256": "b054c7bf92147982764e48f4db9ca6482377ae207d67417d3d97559b52f1be70"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$GHRequestTransformerFactory.class",
+      "sha256": "120569b83ee40d5fee1786c67c477bc681e1f25931e8ef6a923922d8c54e4684"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$GtfsStorageFactory.class",
+      "sha256": "2cfee6ecd99054a05e885b2c7a1e0f27dcb4f3a426f0b0ca2aa9c042da5edbd8"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$HasElevation.class",
+      "sha256": "b07093a3bf7a8ef34889d8de7e1f544d6037ef08e3f65d509480c8582dab4fe0"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$LocationIndexFactory.class",
+      "sha256": "1a63ebe20b3dcc7d81958be137fd93f31b33c1df5e4af8bd9ea43360b2e77a1a"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$MapMatchingRouterFactoryFactory.class",
+      "sha256": "d9b7d911ac8459cba03f996c43b72f99ba9a59681be4f8841158c2ec70e036ce"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$MatrixEngineFactory.class",
+      "sha256": "329b087e8f59805ac2e7e3f60f35aa74d9aa4102dc985dbbd7a9a840011bfaa5"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$PathDetailsBuilderFactoryFactory.class",
+      "sha256": "d76b97632aa82b8b0efe6b460727e3a50423ca89b98830cf8fa502187d52e471"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$ProfileResolverFactory.class",
+      "sha256": "031a04673a19747cdad8369caaa7a80140100432588c1b4b08750cbca7446018"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle$TranslationMapFactory.class",
+      "sha256": "2e8550a53dd805a3bfc35590b07a6dd9dc9a31e592a880b4b1222950fa3b0827"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundle.class",
+      "sha256": "c232a4fedfc693e3bc4b2593a25a1dbff898b4d64c88518689390423630ccab1"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/http/GraphHopperBundleConfiguration.class",
+      "sha256": "49791cb1ca53fb1f690352e0ed92c3ae70c7fed44f1f2d6b4ef170cd2d5ecd2a"
+    },
+    {
+      "module": "web-bundle",
+      "class": "com/graphhopper/resources/MatrixResource.class",
+      "sha256": "7fffe87cbd3177ef4c2ae5e5fb9e0243f8b92b7a9e7559095f74410b9c0eaaa9"
+    }
+  ],
+  "rechecked_utc": "2026-10-19T19:28:44.606023+00:00",
+  "models_checked": 2,
+  "models": [
+    {
+      "resource": "com/graphhopper/custom_models/foot.json",
+      "source_sha256": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+      "compiled_sha256": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+      "jar_sha256": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+      "all_bytes_equal": true
+    },
+    {
+      "resource": "com/graphhopper/custom_models/car.json",
+      "source_sha256": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90",
+      "compiled_sha256": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90",
+      "jar_sha256": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90",
+      "all_bytes_equal": true
+    }
+  ],
+  "verification_script": "../../../audit/verify_binary_source_binding.py"
+}

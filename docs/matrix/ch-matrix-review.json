@@ -1,0 +1,62 @@
+{
+  "status": "CASE_BOUND_RECONCILIATIONS_APPROVED",
+  "approved_posthoc_reconciliations": [
+    {
+      "dataset": "monaco",
+      "posthoc_review_sha256": "ee99620701151ac6e922eb5f260496903fa9cf3b6046810d76ad61cbc74ab29c",
+      "metadata_sha256": "04cd71cbcc3016d11119b9e1be7caf7e1d5ec9e3109f0ac952a695109b99fdcf",
+      "reconciliation_sha256": "d0d1b7011406dc238c9d29c099797aa29db8d193f62c72df3f6e45fbd03f057f",
+      "witnesses_sha256": "c834885bebeb7bdc0dff0825d7e5c9d0d4891ea436ecdf210273ba4471c7104a",
+      "raw_candidate_reconciliation_sha256": "efb0c5619a30000918d06c37dceedd7da51b8c1a1f1a161c3c8012d4f903a5a3"
+    }
+  ],
+  "approved_candidate_path_reconciliations": [
+    {
+      "dataset": "monaco",
+      "reconciliation_sha256": "dcf032db5061c5c3e6361619a06a256efb431471701e447ba512f2a4fd41994a",
+      "witnesses_sha256": "cfa11d2fa4789410f9eef2cdf7e776ea4f00d2018c6c922b4dcc16fefa71c156",
+      "raw_candidate_reconciliation_sha256": "efb0c5619a30000918d06c37dceedd7da51b8c1a1f1a161c3c8012d4f903a5a3"
+    },
+    {
+      "dataset": "manchester",
+      "reconciliation_sha256": "c676883120aa232a1100491d7250643f04608a77e5b0efe06fe943ffab6e7693",
+      "witnesses_sha256": "99fa0535fa58c187313f9a77e8d92e1861d1743a381a69b0f6a0353f9c6e2245",
+      "raw_candidate_reconciliation_sha256": "6f9802e58c23a292b6e73ebdc1e56fd5c1154a9bc6e2eb6555ae9e8473b3fdda"
+    }
+  ],
+  "fresh_actual_candidate_path_review": {
+    "unique_replay_paths": 250,
+    "indexed_raw_flags": 296,
+    "monaco_alternative_paths": 16,
+    "manchester_unique_paths": 234,
+    "manchester_indexed_flags": 280,
+    "manchester_actual_removed_original_leaf_occurrences": 457,
+    "manchester_all_normalized_paths_exactly_equal_independent_dijkstra": true,
+    "checks": [
+      "Independently streamed every fresh witness and checked its line SHA, complete indexed coverage and original raw/request/oracle/certified/flexible bindings.",
+      "Recomputed forward and reverse parent recurrences, exact meeting joins, directed path continuity, sequential metrics and exact rational path sums.",
+      "Reconstructed every removed original leaf's actual shared-overlay virtual chain; checked directed copy families, flags, normalized unit metrics, coordinates and exact weight/distance/time deltas.",
+      "Recomputed nonnegative-addition error bounds from the selected actual leaf terms. These are source-derived bounds for the captured replay path, not a global comparison tolerance.",
+      "Every Manchester represented candidate has the same physical route and exact objective/distance/time as independent Dijkstra. Monaco's sixteen actual alternatives retain a nonzero exact objective difference and are rejected by certification."
+    ],
+    "scope": "Fresh actual replay paths bind exactly to the original scalar observations. Paths were not captured during every original timed repetition. The original reports and historical uncaptured-path ledger remain unchanged. No production fix or benchmark rerun is justified by these representation differences."
+  },
+  "independent_case_review": {
+    "ordinary_ch_cases": 16,
+    "sequential_double_ties_with_nonzero_exact_objective_delta": 15,
+    "one_ulp_original_objective_difference": 1,
+    "exact_ch_minus_plain_objective_fraction": "15/2251799813685248",
+    "raw_candidate_indexed_flags": 16,
+    "raw_flags_rejected_by_mandatory_certificate": 16,
+    "checks": [
+      "Recomputed all four directed path sequences, endpoints, sequential metrics and exact rational objective terms in each exceptional ordinary-CH witness.",
+      "Recomputed the alternative-branch float32 ranking and reported shortcut/query residual arithmetic. Historical preprocessing witness cause remains unproven.",
+      "Bound every rejected raw candidate to original request indices, coordinates, raw/oracle triples and certified/flexible result triples.",
+      "Recomputed legal context path association bounds from nonnegative original terms with zero turn costs. The actual raw candidate edge sequence was not captured.",
+      "Full compressed witness coverage and all remaining cases must independently pass the benchmark analyzer; this approval does not bypass its arithmetic or source-binding checks."
+    ]
+  },
+  "original_outputs_modified": false,
+  "original_raw_failure_reclassified_as_exact_optimality_pass": false,
+  "decision": "Accept the identified ordinary-CH accuracy differences as explicit scoped baseline limitations and the raw candidate flags as rejected diagnostics. Certified API cells must still match flexible routing exactly. Keep auto flexible and the CH backend experimental. No original-rational optimality claim is approved for these sixteen baseline cases."
+}

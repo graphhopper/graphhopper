@@ -1,0 +1,25 @@
+{
+  "profile": "foot",
+  "from_points": [
+    [
+      -2.250961475,
+      53.482605575
+    ]
+  ],
+  "to_points": [
+    [
+      -2.2507744250000004,
+      53.482370325000005
+    ]
+  ],
+  "out_arrays": [
+    "times",
+    "times_ms",
+    "distances",
+    "weights"
+  ],
+  "fail_fast": false,
+  "local": {
+    "algorithm": "flexible"
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -2.250961,
+            53.482606
+          ],
+          [
+            -2.250774,
+            53.48237
+          ]
+        ]
+      },
+      "properties": {
+        "case": "foot-only-source-way-29419166",
+        "profile": "foot",
+        "distance_m": 28.939,
+        "time_ms": 20836,
+        "weight": 20.835993,
+        "manual_review_status": "PENDING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.250961475,
+          53.482605575
+        ]
+      },
+      "properties": {
+        "kind": "raw",
+        "index": 0,
+        "case": "foot-only-source-way-29419166",
+        "profile": "foot"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.2507744250000004,
+          53.482370325000005
+        ]
+      },
+      "properties": {
+        "kind": "raw",
+        "index": 1,
+        "case": "foot-only-source-way-29419166",
+        "profile": "foot"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.250961,
+          53.482606
+        ]
+      },
+      "properties": {
+        "kind": "snapped",
+        "index": 0,
+        "case": "foot-only-source-way-29419166",
+        "profile": "foot"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.250774,
+          53.48237
+        ]
+      },
+      "properties": {
+        "kind": "snapped",
+        "index": 1,
+        "case": "foot-only-source-way-29419166",
+        "profile": "foot"
+      }
+    }
+  ]
+}

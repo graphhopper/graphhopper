@@ -1,0 +1,45 @@
+{
+  "status": "REJECTED_STALE_PACKAGED_ARTIFACT",
+  "tested_source_commit": "9d9208a15ceca110111d45f0777eccc94be717a4",
+  "maven_verify_exit_code": 0,
+  "maven_verify_status": "PASS_FULL_MAVEN_VERIFY",
+  "smoke_precondition_exit_code": 2,
+  "smoke_rejection": "JAR GraphHopper gitinfo does not bind the expected complete source commit",
+  "artifact_sha256": "e40ce0c2da8f73cc88d86dc5486670ce7bde24f54219d32a4d160fa833d84683",
+  "artifact_bytes": 47401882,
+  "artifact_crc": "PASS",
+  "preserved_local_artifact": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\audit\\ch-stale-packaging-attempt\\graphhopper-web-11.0-SNAPSHOT.jar",
+  "packaged_graphhopper_gitinfo": "# properties will be filled by git-commit-id-plugin during maven build\r\nebb578f4e94db72e82f2f8d3bc69417758e16e1c\r\n2026-09-29T13:58:19+0100\r\nMerge commit from fork\r\nfeature/local-matrix\r\ntrue",
+  "compiled_core_gitinfo": "# properties will be filled by git-commit-id-plugin during maven build\n9d9208a15ceca110111d45f0777eccc94be717a4\n2026-10-20T00:06:44+0100\nRecord matrix validation and measured CH comparisons\nfeature/local-matrix\nfalse",
+  "cause_evidence": {
+    "log": "../audit/matrix-ch-full-verify-final.log",
+    "log_sha256": "c382af2634ce354242df710f2b10cfe59f580ba9ef6b098572bb61b841c28fa9",
+    "web_jar_goal_line": 8740,
+    "shade_goal_line": 8742,
+    "overlapping_core_classes_warning_line": 9432,
+    "overlapping_core_classes": 651,
+    "interpretation": "The web jar goal skipped thin-JAR creation, then shade consumed the previous fat JAR and fresh dependencies. Earlier embedded core resources won duplicate entries."
+  },
+  "preserved_reports": [
+    {
+      "original_path": "ch-matrix-full-verification.json",
+      "preserved_path": "ch-matrix-full-verification-prepackage.json",
+      "sha256": "335cb45e1494f802bf954bf57664bdae21e3e4fc5d4efb218d9e03c5a3b2107a"
+    },
+    {
+      "original_path": "ch-matrix-fixture-validation-final.json",
+      "preserved_path": "ch-matrix-fixture-validation-prepackage.json",
+      "sha256": "6fac7980910eea7892bfcf150ad1bbb9d62ad2d9d16cd38d285b9b44359b6b08"
+    }
+  ],
+  "preserved_new_precision_report": {
+    "path": "ch-matrix-precision-diagnostics-prepackage.json",
+    "sha256": "841b008ca3f26b176bfc3eec819a3081925b219a78513fe06de1daa857ed9ba1"
+  },
+  "historical_precision_report_restored_to_committed_bytes": true,
+  "server_started_only_for_rejected_attempt": true,
+  "matrix_http_smoke_not_executed": true,
+  "owned_server_stopped_gracefully": true,
+  "application_admin_ipv4_ipv6_ports_refused_after_stop": true,
+  "next_required_action": "Force fresh web thin-JAR creation before shading, rebuild from a clean commit, and repeat full verification and final-JAR smoke. Do not cite this artifact as the accepted release."
+}

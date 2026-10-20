@@ -1,0 +1,174 @@
+{
+  "times": [
+    [
+      253,
+      161,
+      0,
+      253
+    ],
+    [
+      220,
+      221,
+      276,
+      220
+    ],
+    [
+      253,
+      161,
+      0,
+      253
+    ]
+  ],
+  "times_ms": [
+    [
+      253101,
+      161831,
+      0,
+      253101
+    ],
+    [
+      220030,
+      221931,
+      276388,
+      220030
+    ],
+    [
+      253101,
+      161831,
+      0,
+      253101
+    ]
+  ],
+  "distances": [
+    [
+      2020.393300632565,
+      1309.9138543945137,
+      0.0,
+      2020.393300632565
+    ],
+    [
+      1996.7195282825985,
+      2011.5090820445464,
+      2131.1510133169195,
+      1996.7195282825985
+    ],
+    [
+      2020.393300632565,
+      1309.9138543945137,
+      0.0,
+      2020.393300632565
+    ]
+  ],
+  "weights": [
+    [
+      434.9345184382408,
+      279.72279090335246,
+      0.0,
+      434.9345184382408
+    ],
+    [
+      399.7346553376118,
+      402.96722923129505,
+      468.1976174771197,
+      399.7346553376118
+    ],
+    [
+      434.9345184382408,
+      279.72279090335246,
+      0.0,
+      434.9345184382408
+    ]
+  ],
+  "hints": [],
+  "info": {
+    "local_matrix": {
+      "contract_version": "1.0",
+      "algorithm": "flexible",
+      "profile": "car",
+      "turn_costs": true,
+      "origin_count": 3,
+      "destination_count": 4,
+      "unique_origin_count": 2,
+      "searches": 2,
+      "visited_states": 36046,
+      "visited_states_known": 36046,
+      "visited_states_complete": true,
+      "threads": 1,
+      "units": {
+        "weights": "profile_cost",
+        "times": "seconds",
+        "times_ms": "milliseconds",
+        "distances": "metres"
+      },
+      "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+      "profile_fingerprint": "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc",
+      "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points": [
+        {
+          "coordinates": [
+            -2.2307744,
+            53.4768826
+          ],
+          "snap_distance_m": 58.12956877664705
+        },
+        {
+          "coordinates": [
+            -2.2427956503716446,
+            53.48715960170464
+          ],
+          "snap_distance_m": 64.8363015986992
+        },
+        {
+          "coordinates": [
+            -2.2307744,
+            53.4768826
+          ],
+          "snap_distance_m": 58.12956877664705
+        }
+      ],
+      "to_snapped_points": [
+        {
+          "coordinates": [
+            -2.2543387,
+            53.4761414
+          ],
+          "snap_distance_m": 16.453913043408097
+        },
+        {
+          "coordinates": [
+            -2.2425558452026872,
+            53.48079486158147
+          ],
+          "snap_distance_m": 2.9771196426161306
+        },
+        {
+          "coordinates": [
+            -2.2307744,
+            53.4768826
+          ],
+          "snap_distance_m": 58.12956877664705
+        },
+        {
+          "coordinates": [
+            -2.2543387,
+            53.4761414
+          ],
+          "snap_distance_m": 16.453913043408097
+        }
+      ],
+      "timings_ms": {
+        "snapping": 1.2661,
+        "query_graph": 0.1791,
+        "backend_calls": 43.457,
+        "core_search": 43.3236,
+        "scatter_output": 0.112,
+        "search_and_output": 43.5864,
+        "total": 45.0896
+      }
+    },
+    "copyrights": [
+      "GraphHopper",
+      "OpenStreetMap contributors"
+    ]
+  }
+}

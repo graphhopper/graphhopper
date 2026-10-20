@@ -1,0 +1,142 @@
+{
+  "hints": {
+    "visited_nodes.sum": 5,
+    "visited_nodes.average": 5.0
+  },
+  "info": {
+    "copyrights": [
+      "GraphHopper",
+      "OpenStreetMap contributors"
+    ],
+    "took": 4,
+    "road_data_timestamp": "2026-10-18T20:25:06Z"
+  },
+  "paths": [
+    {
+      "distance": 28.939,
+      "weight": 20.835993,
+      "time": 20836,
+      "transfers": 0,
+      "legs": [],
+      "points_encoded": false,
+      "bbox": [
+        -2.250961,
+        53.48237,
+        -2.250774,
+        53.482606
+      ],
+      "points": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -2.250961,
+            53.482606
+          ],
+          [
+            -2.250774,
+            53.48237
+          ]
+        ]
+      },
+      "instructions": [
+        {
+          "distance": 28.939,
+          "heading": 154.68,
+          "sign": 0,
+          "interval": [
+            0,
+            1
+          ],
+          "text": "Continue onto Trinity Bridge",
+          "time": 20836,
+          "street_name": "Trinity Bridge"
+        },
+        {
+          "distance": 0.0,
+          "sign": 4,
+          "last_heading": 154.68141595146835,
+          "interval": [
+            1,
+            1
+          ],
+          "text": "Arrive at destination",
+          "time": 0,
+          "street_name": ""
+        }
+      ],
+      "details": {
+        "distance": [
+          [
+            0,
+            1,
+            28.938879481487522
+          ]
+        ],
+        "foot_access": [
+          [
+            0,
+            1,
+            true
+          ]
+        ],
+        "edge_key": [
+          [
+            0,
+            1,
+            497056
+          ]
+        ],
+        "weight": [
+          [
+            0,
+            1,
+            "Infinity"
+          ]
+        ],
+        "road_class": [
+          [
+            0,
+            1,
+            "footway"
+          ]
+        ],
+        "time": [
+          [
+            0,
+            1,
+            20836
+          ]
+        ],
+        "car_access": [
+          [
+            0,
+            1,
+            false
+          ]
+        ],
+        "street_name": [
+          [
+            0,
+            1,
+            "Trinity Bridge"
+          ]
+        ]
+      },
+      "ascend": 0.0,
+      "descend": 0.0,
+      "snapped_waypoints": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -2.250961,
+            53.482606
+          ],
+          [
+            -2.250774,
+            53.48237
+          ]
+        ]
+      }
+    }
+  ]
+}

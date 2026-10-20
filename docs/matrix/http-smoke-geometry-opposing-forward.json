@@ -1,0 +1,207 @@
+{
+  "scope": "HTTP_SMOKE_ONLY_NOT_RELEASE_CERTIFICATION",
+  "created_utc": "2026-10-19T19:05:53.371828+00:00",
+  "status": "SMOKE_PASS",
+  "seed": 20261019,
+  "requested_sample": 0,
+  "matrix_url": "http://localhost:8999",
+  "reference_url": "http://localhost:8999",
+  "request": {
+    "profile": "car",
+    "from_points": [
+      [
+        -2.2384752500000005,
+        53.47151515
+      ]
+    ],
+    "to_points": [
+      [
+        -2.238532575468136,
+        53.471607526670134
+      ]
+    ],
+    "out_arrays": [
+      "times",
+      "times_ms",
+      "distances",
+      "weights"
+    ],
+    "fail_fast": false,
+    "local": {
+      "algorithm": "flexible"
+    }
+  },
+  "request_sha256": "0cdd1bcbc98428ab033999b3d01eefb5b8aa4e4e3d57b6b5df5679be42b4d4c2",
+  "total_cells": 1,
+  "checked_cells": 1,
+  "failed_cells": 0,
+  "failures": [],
+  "same_data_and_profile_identity": "Must be independently verified from deployment provenance",
+  "tolerances": {
+    "weight_abs": 1e-06,
+    "weight_rel": 1e-09,
+    "distance_m_abs": 0.002,
+    "distance_rel": 1e-09,
+    "time_ms_abs": 1
+  },
+  "supplied_provenance": {
+    "scope": "ACTUAL_SAVED_ROUTE_INPUT_TO_MATRIX_1X1",
+    "created_utc": "2026-10-19T19:05:52.999068+00:00",
+    "case": "opposite-carriageways-source-forward",
+    "profile": "car",
+    "base_url": "http://localhost:8999",
+    "source_geometry_summary": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\summary.json",
+    "source_geometry_summary_sha256": "1fa5584b9474d41949f5965fa9126654da353a16cb5b4d234c9e5f5ce54a5aee",
+    "source_geometry_summary_generated_utc": "2026-10-19T19:04:30.176244+00:00",
+    "source_route_request": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\opposite-carriageways-source-forward-car.request.json",
+    "source_route_request_sha256": "930d28ab4c882553960d02eb0dff94ab21f838af1a6cabd9a51065fefbdb5107",
+    "source_route_response": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-spot-checks\\opposite-carriageways-source-forward-car.response.json",
+    "source_route_response_sha256": "48c276c887a8f6eb2b8b46e7d657fa287119d1527a92a77096921effea27f866",
+    "matrix_request": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-matrix-requests\\opposing-forward.json",
+    "matrix_request_file_sha256": "ce09ecd52351d669cf1e89b1a852cf4cfa80454d6e3f5a0b5b82ed872bcc7d78",
+    "conversion": "Retain the actual profile and exact raw endpoint coordinates; use singleton axes and the four matrix metrics.",
+    "removed_route_only_fields": [
+      "algorithm",
+      "calc_points",
+      "ch.disable",
+      "details",
+      "instructions",
+      "lm.disable",
+      "points_encoded",
+      "snap_preventions"
+    ],
+    "coordinate_provenance": {
+      "source_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+      "metadata_report": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\geometry-candidates.json",
+      "source_pair": {
+        "first_way_id": 121174584,
+        "first_way_tags": {
+          "bicycle": "no",
+          "bridge": "yes",
+          "highway": "motorway",
+          "lanes": "3",
+          "layer": "1",
+          "lit": "yes",
+          "maxspeed": "30 mph",
+          "name": "Mancunian Way",
+          "not:name": "Mancunian Way (Elevated Road)",
+          "oneway": "yes",
+          "operator": "Manchester City Council",
+          "ref": "A57(M)",
+          "surface": "asphalt"
+        },
+        "first_segment_node_ids": [
+          3351263,
+          3350617
+        ],
+        "first_permitted_tangent": [
+          -0.9543407429068519,
+          -0.2987201808180994
+        ],
+        "second_way_id": 1128395117,
+        "second_way_tags": {
+          "bicycle": "no",
+          "bridge": "yes",
+          "highway": "motorway",
+          "lane_markings": "yes",
+          "lanes": "3",
+          "layer": "1",
+          "lit": "yes",
+          "maxspeed": "30 mph",
+          "name": "Mancunian Way",
+          "not:name": "Mancunian Way (Elevated Road)",
+          "oneway": "yes",
+          "operator": "Manchester City Council",
+          "ref": "A57(M)",
+          "source": "bing",
+          "source:name": "OS_OpenData_Locator",
+          "source:ref": "OS_OpenData_Locator",
+          "surface": "asphalt",
+          "turn:lanes": "slight_left|through|through"
+        },
+        "second_segment_node_ids": [
+          2870425365,
+          1663075703
+        ],
+        "second_permitted_tangent": [
+          0.9380532687064318,
+          0.3464910750209575
+        ],
+        "points_lon_lat": [
+          [
+            -2.2384752500000005,
+            53.47151515
+          ],
+          [
+            -2.238532575468136,
+            53.471607526670134
+          ]
+        ],
+        "separation_m": 10.962457981856243,
+        "permitted_tangent_dot_product": -0.998726329925615,
+        "distance_from_city_anchor_m": 1069.1058859712916,
+        "confirmation": "SOURCE_GEOMETRY_CONFIRMED; IMPORTED_SNAPS_AND_ROUTE_PENDING"
+      }
+    },
+    "validator": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\prompt_pack\\GraphHopper_Local_Matrix_Codex_Pack\\validation\\validate_http.py",
+    "validator_sha256": "36d5fd4a3dc215dff9ce87aaf06934f7986546582e3e3243f93e5cf7f9183d77",
+    "manual_review": "Recorded separately; this verifier only checks HTTP metrics/null masks."
+  },
+  "matrix_info": {
+    "local_matrix": {
+      "contract_version": "1.0",
+      "algorithm": "flexible",
+      "profile": "car",
+      "turn_costs": true,
+      "origin_count": 1,
+      "destination_count": 1,
+      "unique_origin_count": 1,
+      "searches": 1,
+      "visited_states": 135,
+      "visited_states_known": 135,
+      "visited_states_complete": true,
+      "threads": 1,
+      "units": {
+        "weights": "profile_cost",
+        "times": "seconds",
+        "times_ms": "milliseconds",
+        "distances": "metres"
+      },
+      "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+      "profile_fingerprint": "dadc27c8f7be81714dd38cefa1d95a79e2c391ea1f0eedae4f160bd0e4f32fdc",
+      "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points": [
+        {
+          "coordinates": [
+            -2.238475301609927,
+            53.47151524775152
+          ],
+          "snap_distance_m": 0.011393568244287769
+        }
+      ],
+      "to_snapped_points": [
+        {
+          "coordinates": [
+            -2.2385306938986127,
+            53.47160465871257
+          ],
+          "snap_distance_m": 0.3423552248720758
+        }
+      ],
+      "timings_ms": {
+        "snapping": 1.7969,
+        "query_graph": 0.3155,
+        "backend_calls": 0.7895,
+        "core_search": 0.7196,
+        "scatter_output": 0.0643,
+        "search_and_output": 0.8837,
+        "total": 3.1545
+      }
+    },
+    "copyrights": [
+      "GraphHopper",
+      "OpenStreetMap contributors"
+    ]
+  },
+  "planned_checks": 1
+}

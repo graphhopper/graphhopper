@@ -1,0 +1,126 @@
+{
+  "scope": "HTTP_SMOKE_ONLY_NOT_RELEASE_CERTIFICATION",
+  "created_utc": "2026-10-19T18:57:52.286725+00:00",
+  "status": "SMOKE_PASS",
+  "seed": 20261019,
+  "requested_sample": 0,
+  "matrix_url": "http://localhost:8999",
+  "reference_url": "http://localhost:8999",
+  "request": {
+    "profile": "foot",
+    "from_points": [
+      [
+        -2.2309,
+        53.4774
+      ]
+    ],
+    "to_points": [
+      [
+        -2.2426,
+        53.4808
+      ],
+      [
+        -2.242,
+        53.4875
+      ],
+      [
+        -2.2541,
+        53.4761
+      ]
+    ],
+    "out_arrays": [
+      "times",
+      "times_ms",
+      "distances",
+      "weights"
+    ],
+    "fail_fast": false,
+    "local": {
+      "algorithm": "flexible"
+    }
+  },
+  "request_sha256": "fad5da4c10604968fe99b2834599df5b0dcfbc8e9ab4cf66d256f4476c7ea131",
+  "total_cells": 3,
+  "checked_cells": 3,
+  "failed_cells": 0,
+  "failures": [],
+  "same_data_and_profile_identity": "Must be independently verified from deployment provenance",
+  "tolerances": {
+    "weight_abs": 1e-06,
+    "weight_rel": 1e-09,
+    "distance_m_abs": 0.002,
+    "distance_rel": 1e-09,
+    "time_ms_abs": 1
+  },
+  "matrix_info": {
+    "local_matrix": {
+      "contract_version": "1.0",
+      "algorithm": "flexible",
+      "profile": "foot",
+      "turn_costs": false,
+      "origin_count": 1,
+      "destination_count": 3,
+      "unique_origin_count": 1,
+      "searches": 1,
+      "visited_states": 22891,
+      "visited_states_known": 22891,
+      "visited_states_complete": true,
+      "threads": 1,
+      "units": {
+        "weights": "profile_cost",
+        "times": "seconds",
+        "times_ms": "milliseconds",
+        "distances": "metres"
+      },
+      "graph_fingerprint": "65a954f76e1824623551d29fb11254cf6c641e975c7eaeb9f651bae8d65fb829",
+      "profile_fingerprint": "1be092bef4d39565265853eb515a69b040ad2ccb84a7ba5c58a930788244b6df",
+      "build_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+      "from_snapped_points": [
+        {
+          "coordinates": [
+            -2.2308100607125456,
+            53.477380938080806
+          ],
+          "snap_distance_m": 6.318023928897091
+        }
+      ],
+      "to_snapped_points": [
+        {
+          "coordinates": [
+            -2.242602053411688,
+            53.48079199058213
+          ],
+          "snap_distance_m": 0.9009121347629726
+        },
+        {
+          "coordinates": [
+            -2.2419762923887103,
+            53.487496245503145
+          ],
+          "snap_distance_m": 1.6231224833407811
+        },
+        {
+          "coordinates": [
+            -2.254269452338291,
+            53.47612825439584
+          ],
+          "snap_distance_m": 11.645890560647143
+        }
+      ],
+      "timings_ms": {
+        "snapping": 2.1276,
+        "query_graph": 0.2335,
+        "backend_calls": 46.3314,
+        "core_search": 46.2553,
+        "scatter_output": 0.0704,
+        "search_and_output": 46.4164,
+        "total": 48.8331
+      }
+    },
+    "copyrights": [
+      "GraphHopper",
+      "OpenStreetMap contributors"
+    ]
+  },
+  "planned_checks": 3
+}

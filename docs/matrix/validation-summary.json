@@ -1,0 +1,1300 @@
+{
+  "created_utc": "2026-10-19T19:32:29.399830+00:00",
+  "status": "PASS_WITH_SCOPED_LIMITATIONS",
+  "scope": "Static foot and turn-aware car matrices; evidence-backed implementation checks, not universal correctness or commercial-performance certification.",
+  "base_commit": "ebb578f4e94db72e82f2f8d3bc69417758e16e1c",
+  "source_worktree_dirty": true,
+  "full_maven_verify": {
+    "status": "PASS_FULL_MAVEN_VERIFY",
+    "command": [
+      "mvn",
+      "-B",
+      "verify"
+    ],
+    "exit_code": 0,
+    "totals": {
+      "tests": 3276,
+      "passed": 3047,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 229
+    },
+    "wall_time_log": "04:50 min",
+    "finished_at_log": "2026-10-19T19:37:30+01:00"
+  },
+  "pristine_upstream_baseline": {
+    "status": "FAIL_EXISTING_UPSTREAM_TEST_STARTUP",
+    "totals": {
+      "tests": 3177,
+      "failures": 0,
+      "errors": 1,
+      "skipped": 226,
+      "passed": 2950
+    },
+    "sole_error": "PtRouteResourceTripBasedTest startup missing pt_to_street",
+    "isolated_replay": {
+      "status": "PASS",
+      "created_utc": "2026-10-19T18:11:12.499342+00:00",
+      "cwd": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-baseline",
+      "command": [
+        "cmd.exe",
+        "/d",
+        "/c",
+        "mvn",
+        "-B",
+        "-pl",
+        "web",
+        "-am",
+        "test",
+        "-Dtest=PtRouteResourceTripBasedTest",
+        "-Dsurefire.failIfNoSpecifiedTests=false"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 44.598210800031666,
+      "counts": {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "log": "audit\\baseline-pt-isolated.log",
+      "log_sha256": "071f00c08d5f10f31caf9be3dfc5281afd96638d78c15d5c5112ac47fb8d4d8e",
+      "generated_cache_removed": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-baseline\\web\\target\\gtfs-app-gh",
+      "removed_files": [
+        "gtfs_0",
+        "gtfs_0.p",
+        "location_index",
+        "transit_schedule",
+        "transit_schedule.p"
+      ],
+      "git_status_before": "",
+      "git_status_after": "",
+      "original_full_reactor_status": "FAIL_EXISTING_UPSTREAM_TEST_STARTUP",
+      "interpretation": "Focused cache-cleared replay evaluates this class alone and does not replace the original full reactor outcome."
+    }
+  },
+  "matrix_junit_cases_in_full_verify": {
+    "core_passed": 18,
+    "dto_passed": 2,
+    "http_passed": 62,
+    "conditional_not_run_in_default_verify": [
+      "MatrixBenchmarkTest",
+      "MatrixRegionalTest",
+      "MatrixRegionalReplayTest"
+    ]
+  },
+  "independent_search_differential": {
+    "status": "PASS",
+    "od_comparisons": 20000,
+    "seeds": {
+      "first": 730201,
+      "last": 730250
+    },
+    "graph_nodes_range": [
+      20,
+      80
+    ],
+    "traversal_modes": [
+      "node",
+      "directed_edge"
+    ],
+    "query_graph_variants": "base and four-virtual-point overlays",
+    "source": "core/src/test/java/com/graphhopper/routing/matrix/TargetSetDijkstraTest.java"
+  },
+  "monaco_fixture": {
+    "status": "PASS_WITH_CLASSIFIED_SPLIT_PRECISION",
+    "seed": 20261019,
+    "graph_fingerprint": "f3a20eb0f1fca6b664b9a4dad3de0274f8dbfff995f13a4d1510d82f20486cfb",
+    "profile_counts": {
+      "foot": {
+        "disconnected": 66,
+        "profile_fingerprint": "0ee2dad3573f59d8b850aa8cccfe669424ea25d03e6a81c0409f1f7be95676e7",
+        "compared_cells": 1156,
+        "within_original_tolerances": 1090,
+        "reachable": 1090,
+        "explained_split_cases": 0
+      },
+      "car": {
+        "disconnected": 158,
+        "profile_fingerprint": "1deeacf723f6af9959a8d0e4c256ba8516506ea1f190d9cdb14fcc8596c6aafa",
+        "compared_cells": 1156,
+        "within_original_tolerances": 671,
+        "reachable": 998,
+        "explained_split_cases": 327
+      }
+    },
+    "total_cells": 2312,
+    "individually_explained_cases": 327,
+    "unexplained_cases": 0,
+    "tolerances": {
+      "weight_absolute": 1e-07,
+      "time_ms_absolute": 1,
+      "weight_relative": 1e-10,
+      "distance_m_absolute": 0.002
+    }
+  },
+  "regional": {
+    "initial_status": "FAIL",
+    "source_sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+    "graph_nodes": 500226,
+    "graph_edges": 636908,
+    "actual_workers": 1,
+    "stratified_pairs_per_profile": 1296,
+    "unique_stratified_pairs_per_profile": 1156,
+    "all_original_cells_including_examples": 2616,
+    "cases": [
+      {
+        "case": "stratified_regional_square",
+        "profile": "foot",
+        "pairs": 1296,
+        "reachable_pairs": 1091,
+        "null_pairs": 205,
+        "mismatches_above_fixed_thresholds": 22,
+        "explained_by_path_evidence": 22,
+        "unexplained_mismatches": 0,
+        "status": "PASS_WITH_CLASSIFIED_SPLIT_PRECISION"
+      },
+      {
+        "case": "stratified_regional_square",
+        "profile": "car",
+        "pairs": 1296,
+        "reachable_pairs": 936,
+        "null_pairs": 360,
+        "mismatches_above_fixed_thresholds": 29,
+        "explained_by_path_evidence": 19,
+        "unexplained_mismatches": 10,
+        "status": "FAIL"
+      },
+      {
+        "case": "manchester_square.json",
+        "profile": "car",
+        "pairs": 9,
+        "reachable_pairs": 9,
+        "null_pairs": 0,
+        "mismatches_above_fixed_thresholds": 0,
+        "explained_by_path_evidence": 0,
+        "unexplained_mismatches": 0,
+        "status": "PASS"
+      },
+      {
+        "case": "manchester_rectangular.json",
+        "profile": "car",
+        "pairs": 12,
+        "reachable_pairs": 12,
+        "null_pairs": 0,
+        "mismatches_above_fixed_thresholds": 0,
+        "explained_by_path_evidence": 0,
+        "unexplained_mismatches": 0,
+        "status": "PASS"
+      },
+      {
+        "case": "manchester_one_to_many.json",
+        "profile": "foot",
+        "pairs": 3,
+        "reachable_pairs": 3,
+        "null_pairs": 0,
+        "mismatches_above_fixed_thresholds": 0,
+        "explained_by_path_evidence": 0,
+        "unexplained_mismatches": 0,
+        "status": "PASS"
+      }
+    ],
+    "initial_explained_mismatches": 41,
+    "initial_unexplained_mismatches": 10,
+    "reconciliation_status": "PASS_WITH_PROVEN_COPY_TIES_AND_SPLIT_PRECISION",
+    "targeted_cells_replayed": 10,
+    "newly_explained_mismatches": 10,
+    "remaining_unexplained_mismatches": 0,
+    "entire_regional_matrix_rerun_after_reconciliation": false,
+    "production_algorithm_changed_for_reconciliation": false,
+    "replay_heap_evidence": "../../../audit/regional-replay-jvm-flags.txt (MaxHeapSize=2147483648)",
+    "incomplete_replays": [
+      "regional-reconciliation-incomplete-heap.json",
+      "regional-reconciliation-incomplete-heap-2.json"
+    ],
+    "tolerances": {
+      "weight_absolute": 1e-07,
+      "distance_m": 0.002,
+      "weight_relative": 1e-10,
+      "duration_ms": 1
+    }
+  },
+  "data": {
+    "status": "ACQUIRED_AND_VERIFIED",
+    "resolved_url": "https://download.geofabrik.de/europe/united-kingdom/england/greater-manchester-261018.osm.pbf",
+    "acquired_utc": "2026-10-19T18:06:41.557727+00:00",
+    "size_bytes": 51632590,
+    "sha256": "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+    "boundary_bbox": [
+      -2.732097,
+      53.32613,
+      -1.90804,
+      53.68742
+    ]
+  },
+  "benchmark": {
+    "status": "MEASURED",
+    "completed_measured_samples": 960,
+    "scope": "Monaco fixture only; regional data was acquired separately. Request timer includes production validation but excludes post-timer harness validation. Serialization is separately measured.",
+    "report": "benchmark-metadata.json"
+  },
+  "http_benchmark": {
+    "status": "MEASURED",
+    "comparison_mismatched_cells_across_repetitions": 3680,
+    "report": "http-benchmark-report.json"
+  },
+  "http_benchmark_runs": {
+    "http-benchmark-report.json": {
+      "status": "MEASURED",
+      "measured_samples": 160,
+      "warmups": 5,
+      "repeats": 20,
+      "comparison_mismatched_cells_across_repetitions": 3680
+    },
+    "regional-http-benchmark/http-benchmark-report.json": {
+      "status": "MEASURED",
+      "measured_samples": 240,
+      "warmups": 5,
+      "repeats": 20,
+      "comparison_mismatched_cells_across_repetitions": 760
+    }
+  },
+  "http_smoke": {
+    "http-smoke-geometry-opposing-forward.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "total_cells": 1,
+      "failed_cells": 0
+    },
+    "http-smoke-geometry-opposing-reverse.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "total_cells": 1,
+      "failed_cells": 0
+    },
+    "http-smoke-geometry-restriction-car.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "total_cells": 1,
+      "failed_cells": 0
+    },
+    "http-smoke-geometry-trinity-foot.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 1,
+      "total_cells": 1,
+      "failed_cells": 0
+    },
+    "http-smoke-manchester-one_to_many.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 3,
+      "total_cells": 3,
+      "failed_cells": 0
+    },
+    "http-smoke-manchester-rectangular.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 12,
+      "total_cells": 12,
+      "failed_cells": 0
+    },
+    "http-smoke-manchester-square.json": {
+      "status": "SMOKE_PASS",
+      "checked_cells": 9,
+      "total_cells": 9,
+      "failed_cells": 0
+    }
+  },
+  "geometry": {
+    "automated_export_status": "PASS",
+    "manual_geometry_review": "PASS",
+    "case_count": 9,
+    "review_ledger": {
+      "status": "PASS",
+      "reviewed_utc": "2026-10-19T19:06:12.400573+00:00",
+      "reviewer": "Codex",
+      "scope": "Nine actual upstream route geometries inspected visually in rendered SVG, with street instructions, raw/snapped endpoints and source-derived OSM metadata. One OpenStreetMap basemap view provided crossing context. This is a scoped geometry check, not a legal-access or whole-dataset certificate.",
+      "categories_reviewed": [
+        "restricted_turn_detour",
+        "opposing_carriageways",
+        "river_crossing",
+        "pedestrian_only_imported_way",
+        "adjacent_road_snapping"
+      ],
+      "rendered_artifacts": [
+        "docs/matrix/geometry-spot-checks/overview.html",
+        "docs/matrix/geometry-spot-checks/index.html"
+      ],
+      "source_metadata": [
+        "docs/matrix/restriction-candidates.json",
+        "docs/matrix/geometry-candidates.json",
+        "docs/matrix/regional-data.json"
+      ],
+      "context_map": "https://www.openstreetmap.org/?mlat=53.483566&mlon=-2.247487#map=17/53.483566/-2.247487",
+      "cases": [
+        {
+          "case": "piccadilly-to-victoria",
+          "profile": "car",
+          "review": "PASS_SCOPED_GEOMETRY",
+          "observation": "Rendered station-area geometry and endpoint snaps inspected. Instructions follow Fairfield Street, Whitworth Street, Sackville Street, Portland Street, Charlotte Street, Fountain Street, Shudehill and Todd Street.",
+          "response": "docs/matrix/geometry-spot-checks/piccadilly-to-victoria-car-run2.response.json",
+          "response_sha256": "a59da69c4a1531ee6ad2c0bcc933aebc6096fd45dc8d42c7fa1831c12eec3e48",
+          "distance_m": 2254.967,
+          "time_ms": 283336,
+          "weight": 486.284329,
+          "requested_points": [
+            [
+              -2.2309,
+              53.4774
+            ],
+            [
+              -2.242,
+              53.4875
+            ]
+          ],
+          "snapped_points": [
+            [
+              -2.230774,
+              53.476883
+            ],
+            [
+              -2.242796,
+              53.48716
+            ]
+          ]
+        },
+        {
+          "case": "irwell-blackfriars-approaches",
+          "profile": "car",
+          "review": "PASS_SCOPED_GEOMETRY",
+          "observation": "Rendered route makes a larger circuit via Chapel Street and New Bailey Street before the eastern-bank destination. It does not take the short direct Blackfriars crossing used by the foot sample.",
+          "response": "docs/matrix/geometry-spot-checks/irwell-blackfriars-approaches-car-run2.response.json",
+          "response_sha256": "f9813f9902574ad12aa78a8b83c57bc25105719df527ab1edb4d4212522fccce",
+          "distance_m": 1251.687,
+          "time_ms": 128606,
+          "weight": 241.257695,
+          "requested_points": [
+            [
+              -2.2490419999999998,
+              53.48441
+            ],
+            [
+              -2.246642,
+              53.48321
+            ]
+          ],
+          "snapped_points": [
+            [
+              -2.248897,
+              53.484482
+            ],
+            [
+              -2.247094,
+              53.483199
+            ]
+          ]
+        },
+        {
+          "case": "piccadilly-to-victoria",
+          "profile": "foot",
+          "review": "PASS_SCOPED_GEOMETRY",
+          "observation": "Rendered foot geometry follows the station approach and pedestrian network toward Victoria. Its route and snaps differ from car; this is expected profile-specific access.",
+          "response": "docs/matrix/geometry-spot-checks/piccadilly-to-victoria-foot-run2.response.json",
+          "response_sha256": "8686ef67309a497b128c7c9bab2783be88370da75d332de5097f7be0345acea7",
+          "distance_m": 1635.181,
+          "time_ms": 1180136,
+          "weight": 987.240573,
+          "requested_points": [
+            [
+              -2.2309,
+              53.4774
+            ],
+            [
+              -2.242,
+              53.4875
+            ]
+          ],
+          "snapped_points": [
+            [
+              -2.23081,
+              53.477381
+            ],
+            [
+              -2.241976,
+              53.487496
+            ]
+          ]
+        },
+        {
+          "case": "irwell-blackfriars-approaches",
+          "profile": "foot",
+          "review": "PASS_SCOPED_GEOMETRY",
+          "observation": "Rendered short crossing and eastern-bank approaches inspected. Current OpenStreetMap basemap at the actual exported midpoint identifies the River Irwell and Blackfriars Bridge. The current basemap is geographic context, not the dated import oracle.",
+          "response": "docs/matrix/geometry-spot-checks/irwell-blackfriars-approaches-foot-run2.response.json",
+          "response_sha256": "c46255fb9b532ab616b8931b690f0b6a6c962746facad8032e121e858ebc0e2e",
+          "distance_m": 276.868,
+          "time_ms": 199347,
+          "weight": 166.120527,
+          "requested_points": [
+            [
+              -2.2490419999999998,
+              53.48441
+            ],
+            [
+              -2.246642,
+              53.48321
+            ]
+          ],
+          "snapped_points": [
+            [
+              -2.248977,
+              53.484444
+            ],
+            [
+              -2.246596,
+              53.483198
+            ]
+          ]
+        },
+        {
+          "case": "opposite-carriageways-source-forward",
+          "profile": "car",
+          "review": "PASS_SCOPED_GEOMETRY",
+          "observation": "Distinct snaps on source-derived opposing A57(M) ways are visible. Geometry loops through a connection between carriageways rather than jumping the roughly 11 metre separation; forward route is 689.814 metres.",
+          "response": "docs/matrix/geometry-spot-checks/opposite-carriageways-source-forward-car.response.json",
+          "response_sha256": "48c276c887a8f6eb2b8b46e7d657fa287119d1527a92a77096921effea27f866",
+          "distance_m": 689.814,
+          "time_ms": 56439,
+          "weight": 118.522521,
+          "requested_points": [
+            [
+              -2.2384752500000005,
+              53.47151515
+            ],
+            [
+              -2.238532575468136,
+              53.471607526670134
+            ]
+          ],
+          "snapped_points": [
+            [
+              -2.238475,
+              53.471515
+            ],
+            [
+              -2.238531,
+              53.471605
+            ]
+          ]
+        },
+        {
+          "case": "opposite-carriageways-source-reverse",
+          "profile": "car",
+          "review": "PASS_SCOPED_GEOMETRY",
+          "observation": "Reverse geometry uses a different connection and loops, 977.532 metres. Directional asymmetry and distinct endpoint snaps are visible. OSM way tags establish opposing one-way source geometries; this is not an audit of every motorway rule.",
+          "response": "docs/matrix/geometry-spot-checks/opposite-carriageways-source-reverse-car.response.json",
+          "response_sha256": "28bcb114b285d5752a17e5a0d19f842c2e880523c59558d87dac1954b5e698d3",
+          "distance_m": 977.532,
+          "time_ms": 87763,
+          "weight": 175.740812,
+          "requested_points": [
+            [
+              -2.238532575468136,
+              53.471607526670134
+            ],
+            [
+              -2.2384752500000005,
+              53.47151515
+            ]
+          ],
+          "snapped_points": [
+            [
+              -2.238531,
+              53.471605
+            ],
+            [
+              -2.238475,
+              53.471515
+            ]
+          ]
+        },
+        {
+          "case": "foot-only-source-way-29419166",
+          "profile": "foot",
+          "review": "PASS_SCOPED_GEOMETRY",
+          "observation": "Rendered short segment on source way29419166, Trinity Bridge, inspected. Source highway=footway/bridge=yes and returned road_class=footway with car_access=false support the pedestrian-network sample; no claim of current legal access is inferred.",
+          "response": "docs/matrix/geometry-spot-checks/foot-only-source-way-29419166-foot.response.json",
+          "response_sha256": "cdf8a4676b77a761ccfa3871fde2829d3301d05ead9a7de003418260a04e8691",
+          "distance_m": 28.939,
+          "time_ms": 20836,
+          "weight": 20.835993,
+          "requested_points": [
+            [
+              -2.250961475,
+              53.482605575
+            ],
+            [
+              -2.2507744250000004,
+              53.482370325000005
+            ]
+          ],
+          "snapped_points": [
+            [
+              -2.250961,
+              53.482606
+            ],
+            [
+              -2.250774,
+              53.48237
+            ]
+          ]
+        },
+        {
+          "case": "restriction-1645783",
+          "profile": "car",
+          "review": "PASS_SCOPED_GEOMETRY",
+          "observation": "Rendered geometry passes the source via node, continues along Bridge Street, then loops via Bow Street, South King Street and Deansgate instead of making the source no_right_turn. Distance328.843 metres. This is consistent with the imported restriction; the independent core turn-storage tests provide separate algorithm assurance.",
+          "response": "docs/matrix/geometry-spot-checks/restriction-1645783-car-run2.response.json",
+          "response_sha256": "5b00c45f8baa8840ecbb73c7bff0389e61b3764e1fd044ea88520bb9ef58a3dc",
+          "distance_m": 328.843,
+          "time_ms": 42280,
+          "weight": 71.875759,
+          "requested_points": [
+            [
+              -2.2484402619868145,
+              53.480900460291885
+            ],
+            [
+              -2.2481742719273683,
+              53.48057948222779
+            ]
+          ],
+          "snapped_points": [
+            [
+              -2.24844,
+              53.480902
+            ],
+            [
+              -2.248174,
+              53.48058
+            ]
+          ]
+        },
+        {
+          "case": "restriction-1645783",
+          "profile": "foot",
+          "review": "PASS_SCOPED_GEOMETRY",
+          "observation": "Rendered55.309 metre route uses adjacent footways/crossings west of the road via node. This is a different foot network, not a controlled comparison with only car turn restrictions switched off.",
+          "response": "docs/matrix/geometry-spot-checks/restriction-1645783-foot-run2.response.json",
+          "response_sha256": "658c62f5777c2db4b1c1ad7d699c01b5b62857c0ea7d0aaed21e21a33113b5dc",
+          "distance_m": 55.309,
+          "time_ms": 39823,
+          "weight": 40.203867,
+          "requested_points": [
+            [
+              -2.2484402619868145,
+              53.480900460291885
+            ],
+            [
+              -2.2481742719273683,
+              53.48057948222779
+            ]
+          ],
+          "snapped_points": [
+            [
+              -2.24844,
+              53.480902
+            ],
+            [
+              -2.248174,
+              53.48058
+            ]
+          ]
+        }
+      ],
+      "preserved_initial_observations": [
+        {
+          "response": "docs/matrix/geometry-spot-checks/opposite-carriageway-candidate-forward-car.response.json",
+          "sha256": "1b0919b7d28c6c6b5e0494c9b3837eafcdc061642c8160e89faaa22938914b4d",
+          "classification": "SAME_SNAPPED_POINT_NOT_OPPOSING_CARRIAGEWAY_COVERAGE"
+        },
+        {
+          "response": "docs/matrix/geometry-spot-checks/opposite-carriageway-candidate-reverse-car.response.json",
+          "sha256": "b59b217ccc2df816e8324f3280cabeb0c116a1b07a895cacac65d5a3a6a631fd",
+          "classification": "SAME_SNAPPED_POINT_NOT_OPPOSING_CARRIAGEWAY_COVERAGE"
+        }
+      ],
+      "limitations": [
+        "Imported OSM/model limitations remain in osm-data-limitations.md.",
+        "Upstream per-edge weight path details contain Infinity/apparent U-turn charges; they are preserved but excluded from metric proof. See upstream-geometry-detail-limitations.md.",
+        "Matrix output has no per-cell geometry; separate HTTP differential smoke reports connect these requests to the matrix scalar metrics."
+      ]
+    }
+  },
+  "live_endpoints": {
+    "status": "PASS",
+    "checks": [
+      {
+        "profile": "foot",
+        "endpoint": "route",
+        "url": "http://localhost:8999/route?profile=foot&point=53.4774%2C-2.2309&point=53.4875%2C-2.242&calc_points=false&instructions=false",
+        "http_status": 200,
+        "content_type": "application/json",
+        "body_bytes": 375,
+        "body_sha256": "edb050ffc1c9b4e2631ddeb80477a551b01ac815e89ddd918bf1f87f400fc293",
+        "time": 1180136,
+        "distance": 1635.181,
+        "weight": 987.241293
+      },
+      {
+        "profile": "foot",
+        "endpoint": "isochrone",
+        "url": "http://localhost:8999/isochrone?profile=foot&point=53.4774%2C-2.2309&time_limit=60",
+        "http_status": 200,
+        "content_type": "application/json",
+        "body_bytes": 3424,
+        "body_sha256": "05d34a539aab57740dc560addba00ae79d85716c1b8f6a22c47030bc8e0b9b89",
+        "polygons": 1
+      },
+      {
+        "profile": "foot",
+        "endpoint": "spt",
+        "url": "http://localhost:8999/spt?profile=foot&point=53.4774%2C-2.2309&time_limit=60",
+        "http_status": 200,
+        "content_type": "text/csv",
+        "body_bytes": 1809,
+        "body_sha256": "f913306f4024468250593a510722d7aef58dc790d60e8c70f853d1afe52c9b5e",
+        "csv_rows_including_header": 63,
+        "csv_header": "longitude,latitude,time,distance"
+      },
+      {
+        "profile": "car",
+        "endpoint": "route",
+        "url": "http://localhost:8999/route?profile=car&point=53.4774%2C-2.2309&point=53.4875%2C-2.242&calc_points=false&instructions=false",
+        "http_status": 200,
+        "content_type": "application/json",
+        "body_bytes": 374,
+        "body_sha256": "0513285e49d8f781d5b2dc654eebbe963fbeca4b311c24f2f56ffeaad5356f62",
+        "time": 283336,
+        "distance": 2254.967,
+        "weight": 486.284161
+      },
+      {
+        "profile": "car",
+        "endpoint": "isochrone",
+        "url": "http://localhost:8999/isochrone?profile=car&point=53.4774%2C-2.2309&time_limit=60",
+        "http_status": 200,
+        "content_type": "application/json",
+        "body_bytes": 5620,
+        "body_sha256": "52c9913cc05e22e3440da1f9fc7f9db6c1623a54a7da34261f89fbec573b4a66",
+        "polygons": 1
+      },
+      {
+        "profile": "car",
+        "endpoint": "spt",
+        "url": "http://localhost:8999/spt?profile=car&point=53.4774%2C-2.2309&time_limit=60",
+        "http_status": 200,
+        "content_type": "text/csv",
+        "body_bytes": 8784,
+        "body_sha256": "c277c8b521b57f71135f2e4c0b98379176e3cd2f803752e363dccb486d0f38f7",
+        "csv_rows_including_header": 295,
+        "csv_header": "longitude,latitude,time,distance"
+      }
+    ]
+  },
+  "final_release_review": {
+    "status": "PASS",
+    "reviewed_utc": "2026-10-19T19:27:21.478957+00:00",
+    "artifact_sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+    "runtime_manifest_sha256": "00694fe948f83ad1c8734a2316bb66e4c975d2e6100458b69abc5b6e0f6b77fd",
+    "approved_http_reconciliations": [
+      {
+        "http_report": "http-benchmark-report.json",
+        "http_report_sha256": "cce59db1ee2b875355386778143bfbfea58b21b18e98f9a3d0c0314976fe5666",
+        "reconciliation": "ch-weight-reconciliation.json",
+        "reconciliation_sha256": "477259545fa3d130c1b86b11be93fdc2527906744e3d249164fe8c01b896ecdd"
+      },
+      {
+        "http_report": "regional-http-benchmark/http-benchmark-report.json",
+        "http_report_sha256": "a2d1963decd1f6b02bcad16725fc164ec409957ff2ca49d05be5f31006adcd4c",
+        "reconciliation": "regional-http-benchmark/ch-weight-reconciliation.json",
+        "reconciliation_sha256": "ebb7b415a0bf8e7cec52b14059f2dad042defe3e1965d6b3033270978451c5d5"
+      }
+    ],
+    "independent_exact_rational_path_review": [
+      {
+        "report": "http-benchmark-report.json",
+        "unique_path_proofs": 184,
+        "indexed_cases": 184,
+        "exact_rational_path_review": "PASS"
+      },
+      {
+        "report": "regional-http-benchmark/http-benchmark-report.json",
+        "unique_path_proofs": 20,
+        "indexed_cases": 38,
+        "exact_rational_path_review": "PASS"
+      }
+    ],
+    "production_class_binding": "binary-source-binding.json",
+    "decision": "Core behaviour is complete within the recorded static street-profile, fixture and regional coverage. Raw CH comparison mismatches remain retained; explicit per-case expanded-path/storage proofs explain them. No global tolerance was widened.",
+    "source_state": "Local feature/local-matrix branch, uncommitted changes, pinned upstream base plus source input hashes. No production edits after full Maven and live JAR checks.",
+    "scope_limits": [
+      "Monaco gains do not imply regional or national gains; configured CH won five of six tiny Manchester HTTP cases.",
+      "Historical HTTP diagnostics were capped; 204 fresh path proofs cover222 indexed cases,820 retained scalars and4440 aggregate flags without claiming all original outputs/paths were captured.",
+      "OSM/model/import limitations and upstream weight-detail limitations remain documented.",
+      "Dedicated CH matrix acceleration, PT/time-dependent matrices and large/national/concurrent throughput work remain deferred."
+    ],
+    "operational_state": "Both isolated test servers stopped gracefully; application/admin ports checked closed."
+  },
+  "post_snapshot_ch_precision_diagnostics": {
+    "regional": {
+      "status": "PASS",
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml": "../../../audit/matrix-ch-http-regional-final.xml",
+      "log": "../../../audit/matrix-ch-http-regional-final.log"
+    },
+    "monaco": {
+      "status": "PASS",
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "xml": "../../../audit/matrix-ch-http-monaco-final.xml",
+      "log": "../../../audit/matrix-ch-http-monaco-final.log"
+    },
+    "default_control": {
+      "status": "PASS",
+      "counts": {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "xml": "../../../audit/matrix-ch-http-default-control.xml",
+      "log": "../../../audit/matrix-ch-http-default-control.log"
+    }
+  },
+  "production_binary_binding": {
+    "status": "PASS",
+    "scope": "Current compiled matrix production classes and configured model resources exactly match the live-tested packaged JAR. Diagnostic-only test additions are outside the artifact.",
+    "artifact_sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+    "classes_checked": 40,
+    "classes": [
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/MatrixEngine$Backend.class",
+        "sha256": "cf626abce507e2e089e2718b6cb87a453fb2147eef9eaf411d3dd95dc1c70763"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/MatrixEngine$Cell.class",
+        "sha256": "801ceccded2c578c49d4f267400e5001f3416fea3f3971e98f3db63046e5573d"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/MatrixEngine$Context.class",
+        "sha256": "19779c7676e4e34b541ea28628c874fd4d0ea918056787e73b18e9ffe380deb4"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/MatrixEngine$Coordinate.class",
+        "sha256": "4612945b5b0463b5293354d712b26f283dd0a3d33211586e3f9f608a99b89f8d"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/MatrixEngine$Counters.class",
+        "sha256": "84aa570f07b0c22a8e29a2b5726e86e3c2be0bc9bb312cbfa41188ae570111c0"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/MatrixEngine$FlexibleBackend.class",
+        "sha256": "f053a13193530012913cdf9f9c7719d01c61245fe92ae4bb19a619623455bc07"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/MatrixEngine$Limits.class",
+        "sha256": "f22ff24c01182746a6aadd0ccdfdb2117ef3605636ed1f0818b8e9dc7135d53b"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/MatrixEngine$ReferenceBackend.class",
+        "sha256": "10f7e1a65be0aeaf4b9652cce3df0b8d994f3cd63289049a2dde531aa9cecf14"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/MatrixEngine$Row.class",
+        "sha256": "ab6ccf4530f7dd82dc2561d9493f7441cc51352c1c552927d88e9d43ed4f7e2c"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/MatrixEngine.class",
+        "sha256": "2db2a55b7deddb58796962988cb937c8f0ed7d2bb8beaa8c044f5401ebb7334d"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/MatrixProvenance.class",
+        "sha256": "ea7c4c526ebbf478ac665f3b1f484ab8db9bd5a6a6aac2025db2f71b44e3dd71"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Failure.class",
+        "sha256": "afb8708091a61bfe6032c27ee1ee03e8bf830765ff3a7023a2694eadacce2499"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Label.class",
+        "sha256": "22643da6da2a6971e72359c6ed60ac9195bccc9fa851c91faf558c93ff8666b5"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Metrics.class",
+        "sha256": "60bf1008781e12e1dc2c433d1d223a98b32553d7b67b1c2884322b80ec73a745"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Result.class",
+        "sha256": "e609ec68b87d1ee82c13d2963f8db93bc8166297184d2d7bf7f5cb4b23074c31"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$SearchException.class",
+        "sha256": "896a8bd8e656f7215a20097bc89f4b679d52f242bf78d29c6ed740dc82917839"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/TargetSetDijkstra$Step.class",
+        "sha256": "bad41ee80f1b180e1c1eaefecdcf5ad8f9224d29aebf009354a0914c16c58335"
+      },
+      {
+        "module": "core",
+        "class": "com/graphhopper/routing/matrix/TargetSetDijkstra.class",
+        "sha256": "13cddb40f7ac3daace0f58aedc73e868ad034f1ff1da10cd12e0f049e5312cea"
+      },
+      {
+        "module": "web-api",
+        "class": "com/graphhopper/matrix/MatrixException.class",
+        "sha256": "9fe453719707caa82655376d09ece019df22fbbd8e1dfbb734b01e9ec08aca5f"
+      },
+      {
+        "module": "web-api",
+        "class": "com/graphhopper/matrix/MatrixRequest.class",
+        "sha256": "b42be1aa1eb15fae9c1f18cad293d87264c7dc27a465aaa36a709967f527b1bb"
+      },
+      {
+        "module": "web-api",
+        "class": "com/graphhopper/matrix/MatrixSnappedPoint.class",
+        "sha256": "9dc0aaeb933dc0462bc954e01935dd029187ba7be0fe6e672e46c12ff26db933"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$1.class",
+        "sha256": "4eb9e86f6de9805cc3acddb0ec785e1b8327f9c580344b64f09da9c9e87eaaa4"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$2.class",
+        "sha256": "5ad4a0bbf620d2100154904af600289e40ddd0155fa8ed92fd6e9d5536079db4"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$3.class",
+        "sha256": "74548596ceb2f947b4ccb4b9a2e7ef8e7c02564b36c1de2edd19189358852bd2"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$4.class",
+        "sha256": "380b44c9a3694713c756fc1352de57697f93dbf4fa44ceaf2b03d91b113e0c2c"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$BaseGraphFactory.class",
+        "sha256": "3c981fddf3e1afff8527ea1f57eaf927b23b241ce451a253c90bcf6ae11362d2"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$EmptyRealtimeFeedFactory.class",
+        "sha256": "b1112facca4e8353d217ae125f3e19f016481fbd1d5ec5c1e344758de46e5418"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$EncodingManagerFactory.class",
+        "sha256": "b054c7bf92147982764e48f4db9ca6482377ae207d67417d3d97559b52f1be70"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$GHRequestTransformerFactory.class",
+        "sha256": "120569b83ee40d5fee1786c67c477bc681e1f25931e8ef6a923922d8c54e4684"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$GtfsStorageFactory.class",
+        "sha256": "2cfee6ecd99054a05e885b2c7a1e0f27dcb4f3a426f0b0ca2aa9c042da5edbd8"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$HasElevation.class",
+        "sha256": "b07093a3bf7a8ef34889d8de7e1f544d6037ef08e3f65d509480c8582dab4fe0"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$LocationIndexFactory.class",
+        "sha256": "1a63ebe20b3dcc7d81958be137fd93f31b33c1df5e4af8bd9ea43360b2e77a1a"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$MapMatchingRouterFactoryFactory.class",
+        "sha256": "d9b7d911ac8459cba03f996c43b72f99ba9a59681be4f8841158c2ec70e036ce"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$MatrixEngineFactory.class",
+        "sha256": "329b087e8f59805ac2e7e3f60f35aa74d9aa4102dc985dbbd7a9a840011bfaa5"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$PathDetailsBuilderFactoryFactory.class",
+        "sha256": "d76b97632aa82b8b0efe6b460727e3a50423ca89b98830cf8fa502187d52e471"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$ProfileResolverFactory.class",
+        "sha256": "031a04673a19747cdad8369caaa7a80140100432588c1b4b08750cbca7446018"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle$TranslationMapFactory.class",
+        "sha256": "2e8550a53dd805a3bfc35590b07a6dd9dc9a31e592a880b4b1222950fa3b0827"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundle.class",
+        "sha256": "c232a4fedfc693e3bc4b2593a25a1dbff898b4d64c88518689390423630ccab1"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/http/GraphHopperBundleConfiguration.class",
+        "sha256": "49791cb1ca53fb1f690352e0ed92c3ae70c7fed44f1f2d6b4ef170cd2d5ecd2a"
+      },
+      {
+        "module": "web-bundle",
+        "class": "com/graphhopper/resources/MatrixResource.class",
+        "sha256": "7fffe87cbd3177ef4c2ae5e5fb9e0243f8b92b7a9e7559095f74410b9c0eaaa9"
+      }
+    ],
+    "rechecked_utc": "2026-10-19T19:28:44.606023+00:00",
+    "models_checked": 2,
+    "models": [
+      {
+        "resource": "com/graphhopper/custom_models/foot.json",
+        "source_sha256": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+        "compiled_sha256": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+        "jar_sha256": "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f",
+        "all_bytes_equal": true
+      },
+      {
+        "resource": "com/graphhopper/custom_models/car.json",
+        "source_sha256": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90",
+        "compiled_sha256": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90",
+        "jar_sha256": "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90",
+        "all_bytes_equal": true
+      }
+    ],
+    "verification_script": "../../../audit/verify_binary_source_binding.py"
+  },
+  "gates": {
+    "G0": {
+      "status": "PASS",
+      "note": "Unmodified baseline outcomes preserved; one upstream PT cache-lifecycle failure reproduced and isolated replay passed."
+    },
+    "G1": {
+      "status": "PASS",
+      "note": "2 DTO and 62 HTTP cases plus full reactor."
+    },
+    "G2": {
+      "status": "PASS",
+      "note": "Independent synthetic, randomized, node/edge/QueryGraph and path checks; 20000 differential OD cases."
+    },
+    "G3": {
+      "status": "PASS",
+      "note": "Retained fixture/regional, live-server smoke and recorded geometry checks completed; coverage limits remain."
+    },
+    "G4": {
+      "status": "PASS_WITH_SCOPED_LIMITATIONS",
+      "note": "Root's recorded final review accepts completed named benchmarks, runtime, checksum/CRC, live endpoint and geometry evidence within documented coverage limits."
+    }
+  },
+  "limitations": [
+    "The unmodified full baseline failed; do not replace that recorded status with the feature full-reactor PASS.",
+    "Initial regional FAIL and two OOM/incomplete replays remain preserved; the successful replay only revisits ten cells.",
+    "Equal-cost/restriction-copy and virtual-split classifications require each case's independent legal-path evidence; tolerances were not globally widened.",
+    "No existing user service/configuration, user graph cache or user-specific regional OD files were supplied.",
+    "Imported OSM/model restrictions have documented source-data limitations; algorithm agreement does not establish real-world legality.",
+    "Default Maven skips opt-in regional/benchmark classes; separate explicit runs provide their evidence.",
+    "Large dense matrices, PT, runtime custom models, headings/curbsides and dedicated CH matrices are outside this milestone."
+  ],
+  "evidence": {
+    "full-verification.json": {
+      "path": "full-verification.json",
+      "size_bytes": 875682,
+      "sha256": "2f0d05ec1edd939b4704fb9a56caead920678c8bbd12bee07253a6cb8cce9730"
+    },
+    "baseline-report.json": {
+      "path": "baseline-report.json",
+      "size_bytes": 8726,
+      "sha256": "725efff5cc23251ec3a91e77a6d36e3d9a4e7a918b9c7ad8a2bc1a3af489387c"
+    },
+    "fixture-validation.json": {
+      "path": "fixture-validation.json",
+      "size_bytes": 20725874,
+      "sha256": "9ed3da0ab0c219b3704ddad917469e54ca8167fcffa0c698debb1b8e153b110e"
+    },
+    "precision-diagnostics.json": {
+      "path": "precision-diagnostics.json",
+      "size_bytes": 52111,
+      "sha256": "df233e0102b021abc8074b6372f47e6ae36658f5d1bac62c02be9ee3ef9bf7ac"
+    },
+    "regional-data.json": {
+      "path": "regional-data.json",
+      "size_bytes": 2342,
+      "sha256": "1a81d95f3806d5106a9183e0deb8606ed4f90f8e95710688d2410f6cdc398b85"
+    },
+    "regional-validation.json": {
+      "path": "regional-validation.json",
+      "size_bytes": 57710,
+      "sha256": "9541227d34228415d92cb53578a482b7ef4ee29724e0589c9be72f11ed9f8ed3"
+    },
+    "regional-reconciliation.json": {
+      "path": "regional-reconciliation.json",
+      "size_bytes": 7815670,
+      "sha256": "5bafe8f83cb330b437ecb0a8afb2c9558e567d2acf5f182c11e5014c8758da57"
+    },
+    "regional-failure-replays.jsonl": {
+      "path": "regional-failure-replays.jsonl",
+      "size_bytes": 17456943,
+      "sha256": "a405b29275034ee81169f5026854a5cf061b39822e5eeffc91b4c0ddc034e457"
+    },
+    "benchmark-metadata.json": {
+      "path": "benchmark-metadata.json",
+      "size_bytes": 3841,
+      "sha256": "98377c7646ca2ef476b5697a1b951f369eb56e95d07f3f2c1622066fdf94794e"
+    },
+    "benchmark-results.csv": {
+      "path": "benchmark-results.csv",
+      "size_bytes": 15561,
+      "sha256": "1fa2aa6d2f11b1006c18499a9cc96bf94b5850c69296e805d9720d40def351cf"
+    },
+    "benchmark-samples.csv": {
+      "path": "benchmark-samples.csv",
+      "size_bytes": 275877,
+      "sha256": "832756ea472555e134743bd8daae1d0ceaf07a7673e2a3af564329fcaca13eb9"
+    },
+    "benchmark-requests.json": {
+      "path": "benchmark-requests.json",
+      "size_bytes": 99285,
+      "sha256": "71f16a4c08b450a7d7e42bd030a748752167f4b8ad4c8bbe6beea621e7ba9aab"
+    },
+    "http-benchmark-report.json": {
+      "path": "http-benchmark-report.json",
+      "size_bytes": 159649,
+      "sha256": "cce59db1ee2b875355386778143bfbfea58b21b18e98f9a3d0c0314976fe5666"
+    },
+    "http-benchmark-results.csv": {
+      "path": "http-benchmark-results.csv",
+      "size_bytes": 1276,
+      "sha256": "90e2f8a564286768c9891a00842aef13799c5d5e14053578d5950aa22fd60748"
+    },
+    "geometry-spot-checks/summary.json": {
+      "path": "geometry-spot-checks/summary.json",
+      "size_bytes": 18184,
+      "sha256": "f1f950c2018dbe3562764db40a4463d2784b413c07f8fef8c3f5302e7c6052a9"
+    },
+    "runtime-manifest.json": {
+      "path": "runtime-manifest.json",
+      "size_bytes": 9653,
+      "sha256": "00694fe948f83ad1c8734a2316bb66e4c975d2e6100458b69abc5b6e0f6b77fd"
+    },
+    "benchmark-analysis.json": {
+      "path": "benchmark-analysis.json",
+      "size_bytes": 346066,
+      "sha256": "b46d437bc9dd687fb2ff51c5d4905edc4dcbb5a1df7fa55edc2afc0210f87537"
+    },
+    "benchmark-report.md": {
+      "path": "benchmark-report.md",
+      "size_bytes": 15807,
+      "sha256": "9594335aba0e251256001a4850a33f47d8abe478d27bfe248d8d095d4910f747"
+    },
+    "manual-geometry-review.json": {
+      "path": "manual-geometry-review.json",
+      "size_bytes": 11231,
+      "sha256": "ccaa56de7c1a8cec140d13a6f4caa7ea7ce10b07900b5a9df20f0d4748221c9b"
+    },
+    "live-endpoint-checks.json": {
+      "path": "live-endpoint-checks.json",
+      "size_bytes": 2780,
+      "sha256": "b5f792efc3b7151047ee3740c52aa99f91e9e3401c75f60acf953365430454de"
+    },
+    "final-review.json": {
+      "path": "final-review.json",
+      "size_bytes": 2602,
+      "sha256": "6b7ee6e24d9d592fd3da1f2ddb752280efdbe8d4a1a55cee83be7d6b42c1ab6f"
+    },
+    "binary-source-binding.json": {
+      "path": "binary-source-binding.json",
+      "size_bytes": 9501,
+      "sha256": "c916a0aacbf93ebfc3a284150a56c718e7a2d391d9f8b9d5373fa0155b987ddf"
+    },
+    "http-smoke-geometry-opposing-forward.json": {
+      "path": "http-smoke-geometry-opposing-forward.json",
+      "size_bytes": 7582,
+      "sha256": "2b631910548e91de68f0484cd7d3917f4b5d8045b1affc97bed8326b728b32f4"
+    },
+    "http-smoke-geometry-opposing-reverse.json": {
+      "path": "http-smoke-geometry-opposing-reverse.json",
+      "size_bytes": 7582,
+      "sha256": "1d48a241b08448253f19b44fbbd6f5c6a2d636a52cbf7ea6107696538c34720c"
+    },
+    "http-smoke-geometry-restriction-car.json": {
+      "path": "http-smoke-geometry-restriction-car.json",
+      "size_bytes": 5435,
+      "sha256": "f3e3acdf25dd400b1563410c79df1e5d075432afa852dc39f468c83060a9a2c8"
+    },
+    "http-smoke-geometry-trinity-foot.json": {
+      "path": "http-smoke-geometry-trinity-foot.json",
+      "size_bytes": 6481,
+      "sha256": "77a7a13615f87d3abcfbaa81fa1ae43a5149a4cd37bfe7037f57c837a5455a9f"
+    },
+    "http-smoke-manchester-one_to_many.json": {
+      "path": "http-smoke-manchester-one_to_many.json",
+      "size_bytes": 3217,
+      "sha256": "d4b2a0802ea4e231e62bb13745d94c6b1b3e01db28b85bdecc0286a5c1fbecdd"
+    },
+    "http-smoke-manchester-rectangular.json": {
+      "path": "http-smoke-manchester-rectangular.json",
+      "size_bytes": 3837,
+      "sha256": "8c3ef49b8085358ef04318634916b7fe29e3dd0f481c8e282b38627527ddf9ac"
+    },
+    "http-smoke-manchester-square.json": {
+      "path": "http-smoke-manchester-square.json",
+      "size_bytes": 3579,
+      "sha256": "a66a18b32a68862b456adda694601027671759a567ebd7ba3b8658855fddca3d"
+    },
+    "regional-http-benchmark/http-benchmark-report.json": {
+      "path": "regional-http-benchmark/http-benchmark-report.json",
+      "size_bytes": 254579,
+      "sha256": "a2d1963decd1f6b02bcad16725fc164ec409957ff2ca49d05be5f31006adcd4c"
+    },
+    "ch-weight-reconciliation.json": {
+      "path": "ch-weight-reconciliation.json",
+      "size_bytes": 14972454,
+      "sha256": "477259545fa3d130c1b86b11be93fdc2527906744e3d249164fe8c01b896ecdd"
+    },
+    "regional-http-benchmark/ch-weight-reconciliation.json": {
+      "path": "regional-http-benchmark/ch-weight-reconciliation.json",
+      "size_bytes": 8829061,
+      "sha256": "ebb7b415a0bf8e7cec52b14059f2dad042defe3e1965d6b3033270978451c5d5"
+    },
+    "../../../audit/matrix-ch-http-regional-final.xml": {
+      "path": "../../../audit/matrix-ch-http-regional-final.xml",
+      "size_bytes": 15519,
+      "sha256": "48ccfc296cb2f58d6a4e46476748539fd9a79c57a454d11f7dbb8cdcdb6a467d"
+    },
+    "../../../audit/matrix-ch-http-regional-final.log": {
+      "path": "../../../audit/matrix-ch-http-regional-final.log",
+      "size_bytes": 4361,
+      "sha256": "c045b6043005cd9c35bd3f735095aa3f9424ff0a170e911fc805dda060ec72fd"
+    },
+    "../../../audit/matrix-ch-http-monaco-final.xml": {
+      "path": "../../../audit/matrix-ch-http-monaco-final.xml",
+      "size_bytes": 15668,
+      "sha256": "e53d37cf121c5c893222b6cefaa3e23637fc7cf4c4a2071d21b2ae58128e2f95"
+    },
+    "../../../audit/matrix-ch-http-monaco-final.log": {
+      "path": "../../../audit/matrix-ch-http-monaco-final.log",
+      "size_bytes": 4120,
+      "sha256": "c927b769417571e057d0fa3bebd1805cffa89ed1b1fa8dd039cbbdd3fc3401b2"
+    },
+    "../../../audit/matrix-ch-http-default-control.xml": {
+      "path": "../../../audit/matrix-ch-http-default-control.xml",
+      "size_bytes": 15483,
+      "sha256": "aa45241cca5023a4012c4878aab738ae20d57361d5fdbd4b7cab8b45cd7feddf"
+    },
+    "../../../audit/matrix-ch-http-default-control.log": {
+      "path": "../../../audit/matrix-ch-http-default-control.log",
+      "size_bytes": 4125,
+      "sha256": "796fcb763e4a20dab790c355e81dfd6b52c9b7b0acce48ed283b6688fcf4c2d8"
+    }
+  },
+  "reviewed_identity": {
+    "actual_artifact_sha256": "acee903f0fe6514592283d0f8c2f497875ed27afb897ecc8e3201b5e28463e12",
+    "runtime_manifest_sha256": "00694fe948f83ad1c8734a2316bb66e4c975d2e6100458b69abc5b6e0f6b77fd"
+  },
+  "http_reconciliation_reviews": {
+    "http-benchmark-report.json": {
+      "http_report": "http-benchmark-report.json",
+      "reconciliation": "ch-weight-reconciliation.json",
+      "eligible": true,
+      "approved": true,
+      "required_approval": {
+        "http_report": "http-benchmark-report.json",
+        "http_report_sha256": "cce59db1ee2b875355386778143bfbfea58b21b18e98f9a3d0c0314976fe5666",
+        "reconciliation": "ch-weight-reconciliation.json",
+        "reconciliation_sha256": "477259545fa3d130c1b86b11be93fdc2527906744e3d249164fe8c01b896ecdd"
+      },
+      "status": "PASS_WITH_PATH_PROVEN_CH_STORAGE_PRECISION",
+      "indexed_cases": 184,
+      "unique_pair_proofs": 184,
+      "retained_scalar_records": 300,
+      "aggregate_flag_events": 3680,
+      "scope_note": "Fresh paths are reconstructed for each unique profile/OD and linked to every flagged indexed cell. All retained original issue scalars and aggregate counts are checked; capped issue lists do not contain every repetition's path or scalar. Stable aggregate CSV checksums cannot alone exclude compensating per-cell changes in omitted records, which are not directly reverified. Original absence of time/distance/null flags establishes only the original HTTP thresholds; fresh replay checks actual full-precision path metrics."
+    },
+    "regional-http-benchmark/http-benchmark-report.json": {
+      "http_report": "regional-http-benchmark/http-benchmark-report.json",
+      "reconciliation": "regional-http-benchmark/ch-weight-reconciliation.json",
+      "eligible": true,
+      "approved": true,
+      "required_approval": {
+        "http_report": "regional-http-benchmark/http-benchmark-report.json",
+        "http_report_sha256": "a2d1963decd1f6b02bcad16725fc164ec409957ff2ca49d05be5f31006adcd4c",
+        "reconciliation": "regional-http-benchmark/ch-weight-reconciliation.json",
+        "reconciliation_sha256": "ebb7b415a0bf8e7cec52b14059f2dad042defe3e1965d6b3033270978451c5d5"
+      },
+      "status": "PASS_WITH_PATH_PROVEN_CH_STORAGE_PRECISION",
+      "indexed_cases": 38,
+      "unique_pair_proofs": 20,
+      "retained_scalar_records": 520,
+      "aggregate_flag_events": 760,
+      "scope_note": "Fresh paths are reconstructed for each unique profile/OD and linked to every flagged indexed cell. All retained original issue scalars and aggregate counts are checked; capped issue lists do not contain every repetition's path or scalar. Stable aggregate CSV checksums cannot alone exclude compensating per-cell changes in omitted records, which are not directly reverified. Original absence of time/distance/null flags establishes only the original HTTP thresholds; fresh replay checks actual full-precision path metrics."
+    }
+  },
+  "http_comparison_acceptance": {
+    "http-benchmark-report.json": {
+      "raw_comparisons_match": false,
+      "case_bound_reconciliation_approved": true,
+      "accepted": true
+    },
+    "regional-http-benchmark/http-benchmark-report.json": {
+      "raw_comparisons_match": false,
+      "case_bound_reconciliation_approved": true,
+      "accepted": true
+    }
+  },
+  "final_gate_requirements": {
+    "root_final_review_pass": true,
+    "prior_gates_pass": true,
+    "in_process_960_samples_measured": true,
+    "both_expected_http_sample_grids_complete": true,
+    "all_recorded_http_benchmarks_measured": true,
+    "all_recorded_http_comparisons_explicitly_accepted": true,
+    "all_recorded_smokes_pass": true,
+    "six_existing_endpoint_checks_pass": true,
+    "reviewed_artifact_crc_and_checksum_verified": true,
+    "current_compiled_production_and_models_bound_to_artifact": true,
+    "separate_ch_path_audits_and_default_skip_verified": true,
+    "reviewed_runtime_manifest_matches_provenance": true
+  }
+}

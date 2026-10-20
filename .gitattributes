@@ -4,3 +4,28 @@
 # Explicitly declare text files we want to always be normalized and converted 
 # to native line endings on checkout.
 *.sh text
+
+# Measured source hashes and immutable evidence must survive checkout unchanged.
+core/src/main/java/com/graphhopper/routing/matrix/*.java text eol=lf
+core/src/test/java/com/graphhopper/routing/matrix/*.java text eol=lf
+docs/matrix/**/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/matrix/**/*.csv -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/matrix/**/*.jsonl -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/matrix/**/*.jsonl.gz -text
+
+# Retain reproducible matrix evidence while keeping generated data collapsed in PRs.
+docs/matrix/*-reconciliation*.json linguist-generated=true
+docs/matrix/*-validation.json linguist-generated=true
+docs/matrix/*-verification.json linguist-generated=true
+docs/matrix/*-samples.csv linguist-generated=true
+docs/matrix/*-analysis.json linguist-generated=true
+docs/matrix/benchmark-requests.json linguist-generated=true
+docs/matrix/regional-failure-replays.jsonl linguist-generated=true
+docs/matrix/regional-http-benchmark/*.json linguist-generated=true
+docs/matrix/regional-http-benchmark/*-samples.csv linguist-generated=true
+docs/matrix/geometry-spot-checks/* linguist-generated=true
+docs/matrix/ch-matrix-*.jsonl.gz linguist-generated=true
+docs/matrix/ch-matrix-benchmark-*/*.json linguist-generated=true
+docs/matrix/ch-matrix-benchmark-*/*.csv linguist-generated=true
+docs/matrix/ch-matrix-benchmark-*/*.jsonl.gz linguist-generated=true
+docs/matrix/ch-matrix-fixture*.json linguist-generated=true

@@ -1,0 +1,205 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -2.248977,
+            53.484444
+          ],
+          [
+            -2.248862,
+            53.484365
+          ],
+          [
+            -2.248862,
+            53.484365
+          ],
+          [
+            -2.248815,
+            53.484334
+          ],
+          [
+            -2.248792,
+            53.484319
+          ],
+          [
+            -2.248792,
+            53.484319
+          ],
+          [
+            -2.24873,
+            53.484277
+          ],
+          [
+            -2.24873,
+            53.484277
+          ],
+          [
+            -2.248702,
+            53.484258
+          ],
+          [
+            -2.248662,
+            53.48423
+          ],
+          [
+            -2.248662,
+            53.48423
+          ],
+          [
+            -2.248154,
+            53.483885
+          ],
+          [
+            -2.248146,
+            53.483881
+          ],
+          [
+            -2.247686,
+            53.483639
+          ],
+          [
+            -2.247566,
+            53.483572
+          ],
+          [
+            -2.247487,
+            53.483566
+          ],
+          [
+            -2.247416,
+            53.48354
+          ],
+          [
+            -2.247401,
+            53.483535
+          ],
+          [
+            -2.247383,
+            53.483533
+          ],
+          [
+            -2.247314,
+            53.483526
+          ],
+          [
+            -2.247331,
+            53.48351
+          ],
+          [
+            -2.247331,
+            53.48351
+          ],
+          [
+            -2.247666,
+            53.483297
+          ],
+          [
+            -2.247574,
+            53.483265
+          ],
+          [
+            -2.247445,
+            53.483221
+          ],
+          [
+            -2.247324,
+            53.483183
+          ],
+          [
+            -2.246683,
+            53.483046
+          ],
+          [
+            -2.246663,
+            53.483085
+          ],
+          [
+            -2.246676,
+            53.483088
+          ],
+          [
+            -2.246596,
+            53.483198
+          ]
+        ]
+      },
+      "properties": {
+        "case": "irwell-blackfriars-approaches",
+        "profile": "foot",
+        "distance_m": 276.868,
+        "time_ms": 199347,
+        "weight": 166.120527,
+        "manual_review_status": "PENDING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.2490419999999998,
+          53.48441
+        ]
+      },
+      "properties": {
+        "kind": "raw",
+        "index": 0,
+        "case": "irwell-blackfriars-approaches",
+        "profile": "foot"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.246642,
+          53.48321
+        ]
+      },
+      "properties": {
+        "kind": "raw",
+        "index": 1,
+        "case": "irwell-blackfriars-approaches",
+        "profile": "foot"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.248977,
+          53.484444
+        ]
+      },
+      "properties": {
+        "kind": "snapped",
+        "index": 0,
+        "case": "irwell-blackfriars-approaches",
+        "profile": "foot"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.246596,
+          53.483198
+        ]
+      },
+      "properties": {
+        "kind": "snapped",
+        "index": 1,
+        "case": "irwell-blackfriars-approaches",
+        "profile": "foot"
+      }
+    }
+  ]
+}

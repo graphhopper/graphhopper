@@ -1,0 +1,30 @@
+{
+  "profile": "car",
+  "points": [
+    [
+      -2.241185571812168,
+      53.48011598976691
+    ],
+    [
+      -2.2414694281878313,
+      53.47990601023309
+    ]
+  ],
+  "algorithm": "dijkstra",
+  "ch.disable": true,
+  "lm.disable": true,
+  "snap_preventions": [],
+  "instructions": true,
+  "calc_points": true,
+  "points_encoded": false,
+  "details": [
+    "street_name",
+    "road_class",
+    "edge_key",
+    "time",
+    "distance",
+    "weight",
+    "car_access",
+    "foot_access"
+  ]
+}

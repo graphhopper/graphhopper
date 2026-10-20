@@ -1,0 +1,73 @@
+{
+  "status": "PASS",
+  "scope": "Small live endpoint regression sample; full Maven tests supply broader coverage.",
+  "created_utc": "2026-10-19T18:57:16.609017+00:00",
+  "checks": [
+    {
+      "profile": "foot",
+      "endpoint": "route",
+      "url": "http://localhost:8999/route?profile=foot&point=53.4774%2C-2.2309&point=53.4875%2C-2.242&calc_points=false&instructions=false",
+      "http_status": 200,
+      "content_type": "application/json",
+      "body_bytes": 375,
+      "body_sha256": "edb050ffc1c9b4e2631ddeb80477a551b01ac815e89ddd918bf1f87f400fc293",
+      "time": 1180136,
+      "distance": 1635.181,
+      "weight": 987.241293
+    },
+    {
+      "profile": "foot",
+      "endpoint": "isochrone",
+      "url": "http://localhost:8999/isochrone?profile=foot&point=53.4774%2C-2.2309&time_limit=60",
+      "http_status": 200,
+      "content_type": "application/json",
+      "body_bytes": 3424,
+      "body_sha256": "05d34a539aab57740dc560addba00ae79d85716c1b8f6a22c47030bc8e0b9b89",
+      "polygons": 1
+    },
+    {
+      "profile": "foot",
+      "endpoint": "spt",
+      "url": "http://localhost:8999/spt?profile=foot&point=53.4774%2C-2.2309&time_limit=60",
+      "http_status": 200,
+      "content_type": "text/csv",
+      "body_bytes": 1809,
+      "body_sha256": "f913306f4024468250593a510722d7aef58dc790d60e8c70f853d1afe52c9b5e",
+      "csv_rows_including_header": 63,
+      "csv_header": "longitude,latitude,time,distance"
+    },
+    {
+      "profile": "car",
+      "endpoint": "route",
+      "url": "http://localhost:8999/route?profile=car&point=53.4774%2C-2.2309&point=53.4875%2C-2.242&calc_points=false&instructions=false",
+      "http_status": 200,
+      "content_type": "application/json",
+      "body_bytes": 374,
+      "body_sha256": "0513285e49d8f781d5b2dc654eebbe963fbeca4b311c24f2f56ffeaad5356f62",
+      "time": 283336,
+      "distance": 2254.967,
+      "weight": 486.284161
+    },
+    {
+      "profile": "car",
+      "endpoint": "isochrone",
+      "url": "http://localhost:8999/isochrone?profile=car&point=53.4774%2C-2.2309&time_limit=60",
+      "http_status": 200,
+      "content_type": "application/json",
+      "body_bytes": 5620,
+      "body_sha256": "52c9913cc05e22e3440da1f9fc7f9db6c1623a54a7da34261f89fbec573b4a66",
+      "polygons": 1
+    },
+    {
+      "profile": "car",
+      "endpoint": "spt",
+      "url": "http://localhost:8999/spt?profile=car&point=53.4774%2C-2.2309&time_limit=60",
+      "http_status": 200,
+      "content_type": "text/csv",
+      "body_bytes": 8784,
+      "body_sha256": "c277c8b521b57f71135f2e4c0b98379176e3cd2f803752e363dccb486d0f38f7",
+      "csv_rows_including_header": 295,
+      "csv_header": "longitude,latitude,time,distance"
+    }
+  ]
+}

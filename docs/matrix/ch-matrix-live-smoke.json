@@ -1,0 +1,957 @@
+{
+  "status": "FAIL",
+  "started_utc": "2026-10-19T23:21:37.394971+00:00",
+  "source_commit": "a9102e2039b079a43dcb1494d77619e4e989acaa",
+  "artifact_sha256": "7bba4abeb278529c9a8d1d52dad6336ca1a14d9532e0462642f14a55c9a84b70",
+  "artifact": {
+    "path": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\web\\target\\graphhopper-web-11.0-SNAPSHOT.jar",
+    "bytes": 47401798,
+    "sha256": "7bba4abeb278529c9a8d1d52dad6336ca1a14d9532e0462642f14a55c9a84b70",
+    "graphhopper_gitinfo": {
+      "entry": "com/graphhopper/gitinfo",
+      "commit": "a9102e2039b079a43dcb1494d77619e4e989acaa",
+      "commit_time": "2026-10-20T00:16:20+0100",
+      "commit_message": "Rebuild shaded server from a fresh web artifact",
+      "branch": "feature/local-matrix",
+      "dirty": "false"
+    },
+    "version": "11.0-SNAPSHOT",
+    "builddate": "2026-10-19T23:16:23Z",
+    "resource_sha256": {
+      "com/graphhopper/gitinfo": "6fd53ea7c5969571fa3611ab9da33d3bb7afc3253a6b65cc422ac29eaa4984cb",
+      "com/graphhopper/version": "99667b79992961b80a2c24d63cec5ea4c713a0efe8b7e1cd7b2c4acdee7d83b5",
+      "com/graphhopper/builddate": "48af8acec590be9a9a3d5d3fcc04566127657f4f3318ab0aba225b380b5f63f2"
+    }
+  },
+  "config": {
+    "path": "docs/matrix/config-matrix.yml",
+    "sha256": "b394046edf588107ed1acfb34466de90809b21ab8154a598ee102241cffc9c9c"
+  },
+  "base_url": "http://localhost:8997",
+  "server_stopped": false,
+  "ports_closed": {
+    "8997": false,
+    "8998": false
+  },
+  "script_sha256": "a1d36011452c7ca3671f2c7d3023c1edfba38c973491c15912eee89d0b78d28a",
+  "cases": {
+    "foot_experimental": {
+      "http_status": 200,
+      "request": {
+        "profile": "foot",
+        "from_points": [
+          [
+            7.42135,
+            43.730729
+          ],
+          [
+            7.419199,
+            43.727697
+          ],
+          [
+            7.42135,
+            43.730729
+          ]
+        ],
+        "to_points": [
+          [
+            7.4277,
+            43.739213
+          ],
+          [
+            7.42135,
+            43.730729
+          ],
+          [
+            7.4277,
+            43.739213
+          ]
+        ],
+        "out_arrays": [
+          "times",
+          "times_ms",
+          "distances",
+          "weights"
+        ],
+        "fail_fast": false,
+        "local": {
+          "algorithm": "ch_experimental"
+        }
+      },
+      "response": {
+        "times": [
+          [
+            1355,
+            0,
+            1355
+          ],
+          [
+            1482,
+            1173,
+            1482
+          ],
+          [
+            1355,
+            0,
+            1355
+          ]
+        ],
+        "times_ms": [
+          [
+            1355620,
+            0,
+            1355620
+          ],
+          [
+            1482690,
+            1173731,
+            1482690
+          ],
+          [
+            1355620,
+            0,
+            1355620
+          ]
+        ],
+        "distances": [
+          [
+            1763.079158515919,
+            0.0,
+            1763.079158515919
+          ],
+          [
+            2059.2945283960594,
+            1553.3286038963008,
+            2059.2945283960594
+          ],
+          [
+            1763.079158515919,
+            0.0,
+            1763.079158515919
+          ]
+        ],
+        "weights": [
+          [
+            1254.4334691505208,
+            0.0,
+            1254.4334691505208
+          ],
+          [
+            1422.2367170376353,
+            1057.1376363787504,
+            1422.2367170376353
+          ],
+          [
+            1254.4334691505208,
+            0.0,
+            1254.4334691505208
+          ]
+        ],
+        "hints": [],
+        "info": {
+          "local_matrix": {
+            "contract_version": "1.0",
+            "algorithm": "ch_experimental",
+            "requested_algorithm": "ch_experimental",
+            "experimental": true,
+            "optimality_verification": "flexible_each_origin",
+            "ch_preparation": {
+              "nodes": 1217,
+              "profile_fingerprint": "6638f95456c938e23c87196d159bc2d5388c219858851813b26e970ad8b870d7",
+              "graph_fingerprint": "6b2e7ed216b473f0e1e2bff6f457398318ff904f3243a082b6dbf9a81e7ffc0d",
+              "source": "loaded_fixed_profile_preparation",
+              "shortcuts": 1095,
+              "traversal": "node"
+            },
+            "ch_matrix": {
+              "backward_searches": 2,
+              "forward_searches": 2,
+              "candidate_visited_states": 224,
+              "bucket_entries": 84,
+              "metric_cache_entries": 484,
+              "unpacked_original_edges": 2633,
+              "metric_extraction_ms": 7.2774,
+              "certificate_searches": 2,
+              "certificate_visited_states": 1630,
+              "corrected_cells": 5,
+              "corrected_cells_basis": "distinct_origin_coordinate_by_destination_index",
+              "candidate_optimality_guaranteed": false
+            },
+            "profile": "foot",
+            "turn_costs": false,
+            "origin_count": 3,
+            "destination_count": 3,
+            "unique_origin_count": 2,
+            "searches": 6,
+            "visited_states": 1854,
+            "visited_states_known": 1854,
+            "visited_states_complete": true,
+            "threads": 1,
+            "units": {
+              "times": "seconds",
+              "times_ms": "milliseconds",
+              "distances": "metres",
+              "weights": "profile_cost"
+            },
+            "graph_fingerprint": "6b2e7ed216b473f0e1e2bff6f457398318ff904f3243a082b6dbf9a81e7ffc0d",
+            "profile_fingerprint": "6638f95456c938e23c87196d159bc2d5388c219858851813b26e970ad8b870d7",
+            "build_commit": "a9102e2039b079a43dcb1494d77619e4e989acaa",
+            "from_snapped_points": [
+              {
+                "coordinates": [
+                  7.421399792264059,
+                  43.73071829340999
+                ],
+                "snap_distance_m": 4.174138571500523
+              },
+              {
+                "coordinates": [
+                  7.419198523220426,
+                  43.72767974015672
+                ],
+                "snap_distance_m": 1.9195893443848988
+              },
+              {
+                "coordinates": [
+                  7.421399792264059,
+                  43.73071829340999
+                ],
+                "snap_distance_m": 4.174138571500523
+              }
+            ],
+            "to_snapped_points": [
+              {
+                "coordinates": [
+                  7.427676210258734,
+                  43.739236833211734
+                ],
+                "snap_distance_m": 3.267404677567228
+              },
+              {
+                "coordinates": [
+                  7.421399792264059,
+                  43.73071829340999
+                ],
+                "snap_distance_m": 4.174138571500523
+              },
+              {
+                "coordinates": [
+                  7.427676210258734,
+                  43.739236833211734
+                ],
+                "snap_distance_m": 3.267404677567228
+              }
+            ],
+            "timings_ms": {
+              "snapping": 26.2484,
+              "query_graph": 6.8596,
+              "backend_calls": 40.5756,
+              "core_search": 35.7433,
+              "ch_bucket_preparation": 18.0738,
+              "ch_candidates": 5.8063,
+              "ch_verification": 11.8632,
+              "scatter_output": 0.317,
+              "search_and_output": 42.3729,
+              "total": 76.2902
+            }
+          },
+          "copyrights": [
+            "GraphHopper",
+            "OpenStreetMap contributors"
+          ]
+        }
+      },
+      "method": "POST",
+      "path": "/matrix",
+      "started_utc": "2026-10-19T23:21:37.398988+00:00",
+      "completed_utc": "2026-10-19T23:21:39.731593+00:00",
+      "response_headers": {
+        "Date": "Mon, 19 Oct 2026 23:21:39 GMT",
+        "Connection": "close",
+        "Access-Control-Allow-Methods": "GET, POST, HEAD, OPTIONS",
+        "Access-Control-Allow-Headers": "Origin,Accept,X-Requested-With,Content-Type,Access-Control-Request-Method,Access-Control-Request-Headers,Range,GH-Client",
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+        "Vary": "Accept-Encoding",
+        "Content-Length": "2764"
+      },
+      "raw_response_sha256": "5bb7a0cfa06791145bdb758e8dd2647ebaa94dd556bd6e83a6fc8ca1ae1fb50b",
+      "raw_response_file": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\ch-matrix-live-smoke-raw\\foot_experimental.response.json",
+      "raw_request_sha256": "f510dad9edba799a493c4dadb640b7f096c3e3cac53d6dcb08625f58fdaca17b",
+      "raw_request_file": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\ch-matrix-live-smoke-raw\\foot_experimental.request.json",
+      "name": "foot_experimental"
+    },
+    "foot_flexible": {
+      "http_status": 200,
+      "request": {
+        "profile": "foot",
+        "from_points": [
+          [
+            7.42135,
+            43.730729
+          ],
+          [
+            7.419199,
+            43.727697
+          ],
+          [
+            7.42135,
+            43.730729
+          ]
+        ],
+        "to_points": [
+          [
+            7.4277,
+            43.739213
+          ],
+          [
+            7.42135,
+            43.730729
+          ],
+          [
+            7.4277,
+            43.739213
+          ]
+        ],
+        "out_arrays": [
+          "times",
+          "times_ms",
+          "distances",
+          "weights"
+        ],
+        "fail_fast": false,
+        "local": {
+          "algorithm": "flexible"
+        }
+      },
+      "response": {
+        "times": [
+          [
+            1355,
+            0,
+            1355
+          ],
+          [
+            1482,
+            1173,
+            1482
+          ],
+          [
+            1355,
+            0,
+            1355
+          ]
+        ],
+        "times_ms": [
+          [
+            1355620,
+            0,
+            1355620
+          ],
+          [
+            1482690,
+            1173731,
+            1482690
+          ],
+          [
+            1355620,
+            0,
+            1355620
+          ]
+        ],
+        "distances": [
+          [
+            1763.079158515919,
+            0.0,
+            1763.079158515919
+          ],
+          [
+            2059.2945283960594,
+            1553.3286038963008,
+            2059.2945283960594
+          ],
+          [
+            1763.079158515919,
+            0.0,
+            1763.079158515919
+          ]
+        ],
+        "weights": [
+          [
+            1254.4334691505208,
+            0.0,
+            1254.4334691505208
+          ],
+          [
+            1422.2367170376353,
+            1057.1376363787504,
+            1422.2367170376353
+          ],
+          [
+            1254.4334691505208,
+            0.0,
+            1254.4334691505208
+          ]
+        ],
+        "hints": [],
+        "info": {
+          "local_matrix": {
+            "contract_version": "1.0",
+            "algorithm": "flexible",
+            "requested_algorithm": "flexible",
+            "profile": "foot",
+            "turn_costs": false,
+            "origin_count": 3,
+            "destination_count": 3,
+            "unique_origin_count": 2,
+            "searches": 2,
+            "visited_states": 1630,
+            "visited_states_known": 1630,
+            "visited_states_complete": true,
+            "threads": 1,
+            "units": {
+              "times": "seconds",
+              "times_ms": "milliseconds",
+              "distances": "metres",
+              "weights": "profile_cost"
+            },
+            "graph_fingerprint": "6b2e7ed216b473f0e1e2bff6f457398318ff904f3243a082b6dbf9a81e7ffc0d",
+            "profile_fingerprint": "6638f95456c938e23c87196d159bc2d5388c219858851813b26e970ad8b870d7",
+            "build_commit": "a9102e2039b079a43dcb1494d77619e4e989acaa",
+            "from_snapped_points": [
+              {
+                "coordinates": [
+                  7.421399792264059,
+                  43.73071829340999
+                ],
+                "snap_distance_m": 4.174138571500523
+              },
+              {
+                "coordinates": [
+                  7.419198523220426,
+                  43.72767974015672
+                ],
+                "snap_distance_m": 1.9195893443848988
+              },
+              {
+                "coordinates": [
+                  7.421399792264059,
+                  43.73071829340999
+                ],
+                "snap_distance_m": 4.174138571500523
+              }
+            ],
+            "to_snapped_points": [
+              {
+                "coordinates": [
+                  7.427676210258734,
+                  43.739236833211734
+                ],
+                "snap_distance_m": 3.267404677567228
+              },
+              {
+                "coordinates": [
+                  7.421399792264059,
+                  43.73071829340999
+                ],
+                "snap_distance_m": 4.174138571500523
+              },
+              {
+                "coordinates": [
+                  7.427676210258734,
+                  43.739236833211734
+                ],
+                "snap_distance_m": 3.267404677567228
+              }
+            ],
+            "timings_ms": {
+              "snapping": 2.9065,
+              "query_graph": 0.2897,
+              "backend_calls": 8.9384,
+              "core_search": 8.6449,
+              "scatter_output": 0.1273,
+              "search_and_output": 9.5232,
+              "total": 12.8166
+            }
+          },
+          "copyrights": [
+            "GraphHopper",
+            "OpenStreetMap contributors"
+          ]
+        }
+      },
+      "method": "POST",
+      "path": "/matrix",
+      "started_utc": "2026-10-19T23:21:39.741840+00:00",
+      "completed_utc": "2026-10-19T23:21:41.814409+00:00",
+      "response_headers": {
+        "Date": "Mon, 19 Oct 2026 23:21:41 GMT",
+        "Connection": "close",
+        "Access-Control-Allow-Methods": "GET, POST, HEAD, OPTIONS",
+        "Access-Control-Allow-Headers": "Origin,Accept,X-Requested-With,Content-Type,Access-Control-Request-Method,Access-Control-Request-Headers,Range,GH-Client",
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+        "Vary": "Accept-Encoding",
+        "Content-Length": "1920"
+      },
+      "raw_response_sha256": "0b66674bbf58ba26ba7c580a51353d6ba621fc6be503c19334976053ffb230e1",
+      "raw_response_file": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\ch-matrix-live-smoke-raw\\foot_flexible.response.json",
+      "raw_request_sha256": "a56465a552dfc4505155696eddf86dfcbab0f2c4fea0ee6847714f3289b9c8f6",
+      "raw_request_file": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\ch-matrix-live-smoke-raw\\foot_flexible.request.json",
+      "name": "foot_flexible"
+    },
+    "foot_auto": {
+      "http_status": 200,
+      "request": {
+        "profile": "foot",
+        "from_points": [
+          [
+            7.42135,
+            43.730729
+          ],
+          [
+            7.419199,
+            43.727697
+          ],
+          [
+            7.42135,
+            43.730729
+          ]
+        ],
+        "to_points": [
+          [
+            7.4277,
+            43.739213
+          ],
+          [
+            7.42135,
+            43.730729
+          ],
+          [
+            7.4277,
+            43.739213
+          ]
+        ],
+        "out_arrays": [
+          "times",
+          "times_ms",
+          "distances",
+          "weights"
+        ],
+        "fail_fast": false,
+        "local": {
+          "algorithm": "auto"
+        }
+      },
+      "response": {
+        "times": [
+          [
+            1355,
+            0,
+            1355
+          ],
+          [
+            1482,
+            1173,
+            1482
+          ],
+          [
+            1355,
+            0,
+            1355
+          ]
+        ],
+        "times_ms": [
+          [
+            1355620,
+            0,
+            1355620
+          ],
+          [
+            1482690,
+            1173731,
+            1482690
+          ],
+          [
+            1355620,
+            0,
+            1355620
+          ]
+        ],
+        "distances": [
+          [
+            1763.079158515919,
+            0.0,
+            1763.079158515919
+          ],
+          [
+            2059.2945283960594,
+            1553.3286038963008,
+            2059.2945283960594
+          ],
+          [
+            1763.079158515919,
+            0.0,
+            1763.079158515919
+          ]
+        ],
+        "weights": [
+          [
+            1254.4334691505208,
+            0.0,
+            1254.4334691505208
+          ],
+          [
+            1422.2367170376353,
+            1057.1376363787504,
+            1422.2367170376353
+          ],
+          [
+            1254.4334691505208,
+            0.0,
+            1254.4334691505208
+          ]
+        ],
+        "hints": [],
+        "info": {
+          "local_matrix": {
+            "contract_version": "1.0",
+            "algorithm": "flexible",
+            "requested_algorithm": "auto",
+            "profile": "foot",
+            "turn_costs": false,
+            "origin_count": 3,
+            "destination_count": 3,
+            "unique_origin_count": 2,
+            "searches": 2,
+            "visited_states": 1630,
+            "visited_states_known": 1630,
+            "visited_states_complete": true,
+            "threads": 1,
+            "units": {
+              "times": "seconds",
+              "times_ms": "milliseconds",
+              "distances": "metres",
+              "weights": "profile_cost"
+            },
+            "graph_fingerprint": "6b2e7ed216b473f0e1e2bff6f457398318ff904f3243a082b6dbf9a81e7ffc0d",
+            "profile_fingerprint": "6638f95456c938e23c87196d159bc2d5388c219858851813b26e970ad8b870d7",
+            "build_commit": "a9102e2039b079a43dcb1494d77619e4e989acaa",
+            "from_snapped_points": [
+              {
+                "coordinates": [
+                  7.421399792264059,
+                  43.73071829340999
+                ],
+                "snap_distance_m": 4.174138571500523
+              },
+              {
+                "coordinates": [
+                  7.419198523220426,
+                  43.72767974015672
+                ],
+                "snap_distance_m": 1.9195893443848988
+              },
+              {
+                "coordinates": [
+                  7.421399792264059,
+                  43.73071829340999
+                ],
+                "snap_distance_m": 4.174138571500523
+              }
+            ],
+            "to_snapped_points": [
+              {
+                "coordinates": [
+                  7.427676210258734,
+                  43.739236833211734
+                ],
+                "snap_distance_m": 3.267404677567228
+              },
+              {
+                "coordinates": [
+                  7.421399792264059,
+                  43.73071829340999
+                ],
+                "snap_distance_m": 4.174138571500523
+              },
+              {
+                "coordinates": [
+                  7.427676210258734,
+                  43.739236833211734
+                ],
+                "snap_distance_m": 3.267404677567228
+              }
+            ],
+            "timings_ms": {
+              "snapping": 1.3397,
+              "query_graph": 0.3038,
+              "backend_calls": 4.1494,
+              "core_search": 4.0772,
+              "scatter_output": 0.064,
+              "search_and_output": 4.2267,
+              "total": 5.9093
+            }
+          },
+          "copyrights": [
+            "GraphHopper",
+            "OpenStreetMap contributors"
+          ]
+        }
+      },
+      "method": "POST",
+      "path": "/matrix",
+      "started_utc": "2026-10-19T23:21:41.815411+00:00",
+      "completed_utc": "2026-10-19T23:21:43.854093+00:00",
+      "response_headers": {
+        "Date": "Mon, 19 Oct 2026 23:21:43 GMT",
+        "Connection": "close",
+        "Access-Control-Allow-Methods": "GET, POST, HEAD, OPTIONS",
+        "Access-Control-Allow-Headers": "Origin,Accept,X-Requested-With,Content-Type,Access-Control-Request-Method,Access-Control-Request-Headers,Range,GH-Client",
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+        "Vary": "Accept-Encoding",
+        "Content-Length": "1914"
+      },
+      "raw_response_sha256": "25de077051998be94edb4ec157fd2efd7676eb3bb629d6a741a83b97941ed52e",
+      "raw_response_file": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\ch-matrix-live-smoke-raw\\foot_auto.response.json",
+      "raw_request_sha256": "2a0c4e9ad65a296f80a826215b1c2f68cf109054eef9a9bea094a7cc4cb9a240",
+      "raw_request_file": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\ch-matrix-live-smoke-raw\\foot_auto.request.json",
+      "name": "foot_auto"
+    },
+    "car_experimental": {
+      "http_status": 200,
+      "request": {
+        "profile": "car",
+        "from_points": [
+          [
+            7.42135,
+            43.730729
+          ],
+          [
+            7.419199,
+            43.727697
+          ],
+          [
+            7.42135,
+            43.730729
+          ]
+        ],
+        "to_points": [
+          [
+            7.4277,
+            43.739213
+          ],
+          [
+            7.42135,
+            43.730729
+          ],
+          [
+            7.4277,
+            43.739213
+          ]
+        ],
+        "out_arrays": [
+          "times",
+          "times_ms",
+          "distances",
+          "weights"
+        ],
+        "fail_fast": false,
+        "local": {
+          "algorithm": "ch_experimental"
+        }
+      },
+      "response": {
+        "times": [
+          [
+            245,
+            0,
+            245
+          ],
+          [
+            188,
+            null,
+            188
+          ],
+          [
+            245,
+            0,
+            245
+          ]
+        ],
+        "times_ms": [
+          [
+            245919,
+            0,
+            245919
+          ],
+          [
+            188080,
+            null,
+            188080
+          ],
+          [
+            245919,
+            0,
+            245919
+          ]
+        ],
+        "distances": [
+          [
+            2682.012329988138,
+            0.0,
+            2682.012329988138
+          ],
+          [
+            2013.8968168763581,
+            null,
+            2013.8968168763581
+          ],
+          [
+            2682.012329988138,
+            0.0,
+            2682.012329988138
+          ]
+        ],
+        "weights": [
+          [
+            487.30032851828827,
+            0.0,
+            487.30032851828827
+          ],
+          [
+            369.3314525829963,
+            null,
+            369.3314525829963
+          ],
+          [
+            487.30032851828827,
+            0.0,
+            487.30032851828827
+          ]
+        ],
+        "hints": [
+          {
+            "details": "CONNECTION_NOT_FOUND",
+            "message": "No connection between the listed point pairs",
+            "point_pairs": [
+              [
+                1,
+                1
+              ]
+            ]
+          }
+        ],
+        "info": {
+          "local_matrix": {
+            "contract_version": "1.0",
+            "algorithm": "flexible",
+            "requested_algorithm": "ch_experimental",
+            "fallback_reason": "TURN_COST_PROFILE_UNSUPPORTED",
+            "profile": "car",
+            "turn_costs": true,
+            "origin_count": 3,
+            "destination_count": 3,
+            "unique_origin_count": 2,
+            "searches": 2,
+            "visited_states": 1842,
+            "visited_states_known": 1842,
+            "visited_states_complete": true,
+            "threads": 1,
+            "units": {
+              "times": "seconds",
+              "times_ms": "milliseconds",
+              "distances": "metres",
+              "weights": "profile_cost"
+            },
+            "graph_fingerprint": "6b2e7ed216b473f0e1e2bff6f457398318ff904f3243a082b6dbf9a81e7ffc0d",
+            "profile_fingerprint": "8a953d1fc48ba37bfc6f62e6f574d26464e2bcf1651e1ddc499805aba7c6f91f",
+            "build_commit": "a9102e2039b079a43dcb1494d77619e4e989acaa",
+            "from_snapped_points": [
+              {
+                "coordinates": [
+                  7.4213923,
+                  43.7307001
+                ],
+                "snap_distance_m": 4.67743616585475
+              },
+              {
+                "coordinates": [
+                  7.419198523220426,
+                  43.72767974015672
+                ],
+                "snap_distance_m": 1.9195893443848988
+              },
+              {
+                "coordinates": [
+                  7.4213923,
+                  43.7307001
+                ],
+                "snap_distance_m": 4.67743616585475
+              }
+            ],
+            "to_snapped_points": [
+              {
+                "coordinates": [
+                  7.4277318832039265,
+                  43.739176905095974
+                ],
+                "snap_distance_m": 4.761264131005476
+              },
+              {
+                "coordinates": [
+                  7.4213923,
+                  43.7307001
+                ],
+                "snap_distance_m": 4.67743616585475
+              },
+              {
+                "coordinates": [
+                  7.4277318832039265,
+                  43.739176905095974
+                ],
+                "snap_distance_m": 4.761264131005476
+              }
+            ],
+            "timings_ms": {
+              "snapping": 3.1032,
+              "query_graph": 0.1662,
+              "backend_calls": 14.8649,
+              "core_search": 14.7136,
+              "scatter_output": 0.0695,
+              "search_and_output": 14.9464,
+              "total": 18.2953
+            }
+          },
+          "copyrights": [
+            "GraphHopper",
+            "OpenStreetMap contributors"
+          ]
+        }
+      },
+      "method": "POST",
+      "path": "/matrix",
+      "started_utc": "2026-10-19T23:21:43.855105+00:00",
+      "completed_utc": "2026-10-19T23:21:45.929425+00:00",
+      "response_headers": {
+        "Date": "Mon, 19 Oct 2026 23:21:45 GMT",
+        "Connection": "close",
+        "Access-Control-Allow-Methods": "GET, POST, HEAD, OPTIONS",
+        "Access-Control-Allow-Headers": "Origin,Accept,X-Requested-With,Content-Type,Access-Control-Request-Method,Access-Control-Request-Headers,Range,GH-Client",
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
+        "Vary": "Accept-Encoding",
+        "Content-Length": "2000"
+      },
+      "raw_response_sha256": "54d7686d73d512cbc820f0ead009d1c2f1652d9e65bde75c574bbde2aae4b521",
+      "raw_response_file": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\ch-matrix-live-smoke-raw\\car_experimental.response.json",
+      "raw_request_sha256": "18e0bb1b88aaa047e14d41f0d24deb992620d57ae6be044b59ec2630ec46254c",
+      "raw_request_file": "C:\\Users\\hulse\\Documents\\Codex\\2026-10-19\\hello-extract-the-following-prompt-pack\\graphhopper-matrix\\docs\\matrix\\ch-matrix-live-smoke-raw\\car_experimental.request.json",
+      "name": "car_experimental"
+    }
+  },
+  "checks": [],
+  "failure": "ValueError: car_experimental: fixture points should connect",
+  "completed_utc": "2026-10-19T23:21:45.929425+00:00"
+}

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="local-matrix-test">
+  <bounds minlat="0" minlon="0" maxlat="0.03" maxlon="0.04"/>
+  <node id="1" lat="0" lon="0" version="1"/>
+  <node id="2" lat="0" lon="0.01" version="1"/>
+  <node id="3" lat="0.03" lon="0.03" version="1"/>
+  <node id="4" lat="0.03" lon="0.04" version="1"/>
+  <way id="1" version="1">
+    <nd ref="1"/><nd ref="2"/>
+    <tag k="highway" v="residential"/>
+    <tag k="maxspeed" v="50"/>
+  </way>
+  <way id="2" version="1">
+    <nd ref="3"/><nd ref="4"/>
+    <tag k="highway" v="residential"/>
+    <tag k="maxspeed" v="50"/>
+  </way>
+</osm>

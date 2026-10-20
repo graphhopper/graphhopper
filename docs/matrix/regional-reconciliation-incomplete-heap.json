@@ -1,0 +1,22 @@
+{
+  "started_utc" : "2026-10-19T18:27:03.193722200Z",
+  "original_status" : "FAIL",
+  "original_report_sha256" : "9541227d34228415d92cb53578a482b7ef4ee29724e0589c9be72f11ed9f8ed3",
+  "original_replays_sha256" : "a405b29275034ee81169f5026854a5cf061b39822e5eeffc91b4c0ddc034e457",
+  "original_cells_compared" : 2592,
+  "original_explained_mismatches" : 41,
+  "original_unexplained_mismatches" : 10,
+  "source_sha256" : "11f9b3f5b1d63cdf107f5804bd46131929dc2f13a1bd2837c6611429d8b9e4d3",
+  "production_algorithm_changed" : false,
+  "rule" : "Raw edge identities remain recorded. Different edges align only through the actual upstream shared-geometry copy relation, with matching directed endpoints, legal reconstructed paths, unchanged actual turn costs and weight per metre, exact same-QueryGraph Dijkstra/path metrics, and observed outputs matching the independent path evidence.",
+  "replay_graph_fingerprint" : "d7cfbb190c882142660427fce0ecefa1c4803f923b9fe4171e2fc8f70e69e56d",
+  "replay_profile_fingerprint" : "75bb89cbc1d42e31fcaf3c68f80ea2813ed076b0a8cefb88d8f8c42bb020844e",
+  "replay_build_commit" : "ebb578f4e94db72e82f2f8d3bc69417758e16e1c+dirty",
+  "profile_custom_model_sha256" : {
+    "car.json" : "e3c548e9c76c8caa80ae317d343a5c8781cafda89e28b9065b57167273b33e90",
+    "foot.json" : "2582f751e4e98b006ae37fb4516a55368637f5387c4549ef04a41a13447cb98f"
+  },
+  "graph_nodes" : 500226,
+  "graph_edges" : 636908,
+  "completed_utc" : "2026-10-19T18:27:29.829214800Z"
+}

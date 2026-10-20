@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "source_commit": "a9102e2039b079a43dcb1494d77619e4e989acaa",
+  "profile": "foot",
+  "metric_cells_compared": 6,
+  "metric_fields_per_cell": 4,
+  "certified_flexible_equality": "exact_arrays_and_hints",
+  "csv_round_trip": "PASS_ALL_SIX_ORDERED_ROWS",
+  "evidence_sha256": {
+    "ch-matrix-client-smoke.json": "97629e22f9671311398f4481b6ef3ab2d9782fa10d7f34937216960f3fc715e6",
+    "ch-matrix-client-flexible-smoke.json": "bc986e94f8ef0358566a87fce2efb16d5422df40b52d59241d05cf21546225ed",
+    "ch-matrix-client-smoke.csv": "0014143f5852e1feeaa42b563e4f993732a525f220e8f91cc8db7a1258135656"
+  }
+}
