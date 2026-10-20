@@ -134,6 +134,7 @@ public class Parameters {
          */
         public static final double DEFAULT_HEADING_PENALTY = 300;
         public static final String HEADING_PENALTY = "heading_penalty";
+        public static final String LEVEL = "level";
     }
 
     /**

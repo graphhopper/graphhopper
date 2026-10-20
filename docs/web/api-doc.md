@@ -21,7 +21,7 @@ The endpoint to obtain the route is `/route` via GET.
 
 The GET request has an URL length limitation, so it won't work for many locations per request. In those cases use a HTTP POST request with JSON data as input. 
 The POST request is identical except that all singular parameter names are named as their plural for a POST request. All effected parameters are: `points`, `snap_preventions`, 
-`curbsides` and `point_hints`. (`details` stays `details`)
+`curbsides`, `headings`, `levels` and `point_hints`. (`details` stays `details`)
 
 Please note that unlike to the GET endpoint, points are specified in `[longitude, latitude]` order. For example `point=10,11&point=20,22` will be the following JSON:
 
@@ -73,6 +73,7 @@ ch.disable       | `false`    | Use this parameter in combination with one or mo
 custom_model     | -          | Customize the route calculations. See [the documentation](../core/custom-models.md) for more information. Only available for POST requests.
 algorithm        |`astarbi`   | The algorithm to calculate the route. Other options are `dijkstra`, `astar`, `astarbi`, `alternative_route` and `round_trip`.
 heading          | NaN        | Favour a heading direction for a certain point. Specify either one heading for the start point or as many as there are points. In this case headings are associated by their order to the specific points. Headings are given as north based clockwise angle between 0 and 360 degree. This parameter also influences the tour generated with `algorithm=round_trip` and forces the initial direction.
+level            | NaN        | Force a route to start or end at a given level for a certain point. Specify either one level for the start point or as many as there are points. In this case levels are associated by their order to the specific points. Level values are decimals ranging from -40.0 to 164.7 (use `NaN` in GET or `null`/`"NaN"` in POST if no level shall be specified for a point).
 heading_penalty  | 300        | Penalty for omitting a specified heading. The penalty corresponds to the accepted time delay in seconds in comparison to the route without a heading.
 pass_through     | `false`    | If `true` u-turns are avoided at via-points with regard to the `heading_penalty`.
 round_trip.distance                 | 10000 | If `algorithm=round_trip` this parameter configures approximative length of the resulting round trip
