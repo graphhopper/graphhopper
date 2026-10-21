@@ -130,8 +130,13 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 weightToPrioMap.put(100d, current.better());
         } else if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
-            if (way.hasTag("highway", "steps"))
-                pushingSectionPrio = BAD;
+            if (way.hasTag("highway", "steps")) {
+                if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive") || bikeDesignated) {
+                    pushingSectionPrio = BAD;
+                } else {
+                    pushingSectionPrio = REACH_DESTINATION;
+                }
+            }
             else if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER;
             else if (bikeDesignated)
