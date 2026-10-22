@@ -278,7 +278,11 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         // update edge references
         for (int node = 0; node < getNodes(); node++) {
             long pointer = toNodePointer(node);
-            setEdgeRef(pointer, getNewEdgeForOldEdge.applyAsInt(getEdgeRef(pointer)));
+            int edgeRef = getEdgeRef(pointer);
+            // If no edge uses this node, there is nothing to update.
+            // This happens all OSM way segments connected to a tower miss some OSM nodes in the input file.
+            if (edgeRef != NO_EDGE)
+                setEdgeRef(pointer, getNewEdgeForOldEdge.applyAsInt(edgeRef));
         }
     }
 
