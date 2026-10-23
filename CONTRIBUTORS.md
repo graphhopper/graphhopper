@@ -5,6 +5,7 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
 Here is an overview:
 
  * agouge, discussion and API refactoring
+ * albanofazzito, fixed duplicate via point in GPX track #323
  * AnahitaS, docs for Android, Android, Tomcat
  * andreaswolf, flag encoder versioning and more
  * andreylh, polygon for blocked area #1306
