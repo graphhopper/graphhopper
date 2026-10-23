@@ -552,6 +552,24 @@ public class RouteResourceTest {
     }
 
     @Test
+    public void testGPXWithViaPoint() {
+        String str = clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198" +
+                "&point=42.526351,1.526435&point=42.510071,1.548128&type=gpx")
+                .request().get(String.class);
+
+        int trkpts = 0;
+        String prevTrkpt = null;
+        for (String line : str.split("\n")) {
+            if (!line.startsWith("<trkpt"))
+                continue;
+            assertNotEquals(prevTrkpt, line, str);
+            prevTrkpt = line;
+            trkpts++;
+        }
+        assertTrue(trkpts > 2, str);
+    }
+
+    @Test
     public void testGPXWithExcludedRouteSelection() {
         String str = clientTarget(app, "/route?profile=my_car&" +
                 "point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false").request().get(String.class);

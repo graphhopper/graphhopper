@@ -159,6 +159,47 @@ public class GpxConversionsTest {
     }
 
     @Test
+    public void testCreateGPXWithViaPoint_issue323() {
+        Translation tr = trMap.getWithFallBack(Locale.US);
+        InstructionList instructions = new InstructionList(tr);
+        PointList pl = new PointList();
+        pl.add(49.942576, 11.580384);
+        pl.add(49.941858, 11.582422);
+        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", pl)
+                .setDistance(240).setTime(15000));
+
+        ViaInstruction via = new ViaInstruction(new FinishInstruction(49.941575, 11.583501, 0));
+        via.setViaCount(1);
+        instructions.add(via);
+
+        pl = new PointList();
+        pl.add(49.941575, 11.583501);
+        pl.add(49.941389, 11.584311);
+        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp2", pl)
+                .setDistance(25).setTime(4000));
+        instructions.add(new FinishInstruction(49.941029, 11.584514, 0));
+
+        List<GpxConversions.GPXEntry> result = GpxConversions.createGPXList(instructions);
+        assertEquals(5, result.size());
+
+        assertEquals(49.941575, result.get(2).getPoint().getLat(), 1e-6);
+        assertEquals(11.583501, result.get(2).getPoint().getLon(), 1e-6);
+        assertEquals(15000, result.get(2).getTime().longValue());
+        assertEquals(49.941389, result.get(3).getPoint().getLat(), 1e-6);
+        assertNull(result.get(3).getTime());
+        assertEquals(19000, result.get(4).getTime().longValue());
+
+        String gpxStr = GpxConversions.createGPX(instructions, "test", 0, false, true, true, true,
+                Constants.VERSION, tr);
+        verifyGPX(gpxStr);
+        String viaTrkpt = "<trkpt lat=\"49.941575\" lon=\"11.583501\">";
+        assertTrue(gpxStr.contains(viaTrkpt), gpxStr);
+        assertEquals(gpxStr.indexOf(viaTrkpt), gpxStr.lastIndexOf(viaTrkpt), gpxStr);
+        assertTrue(gpxStr.contains("<wpt lat=\"49.941575\" lon=\"11.583501\">"), gpxStr);
+        assertTrue(gpxStr.contains("<rtept lat=\"49.941575\" lon=\"11.583501\">"), gpxStr);
+    }
+
+    @Test
     public void testCreateGPXIncludesRoundaboutExitNumber() {
         InstructionList instructions = new InstructionList(trMap.getWithFallBack(Locale.US));
 

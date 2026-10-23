@@ -52,6 +52,9 @@ public class GpxConversions {
         List<GPXEntry> gpxList = new ArrayList<>();
         long timeOffset = 0;
         for (Instruction instruction : instructions) {
+            if (instruction instanceof ViaInstruction)
+                continue;
+
             int i = 0;
             for (GHPoint3D point : instruction.getPoints()) {
                 GPXEntry gpxEntry;
