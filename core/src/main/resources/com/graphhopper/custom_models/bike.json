@@ -15,7 +15,7 @@
 
 {
   // small distance term: avoids long detours, e.g. for small differences in priority
-  "distance_influence": 5,
+  "distance_influence": 2,
   "parameters": { "max_mtb_rating": 2, "max_hike_rating": 1,
                   "power": { "value": 100, "min": 40, "max": 500 }, "total_weight": { "value": 90, "min": 25, "max": 300 },
                   "air_drag_area": { "value": 0.74, "min": 0.2, "max": 1.2 }, "rolling_resistance": { "value": 0.008, "min": 0.002, "max": 0.03 }, "climb_penalty": { "value": 0.004, "min": 0, "max": 0.02 } },
