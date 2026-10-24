@@ -18,7 +18,7 @@
   "distance_influence": 5,
   "parameters": { "max_mtb_rating": 2, "max_hike_rating": 1,
                   "power": { "value": 100, "min": 40, "max": 500 }, "total_weight": { "value": 90, "min": 25, "max": 300 },
-                  "air_drag_area": { "value": 0.74, "min": 0.2, "max": 1.2 }, "rolling_resistance": { "value": 0.008, "min": 0.002, "max": 0.03 }, "hill_penalty": { "value": 0, "min": 0, "max": 0.03 } },
+                  "air_drag_area": { "value": 0.74, "min": 0.2, "max": 1.2 }, "rolling_resistance": { "value": 0.008, "min": 0.002, "max": 0.03 }, "climb_penalty": { "value": 0.004, "min": 0, "max": 0.02 } },
   "priority": [
     { "if": "true",  "multiply_by": "bike_priority" },
     { "if": "bike_network == INTERNATIONAL || bike_network == NATIONAL",  "multiply_by": "1.4" },
@@ -29,9 +29,9 @@
     { "if": "bike_road_access == NO", "multiply_by": "0" },
     { "if": "!bike_access && (!backward_bike_access || roundabout)",  "multiply_by": "0" },
     { "else_if": "!bike_access && backward_bike_access",  "multiply_by": "0.5" },
-    { "if": "true", "multiply_by": "1 - p_hill_penalty * Math.max(average_slope - 3, 0)" },
-    // avoid steep downhill sections on bad surfaces
-    { "if": "average_slope < -8 && bike_average_speed < 18", "multiply_by": "1 - p_hill_penalty * Math.max(-average_slope - 8, 0)" }
+    // avoid steep climbs: with constant power a metre of height costs the same time on every slope above 5 %, so the
+    // time alone takes the steepest road. Quadratic penalty above 5 %, 0.006: 0.95 at 8 %, 0.85 at 10 %, 0.71 at 12 %, 0.4 at 15 %, floor 0.2
+    { "if": "average_slope > 5", "multiply_by": "Math.max(0.2, 1 - p_climb_penalty * (average_slope - 5) * (average_slope - 5))" }
   ],
   "speed": [
     { "if": "road_environment == FERRY", "limit_to": "ferry_speed" },
