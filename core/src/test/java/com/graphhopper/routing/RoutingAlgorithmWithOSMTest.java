@@ -318,21 +318,22 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoBike3D() {
         List<Query> queries = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.6km after BridgeTunnelTowerCorrection
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2665, 118));
+        // expected values recalculated 2026-10-24 for the power-based bike model and the 2 m slope minimum; this query now takes 67 m of steps
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 1993, 101));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3787, 186));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4811, 317));
         // 3.
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2839, 145));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 3532, 175));
         // 4.
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1567, 83));
 
         // try reverse direction
         // 1.
-        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 1901, 93));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4129, 194));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2806, 145));
+        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2661, 108));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4112, 180));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 3119, 205));
         // 4. avoid tunnel(s)!
-        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1901, 116));
+        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 2061, 147));
         // tests here still assert that reverse oneways are excluded
         GraphHopper hopper = createHopper(MONACO,
                 new Profile("bike").setCustomModel(getCustomModel("bike.json").

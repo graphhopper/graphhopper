@@ -22,6 +22,7 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setTrackTypeSpeed("grade5", PUSHING_SECTION_SPEED);
 
         setSurfaceSpeed("paved", 28);
+        setSurfaceSpeed("chipseal", 28);
         setSurfaceSpeed("asphalt", 28);
         setSurfaceSpeed("concrete", 28);
         setSurfaceSpeed("concrete:lanes", 20);
@@ -35,15 +36,21 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
         setSurfaceSpeed("grass_paver", MIN_SPEED);
         setSurfaceSpeed("gravel", MIN_SPEED);
         setSurfaceSpeed("ground", MIN_SPEED);
+        setSurfaceSpeed("rock", MIN_SPEED);
         setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", MIN_SPEED);
+        setSurfaceSpeed("metal_grid", MIN_SPEED);
         setSurfaceSpeed("mud", MIN_SPEED);
         setSurfaceSpeed("clay", MIN_SPEED);
         setSurfaceSpeed("laterite", MIN_SPEED);
+        setSurfaceSpeed("stepping_stones", MIN_SPEED);
         setSurfaceSpeed("pebblestone", PUSHING_SECTION_SPEED);
+        setSurfaceSpeed("unhewn_cobblestone", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("salt", MIN_SPEED);
         setSurfaceSpeed("sand", MIN_SPEED);
         setHighwaySpeed("track", MIN_SPEED); // assume unpaved
+        setHighwaySpeed("wood", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("woodchips", MIN_SPEED);
 
         setHighwaySpeed("trunk", 28);
         setHighwaySpeed("trunk_link", 28);

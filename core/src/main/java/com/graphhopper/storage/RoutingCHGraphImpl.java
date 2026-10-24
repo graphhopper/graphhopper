@@ -104,7 +104,6 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
 
     @Override
     public void close() {
-        if (!baseGraph.isClosed()) baseGraph.close();
         chStorage.close();
     }
 

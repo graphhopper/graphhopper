@@ -2874,14 +2874,38 @@ public class GraphHopperTest {
         loaded.close();
     }
 
-    private static GraphHopper configureForRerunTest(GraphHopper hopper, String profile) {
+    @Test
+    public void testRerunWithAdditionalCHProfilePreparesOnlyTheNewOne() {
+        GraphHopper hopper = configureForRerunTest(new GraphHopper(), "p1", "p2");
+        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("p1"));
+        hopper.importAndClose();
+
+        // the existing CH is loaded and closed early, but the base graph must stay open to prepare the new one
+        GraphHopper rerun = configureForRerunTest(new GraphHopper() {
+            @Override
+            protected void importOSM() {
+                fail("the graph should have been loaded");
+            }
+        }, "p1", "p2");
+        rerun.importAndClose();
+
+        GraphHopper loaded = configureForRerunTest(new GraphHopper(), "p1", "p2");
+        assertTrue(loaded.load());
+        assertEquals(2, loaded.getCHGraphs().size());
+        GHResponse rsp = loaded.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).setProfile("p2"));
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertTrue(rsp.getHints().getLong("visited_nodes.sum", 0) < 155);
+        loaded.close();
+    }
+
+    private static GraphHopper configureForRerunTest(GraphHopper hopper, String... profiles) {
         hopper.setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setEncodedValuesString("car_access, car_average_speed").
-                setProfiles(TestProfiles.accessAndSpeed(profile, "car")).
+                setProfiles(Arrays.stream(profiles).map(p -> TestProfiles.accessAndSpeed(p, "car")).toList()).
                 setMinNetworkSize(0).
                 setFileBacked(true);
-        hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
+        hopper.getCHPreparationHandler().setCHProfiles(Arrays.stream(profiles).map(CHProfile::new).toList());
         return hopper;
     }
 
