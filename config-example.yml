@@ -228,6 +228,9 @@ graphhopper:
   # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):
   # datareader.preferred_language: en
 
+  # number of threads that decode the OSM PBF file, default is half of the available processors (at least 2):
+  # datareader.worker_threads: 8
+
   # configure the memory access, use RAM for well equipped servers (default and recommended)
   graph.dataaccess.default_type: RAM
 

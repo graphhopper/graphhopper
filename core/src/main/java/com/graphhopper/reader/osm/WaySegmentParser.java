@@ -72,7 +72,7 @@ public class WaySegmentParser {
     };
     private EdgeHandler edgeHandler = (from, to, pointList, way, nodeTags) ->
             System.out.println("edge " + from + "->" + to + " (" + pointList.size() + " points)");
-    private int workerThreads = 2;
+    private int workerThreads = OSMInput.defaultWorkerThreads();
 
     private final OSMNodeData nodeData;
     private Date timestamp;
@@ -475,7 +475,8 @@ public class WaySegmentParser {
         }
 
         /**
-         * @param workerThreads the number of threads used for the low level reading of the OSM file
+         * @param workerThreads the number of threads used for the low level reading (PBF decoding) of the OSM file,
+         *                      see {@link OSMInput#defaultWorkerThreads()}
          */
         public Builder setWorkerThreads(int workerThreads) {
             waySegmentParser.workerThreads = workerThreads;

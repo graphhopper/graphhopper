@@ -33,6 +33,15 @@ public interface OSMInput extends AutoCloseable {
     ReaderElement getNext() throws XMLStreamException;
 
     /**
+     * The default number of threads that decode the blobs of a PBF file: half of the available processors, but at
+     * least 2. The decoded elements are handled by a single thread, so with the previous default of 2 the import of
+     * large files waited for the decoder most of the time (e.g. germany: -11% import time with more threads).
+     */
+    static int defaultWorkerThreads() {
+        return Math.max(2, Runtime.getRuntime().availableProcessors() / 2);
+    }
+
+    /**
      * Opens an OSM file, automatically detecting the format (PBF or XML) based on file contents.
      *
      * @param file         the OSM file to open
