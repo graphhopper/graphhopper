@@ -30,7 +30,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
-import java.util.PriorityQueue;
+import com.graphhopper.coll.BinaryHeapWithDuplicates;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
@@ -153,7 +153,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
         return true;
     }
 
-    private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
+    private void fillEdges(SPTEntry currEdge, BinaryHeapWithDuplicates<SPTEntry> prioQueue, IntObjectMap<SPTEntry> bestWeightMap, boolean reverse) {
         EdgeIterator iter = edgeExplorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge.edge))
@@ -168,14 +168,14 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
             if (entry == null) {
                 entry = createEntry(iter, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
-                prioQueue.add(entry);
+                prioQueue.add(entry, entry.weight);
             } else if (entry.getWeightOfVisitedPath() > weight) {
                 // flagging this entry, so it will be ignored when it is polled the next time
                 entry.setDeleted();
                 boolean isBestEntry = reverse ? (entry == bestBwdEntry) : (entry == bestFwdEntry);
                 entry = createEntry(iter, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
-                prioQueue.add(entry);
+                prioQueue.add(entry, entry.weight);
                 // if this is the best entry we need to update the best reference as well
                 if (isBestEntry)
                     if (reverse)
