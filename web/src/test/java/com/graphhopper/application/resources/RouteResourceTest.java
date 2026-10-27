@@ -177,8 +177,10 @@ public class RouteResourceTest {
         GHPoint onStreet = direct.getPoints().get(direct.getPoints().size() / 2);
         Instruction turn = directInstructions.stream().filter(i -> Math.abs(i.getSign()) == Instruction.TURN_RIGHT).findFirst().get();
         GHPoint atTurn = turn.getPoints().get(0);
+        Instruction roundabout = directInstructions.stream().filter(i -> i.getSign() == Instruction.ROUNDABOUT_USE && i.getPoints().size() > 2).findFirst().get();
+        GHPoint inRoundabout = roundabout.getPoints().get(1);
 
-        for (GHPoint via : List.of(onStreet, atTurn)) {
+        for (GHPoint via : List.of(onStreet, atTurn, inRoundabout)) {
             GHResponse rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, via, to)));
             assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
             assertTrue(toString(rsp.getBest().getInstructions()).contains(REACHED_VIA + ","));

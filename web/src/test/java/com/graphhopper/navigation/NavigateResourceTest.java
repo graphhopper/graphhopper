@@ -107,6 +107,13 @@ public class NavigateResourceTest {
         assertEquals(1, json.get("routes").get(0).get("legs").size());
         assertEquals(2, json.get("waypoints").size());
 
+        // mixed: first via silent, second announced
+        url = "/navigate/directions/v5/gh/driving/1.537174,42.507145;1.538,42.509;1.5385,42.510;1.539116,42.511368?" +
+                "geometries=polyline6&overview=full&steps=true&voice_instructions=true&banner_instructions=true&waypoints=0;2;3";
+        json = clientTarget(app, url).request().get(JsonNode.class);
+        assertEquals(2, json.get("routes").get(0).get("legs").size());
+        assertEquals(3, json.get("waypoints").size());
+
         assertEquals(List.of(0, 3, 5), NavigateResource.getWaypoints("0;3;5"));
         assertNull(NavigateResource.getWaypoints(""));
         assertThrows(IllegalArgumentException.class, () -> NavigateResource.getWaypoints("0;;5"));
