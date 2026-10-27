@@ -263,6 +263,8 @@ public class GraphHopperWeb {
             requestJson.putArray("headings").addAll(createDoubleList(ghRequest.getHeadings()));
         if (!ghRequest.getCurbsides().isEmpty())
             requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getCurbsides()));
+        if (ghRequest.getAnnouncedViaPoints() != null)
+            requestJson.putPOJO("announced_via_points", ghRequest.getAnnouncedViaPoints());
         if (ghRequest.hasSnapPreventions())
             requestJson.putArray("snap_preventions").addAll(createStringList(ghRequest.getSnapPreventions()));
 

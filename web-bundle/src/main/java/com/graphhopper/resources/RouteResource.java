@@ -112,6 +112,8 @@ public class RouteResource {
         instructions = writeGPX || instructions;
         if (enableElevation && !hasElevation)
             throw new IllegalArgumentException("Elevation not supported!");
+        if (uriInfo.getQueryParameters().containsKey(ANNOUNCED_VIA_POINTS))
+            throw new IllegalArgumentException(ANNOUNCED_VIA_POINTS + " is currently only supported for POST requests");
 
         GHRequest request = new GHRequest();
         initHints(request.getHints(), uriInfo.getQueryParameters());
