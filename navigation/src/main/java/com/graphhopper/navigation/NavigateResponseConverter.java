@@ -54,13 +54,13 @@ public class NavigateResponseConverter {
      */
     public static ObjectNode convertFromGHResponse(GHResponse ghResponse, TranslationMap translationMap, Locale locale,
                                                    DistanceConfig distanceConfig) {
-        return convertFromGHResponse(ghResponse, Collections.emptyList(), translationMap, locale, distanceConfig);
+        return convertFromGHResponse(ghResponse, null, translationMap, locale, distanceConfig);
     }
 
     /**
-     * @param legPoints the indices of the points that are returned as waypoints. Empty means all points.
+     * @param announcedViaPoints the indices of the via points that are returned as waypoints. Null means all.
      */
-    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, List<Integer> legPoints, TranslationMap translationMap,
+    public static ObjectNode convertFromGHResponse(GHResponse ghResponse, List<Integer> announcedViaPoints, TranslationMap translationMap,
                                                    Locale locale, DistanceConfig distanceConfig) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
@@ -83,7 +83,7 @@ public class NavigateResponseConverter {
 
         final ArrayNode waypointsJson = json.putArray("waypoints");
         for (int i = 0; i < waypoints.size(); i++) {
-            if (!legPoints.isEmpty() && !legPoints.contains(i))
+            if (announcedViaPoints != null && i > 0 && i < waypoints.size() - 1 && !announcedViaPoints.contains(i))
                 continue;
             ObjectNode waypointJson = waypointsJson.addObject();
             // TODO get names

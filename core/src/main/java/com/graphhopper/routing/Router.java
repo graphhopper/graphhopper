@@ -94,7 +94,7 @@ public class Router {
             checkHeadings(request);
             checkPointHints(request);
             checkCurbsides(request);
-            checkLegPoints(request);
+            checkAnnouncedViaPoints(request);
             checkNoBlockArea(request);
             checkCustomModel(request);
 
@@ -170,16 +170,17 @@ public class Router {
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
     }
 
-    private void checkLegPoints(GHRequest request) {
-        List<Integer> legPoints = request.getLegPoints();
-        if (legPoints.isEmpty())
+    private void checkAnnouncedViaPoints(GHRequest request) {
+        List<Integer> viaPoints = request.getAnnouncedViaPoints();
+        if (viaPoints == null)
             return;
-        int lastIndex = request.getPoints().size() - 1;
-        if (legPoints.get(0) != 0 || legPoints.get(legPoints.size() - 1) != lastIndex)
-            throw new IllegalArgumentException(LEG_POINTS + " must start with 0 and end with the index of the last point (" + lastIndex + ")");
-        for (int i = 1; i < legPoints.size(); i++)
-            if (legPoints.get(i) <= legPoints.get(i - 1))
-                throw new IllegalArgumentException(LEG_POINTS + " must be strictly increasing, but was: " + legPoints);
+        int maxIndex = request.getPoints().size() - 1;
+        for (int i = 0; i < viaPoints.size(); i++) {
+            if (viaPoints.get(i) < 0 || viaPoints.get(i) > maxIndex)
+                throw new IllegalArgumentException(ANNOUNCED_VIA_POINTS + " must contain point indices from 0 to " + maxIndex + ", but was: " + viaPoints);
+            if (i > 0 && viaPoints.get(i) <= viaPoints.get(i - 1))
+                throw new IllegalArgumentException(ANNOUNCED_VIA_POINTS + " must be strictly increasing, but was: " + viaPoints);
+        }
     }
 
     private void checkNoBlockArea(GHRequest request) {
@@ -320,7 +321,7 @@ public class Router {
                 setRamerDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
                 setIncludeRoundaboutExitInstruction(includeRoundaboutExitInstruction).
-                setLegPoints(request.getLegPoints()).
+                setAnnouncedViaPoints(request.getAnnouncedViaPoints()).
                 setPathDetailsBuilders(pathDetailsBuilderFactory, request.getPathDetails()).
                 setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
 

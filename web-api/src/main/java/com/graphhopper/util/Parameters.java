@@ -123,7 +123,7 @@ public class Parameters {
         public static final String PASS_THROUGH = "pass_through";
         public static final String POINT_HINT = "point_hint";
         public static final String CURBSIDE = "curbside";
-        public static final String LEG_POINTS = "leg_points";
+        public static final String ANNOUNCED_VIA_POINTS = "announced_via_points";
         public static final String CURBSIDE_STRICTNESS = "curbside_strictness";
         public static final String SNAP_PREVENTION = "snap_prevention";
         /**

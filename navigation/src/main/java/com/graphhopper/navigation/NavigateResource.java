@@ -120,7 +120,7 @@ public class NavigateResource {
 
         GHRequest request = new GHRequest(requestPoints).
                 setHeadings(favoredHeadings).
-                setLegPoints(getWaypoints(waypoints)).
+                setAnnouncedViaPoints(getWaypoints(waypoints)).
                 setProfile(ghProfile).
                 setLocale(localeStr).
                 // We force the intersection details here as we cannot easily add this to the URL
@@ -153,7 +153,7 @@ public class NavigateResource {
             Locale locale = Helper.getLocale(localeStr);
             DistanceConfig config = new DistanceConfig(unit, translationMap, locale, graphHopper.getInstructionsBaseMode(ghProfile));
             logger.info(logStr);
-            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, request.getLegPoints(), translationMap, locale, config)).
+            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, request.getAnnouncedViaPoints(), translationMap, locale, config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }
@@ -224,7 +224,7 @@ public class NavigateResource {
 
             DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), graphHopper.getInstructionsBaseMode(request.getProfile()));
             logger.info(logStr);
-            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, request.getLegPoints(), translationMap, request.getLocale(), config)).
+            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, request.getAnnouncedViaPoints(), translationMap, request.getLocale(), config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }
@@ -255,7 +255,7 @@ public class NavigateResource {
      */
     static List<Integer> getWaypoints(String waypointsString) {
         if (waypointsString.isEmpty())
-            return Collections.emptyList();
+            return null;
         List<Integer> waypoints = new ArrayList<>();
         for (String index : waypointsString.split(";", -1)) {
             try {

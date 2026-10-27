@@ -168,7 +168,7 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testLegPoints() {
+    public void testAnnouncedViaPoints() {
         GraphHopperWeb hopper = new GraphHopperWeb(clientUrl(app, "/route"));
         GHPoint from = new GHPoint(42.554851, 1.536198), to = new GHPoint(42.510071, 1.548128);
         ResponsePath direct = hopper.route(new GHRequest(from, to).setProfile("my_car")).getBest();
@@ -183,7 +183,7 @@ public class RouteResourceTest {
             assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
             assertTrue(toString(rsp.getBest().getInstructions()).contains(REACHED_VIA + ","));
 
-            rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, via, to)).setLegPoints(List.of(0, 2)));
+            rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, via, to)).setAnnouncedViaPoints(List.of()));
             assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
             ResponsePath path = rsp.getBest();
             assertEquals(toString(directInstructions), toString(path.getInstructions()), "via " + via);
@@ -192,22 +192,31 @@ public class RouteResourceTest {
             assertEquals(3, path.getWaypoints().size());
         }
 
-        GHResponse rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, onStreet, to)).setLegPoints(List.of(0, 1)));
-        assertEquals("leg_points must start with 0 and end with the index of the last point (2)", rsp.getErrors().get(0).getMessage());
-        rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, onStreet, to)).setLegPoints(List.of(0, 1, 1, 2)));
-        assertEquals("leg_points must be strictly increasing, but was: [0, 1, 1, 2]", rsp.getErrors().get(0).getMessage());
+        // announced via points are counted from 1
+        GHResponse rsp4 = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, onStreet, atTurn, to)).setAnnouncedViaPoints(List.of(2)));
+        assertTrue(toString(rsp4.getBest().getInstructions()).contains("5,Waypoint 1,"), toString(rsp4.getBest().getInstructions()));
+        assertFalse(toString(rsp4.getBest().getInstructions()).contains("Waypoint 2,"));
 
-        // a u-turn at a via point is kept
-        rsp = hopper.route(new GHRequest().setProfile("foot").setPoints(List.of(from, onStreet, from)).setLegPoints(List.of(0, 2)));
+        // explicitly announced is the same as the default
+        GHResponse rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, onStreet, to)).setAnnouncedViaPoints(List.of(1)));
+        assertTrue(toString(rsp.getBest().getInstructions()).contains(REACHED_VIA + ","));
+
+        rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, onStreet, to)).setAnnouncedViaPoints(List.of(3)));
+        assertEquals("announced_via_points must contain point indices from 0 to 2, but was: [3]", rsp.getErrors().get(0).getMessage());
+        rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, onStreet, to)).setAnnouncedViaPoints(List.of(1, 1)));
+        assertEquals("announced_via_points must be strictly increasing, but was: [1, 1]", rsp.getErrors().get(0).getMessage());
+
+        // a u-turn at a via point is kept, start and end are accepted like for Mapbox
+        rsp = hopper.route(new GHRequest().setProfile("foot").setPoints(List.of(from, onStreet, from)).setAnnouncedViaPoints(List.of(0, 2)));
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertTrue(toString(rsp.getBest().getInstructions()).contains(Instruction.U_TURN_UNKNOWN + ","), toString(rsp.getBest().getInstructions()));
     }
 
     @Test
-    public void testLegPointsGET() {
-        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128&leg_points=0&leg_points=1"));
+    public void testAnnouncedViaPointsGET() {
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128&announced_via_points=1"));
         assertEquals(400, response.getStatus());
-        assertEquals("leg_points is currently only supported for POST requests", response.getBody().get("message").asText());
+        assertEquals("announced_via_points is currently only supported for POST requests", response.getBody().get("message").asText());
     }
 
     private static String toString(InstructionList instructions) {

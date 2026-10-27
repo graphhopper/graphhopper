@@ -52,7 +52,7 @@ public class PathMerger {
 
     private boolean enableInstructions = true;
     private boolean includeRoundaboutExitInstruction = false;
-    private List<Integer> legPoints = List.of();
+    private List<Integer> announcedViaPoints;
     private boolean simplifyResponse = true;
     private RamerDouglasPeucker ramerDouglasPeucker = RDP;
     private boolean calcPoints = true;
@@ -103,10 +103,10 @@ public class PathMerger {
     }
 
     /**
-     * The indices of the points that start or end a leg. Empty means all points.
+     * The indices of the via points that get instructions. Null means all, empty none.
      */
-    public PathMerger setLegPoints(List<Integer> legPoints) {
-        this.legPoints = legPoints;
+    public PathMerger setAnnouncedViaPoints(List<Integer> announcedViaPoints) {
+        this.announcedViaPoints = announcedViaPoints;
         return this;
     }
 
@@ -157,7 +157,7 @@ public class PathMerger {
             int legStart = 0, viaCount = 0;
             for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
                 boolean lastPath = pathIndex + 1 == paths.size();
-                if (!lastPath && !legPoints.isEmpty() && !legPoints.contains(pathIndex + 1))
+                if (!lastPath && announcedViaPoints != null && !announcedViaPoints.contains(pathIndex + 1))
                     continue;
                 InstructionList il = InstructionsFromEdges.calcInstructions(paths.subList(legStart, pathIndex + 1), graph, weighting,
                         instructionsBaseMode, evLookup, tr, includeRoundaboutExitInstruction);

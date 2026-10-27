@@ -43,7 +43,7 @@ public class GHRequest {
     private List<Double> headings = new ArrayList<>();
     private List<String> pointHints = new ArrayList<>();
     private List<String> curbsides = new ArrayList<>();
-    private List<Integer> legPoints = new ArrayList<>();
+    private List<Integer> announcedViaPoints;
     private List<String> snapPreventions;
     private List<String> pathDetails = new ArrayList<>();
     private String algo = "";
@@ -210,15 +210,15 @@ public class GHRequest {
     }
 
     /**
-     * @param legPoints the indices of the points that start or end a leg
+     * @param announcedViaPoints the indices of the via points that get instructions, null means all. Start and end are accepted and ignored.
      */
-    public GHRequest setLegPoints(List<Integer> legPoints) {
-        this.legPoints = legPoints;
+    public GHRequest setAnnouncedViaPoints(List<Integer> announcedViaPoints) {
+        this.announcedViaPoints = announcedViaPoints;
         return this;
     }
 
-    public List<Integer> getLegPoints() {
-        return legPoints;
+    public List<Integer> getAnnouncedViaPoints() {
+        return announcedViaPoints;
     }
 
     public boolean hasSnapPreventions() {

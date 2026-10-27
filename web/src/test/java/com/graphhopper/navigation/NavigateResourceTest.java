@@ -81,7 +81,7 @@ public class NavigateResourceTest {
     }
 
     @Test
-    public void testLegPoints() {
+    public void testAnnouncedViaPoints() {
         String url = "/navigate/directions/v5/gh/driving/1.537174,42.507145;1.538,42.509;1.539116,42.511368?" +
                 "geometries=polyline6&overview=full&steps=true&voice_instructions=true&banner_instructions=true";
         JsonNode json = clientTarget(app, url).request().get(JsonNode.class);
@@ -102,12 +102,13 @@ public class NavigateResourceTest {
         assertEquals("depart", steps.get(0).get("maneuver").get("type").asText());
 
         String body = "{\"points\": [[1.537174,42.507145],[1.538,42.509],[1.539116,42.511368]], \"profile\": \"my_car\", " +
-                "\"type\": \"mapbox\", \"ch.disable\": true, \"leg_points\": [0, 2]}";
+                "\"type\": \"mapbox\", \"ch.disable\": true, \"announced_via_points\": []}";
         json = clientTarget(app, "/navigate").request().post(Entity.json(body), JsonNode.class);
         assertEquals(1, json.get("routes").get(0).get("legs").size());
         assertEquals(2, json.get("waypoints").size());
 
         assertEquals(List.of(0, 3, 5), NavigateResource.getWaypoints("0;3;5"));
+        assertNull(NavigateResource.getWaypoints(""));
         assertThrows(IllegalArgumentException.class, () -> NavigateResource.getWaypoints("0;;5"));
     }
 
