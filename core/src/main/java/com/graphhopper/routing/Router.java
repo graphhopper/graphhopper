@@ -171,8 +171,6 @@ public class Router {
     }
 
     private void checkLegPoints(GHRequest request) {
-        if (request.getHints().has(LEG_POINTS))
-            throw new IllegalArgumentException(LEG_POINTS + " is currently only supported for POST requests");
         List<Integer> legPoints = request.getLegPoints();
         if (legPoints.isEmpty())
             return;

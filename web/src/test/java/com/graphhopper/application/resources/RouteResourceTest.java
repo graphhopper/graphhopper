@@ -203,6 +203,13 @@ public class RouteResourceTest {
         assertTrue(toString(rsp.getBest().getInstructions()).contains(Instruction.U_TURN_UNKNOWN + ","), toString(rsp.getBest().getInstructions()));
     }
 
+    @Test
+    public void testLegPointsGET() {
+        BodyAndStatus response = getWithStatus(clientTarget(app, "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128&leg_points=0&leg_points=1"));
+        assertEquals(400, response.getStatus());
+        assertEquals("leg_points is currently only supported for POST requests", response.getBody().get("message").asText());
+    }
+
     private static String toString(InstructionList instructions) {
         return instructions.stream().map(i -> i.getSign() + "," + i.getName() + "," + Math.round(i.getDistance())).collect(Collectors.joining("; "));
     }
