@@ -192,7 +192,7 @@ public class RouteResourceTest {
             assertEquals(3, path.getWaypoints().size());
         }
 
-        // announced via points are counted from 1
+        // skipped via points are not counted
         GHResponse rsp4 = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, onStreet, atTurn, to)).setAnnouncedViaPoints(List.of(2)));
         assertTrue(toString(rsp4.getBest().getInstructions()).contains("5,Waypoint 1,"), toString(rsp4.getBest().getInstructions()));
         assertFalse(toString(rsp4.getBest().getInstructions()).contains("Waypoint 2,"));
