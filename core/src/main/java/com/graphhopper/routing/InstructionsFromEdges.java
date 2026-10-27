@@ -173,18 +173,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
         InstructionsFromEdges visitor = new InstructionsFromEdges(graph, weighting, instructionsBaseMode, evLookup, ways, includeRoundaboutExits);
         // finish only once after the last path
-        Path.EdgeVisitor withoutFinish = new Path.EdgeVisitor() {
-            @Override
-            public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
-                visitor.next(edge, index, prevEdgeId);
-            }
-
-            @Override
-            public void finish() {
-            }
-        };
         for (Path path : paths)
-            path.forEveryEdge(withoutFinish);
+            path.forEveryEdge(visitor::next);
         visitor.finish();
         return ways;
     }
