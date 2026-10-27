@@ -49,7 +49,7 @@ All official parameters are shown in the following table
  curbside        | any                       | Optional parameter applicable to edge-based routing only. It specifies on which side a query point should be relative to the driver when she leaves/arrives at a start/target/via point. Possible values: right, left, any. Specify for every point parameter. See similar heading parameter.                                                                                                                                                                                                                                                                                                                                                                                                                                                      
  curbside_strictness| strict                    | Optional parameter. If it is set to "strict" there will be an exception in case the curbside parameters cannot be fulfilled (e.g. specifying the wrong side for one-ways). If you don't want this use "soft".
  timeout_ms      | infinity                  | Optional parameter. Limits the request runtime to the minimum between the given value in milli-seconds and the server-side timeout configuration
- via_point_instructions           | true                     | Optional parameter. If true, the instructions will contain via-point instructions such as "Reached waypoint X".
+ leg_points      | -                         | Optional parameter. The indices of the points that start or end a leg, e.g. `[0, 3, 5]`, from 0 to the index of the last point. The other points only shape the route and create no additional instructions. Only available for POST requests.
 
 
 ### Hybrid

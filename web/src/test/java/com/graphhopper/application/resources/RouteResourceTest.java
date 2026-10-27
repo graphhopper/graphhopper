@@ -33,6 +33,7 @@ import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.Surface;
 import com.graphhopper.util.BodyAndStatus;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Instruction;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.details.PathDetail;
@@ -52,6 +53,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.application.resources.Util.getWithStatus;
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -166,19 +168,43 @@ public class RouteResourceTest {
     }
 
     @Test
-    public void testQueryWithViaPointInstructions() {
-        JsonNode json = clientTarget(app, 
-            "/route?profile=my_car&point=42.554851,1.536198&point=42.526351,1.526435&point=42.510071,1.548128&via_point_instructions=true")
-            .request().get(JsonNode.class);
-        JsonNode infoJson = json.get("info");
-        assertFalse(infoJson.has("errors"));
-        JsonNode instructions = json.get("paths").get(0).get("instructions");
-        boolean foundViaPointInstruction = false;
-        for(int i = 0; i < instructions.size(); i++) {
-            if(instructions.get(i).get("sign").asInt() == 5) foundViaPointInstruction = true;
+    public void testLegPoints() {
+        GraphHopperWeb hopper = new GraphHopperWeb(clientUrl(app, "/route"));
+        GHPoint from = new GHPoint(42.554851, 1.536198), to = new GHPoint(42.510071, 1.548128);
+        ResponsePath direct = hopper.route(new GHRequest(from, to).setProfile("my_car")).getBest();
+        InstructionList directInstructions = direct.getInstructions();
+        // via points on the route: somewhere on a street and exactly at the turn of an instruction
+        GHPoint onStreet = direct.getPoints().get(direct.getPoints().size() / 2);
+        Instruction turn = directInstructions.stream().filter(i -> Math.abs(i.getSign()) == Instruction.TURN_RIGHT).findFirst().get();
+        GHPoint atTurn = turn.getPoints().get(0);
+
+        for (GHPoint via : List.of(onStreet, atTurn)) {
+            GHResponse rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, via, to)));
+            assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+            assertTrue(toString(rsp.getBest().getInstructions()).contains(REACHED_VIA + ","));
+
+            rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, via, to)).setLegPoints(List.of(0, 2)));
+            assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+            ResponsePath path = rsp.getBest();
+            assertEquals(toString(directInstructions), toString(path.getInstructions()), "via " + via);
+            assertEquals(direct.getDistance(), path.getDistance(), 1);
+            assertEquals(path.getTime(), path.getInstructions().stream().mapToLong(Instruction::getTime).sum());
+            assertEquals(3, path.getWaypoints().size());
         }
-        
-        assertTrue(foundViaPointInstruction, "No via point instructions were found");
+
+        GHResponse rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, onStreet, to)).setLegPoints(List.of(0, 1)));
+        assertEquals("leg_points must start with 0 and end with the index of the last point (2)", rsp.getErrors().get(0).getMessage());
+        rsp = hopper.route(new GHRequest().setProfile("my_car").setPoints(List.of(from, onStreet, to)).setLegPoints(List.of(0, 1, 1, 2)));
+        assertEquals("leg_points must be strictly increasing, but was: [0, 1, 1, 2]", rsp.getErrors().get(0).getMessage());
+
+        // a u-turn at a via point is kept
+        rsp = hopper.route(new GHRequest().setProfile("foot").setPoints(List.of(from, onStreet, from)).setLegPoints(List.of(0, 2)));
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertTrue(toString(rsp.getBest().getInstructions()).contains(Instruction.U_TURN_UNKNOWN + ","), toString(rsp.getBest().getInstructions()));
+    }
+
+    private static String toString(InstructionList instructions) {
+        return instructions.stream().map(i -> i.getSign() + "," + i.getName() + "," + Math.round(i.getDistance())).collect(Collectors.joining("; "));
     }
 
     @Test

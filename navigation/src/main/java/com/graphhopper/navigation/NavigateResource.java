@@ -94,6 +94,7 @@ public class NavigateResource {
             @QueryParam("overview") @DefaultValue("simplified") String overview,
             @QueryParam("geometries") @DefaultValue("polyline") String geometries,
             @QueryParam("bearings") @DefaultValue("") String bearings,
+            @QueryParam("waypoints") @DefaultValue("") String waypoints,
             @QueryParam("language") @DefaultValue("en") String localeStr,
             @PathParam("profile") String mapboxProfile) {
 
@@ -119,6 +120,7 @@ public class NavigateResource {
 
         GHRequest request = new GHRequest(requestPoints).
                 setHeadings(favoredHeadings).
+                setLegPoints(getWaypoints(waypoints)).
                 setProfile(ghProfile).
                 setLocale(localeStr).
                 // We force the intersection details here as we cannot easily add this to the URL
@@ -151,7 +153,7 @@ public class NavigateResource {
             Locale locale = Helper.getLocale(localeStr);
             DistanceConfig config = new DistanceConfig(unit, translationMap, locale, graphHopper.getInstructionsBaseMode(ghProfile));
             logger.info(logStr);
-            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, locale, config)).
+            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, request.getLegPoints(), translationMap, locale, config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }
@@ -222,7 +224,7 @@ public class NavigateResource {
 
             DistanceConfig config = new DistanceConfig(unit, translationMap, request.getLocale(), graphHopper.getInstructionsBaseMode(request.getProfile()));
             logger.info(logStr);
-            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, translationMap, request.getLocale(), config)).
+            return Response.ok(NavigateResponseConverter.convertFromGHResponse(ghResponse, request.getLegPoints(), translationMap, request.getLocale(), config)).
                     header("X-GH-Took", "" + Math.round(took * 1000)).
                     build();
         }
@@ -246,6 +248,23 @@ public class NavigateResource {
         }
 
         return points;
+    }
+
+    /**
+     * Parses the Mapbox waypoints parameter, e.g. "0;3;5"
+     */
+    static List<Integer> getWaypoints(String waypointsString) {
+        if (waypointsString.isEmpty())
+            return Collections.emptyList();
+        List<Integer> waypoints = new ArrayList<>();
+        for (String index : waypointsString.split(";", -1)) {
+            try {
+                waypoints.add(Integer.parseInt(index));
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException("You passed an invalid waypoints parameter " + waypointsString);
+            }
+        }
+        return waypoints;
     }
 
     static List<Double> getBearing(String bearingString) {
