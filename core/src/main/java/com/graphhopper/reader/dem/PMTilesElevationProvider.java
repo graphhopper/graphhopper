@@ -165,9 +165,15 @@ public class PMTilesElevationProvider implements ElevationProvider {
             throw new RuntimeException(e);
         }
 
-        this.zoom = preferredZoom > 0 ? preferredZoom : Math.min(reader.header.maxZoom, 11);
+        int fileMaxZoom = reader.header.maxZoom;
+        this.zoom = preferredZoom > 0 ? preferredZoom : Math.min(fileMaxZoom, 11);
         if (this.zoom < 1)
             throw new IllegalArgumentException("Zoom level must be at least 1, got " + this.zoom);
+        int fileMinZoom = reader.header.minZoom;
+        if (fileMinZoom > this.zoom)
+            throw new IllegalArgumentException("PMTiles file minimum zoom " + fileMinZoom + " is larger than requested zoom level " + this.zoom);
+        if (fileMaxZoom < this.zoom)
+            throw new IllegalArgumentException("PMTiles file maximum zoom " + fileMaxZoom + " is smaller than requested zoom level " + this.zoom);
         this.hilbertBase = PMTilesReader.hilbertBase(zoom);
         this.n = 1 << zoom;
 
