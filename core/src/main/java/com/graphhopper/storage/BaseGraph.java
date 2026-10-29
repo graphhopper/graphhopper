@@ -627,14 +627,9 @@ public class BaseGraph implements Graph, Closeable {
             pillarNodes.add(nodeAccess, baseNode);
 
         // Use long accumulators to mirror the encode path and avoid implicit int overflow near the anti-meridian.
-        long curLat = 0, curLon = 0;
-        int curEle = 0;
-        if (pillarBytesLen > 0) {
-            long nodePointer = store.toNodePointer(store.getNodeA(edgePointer));
-            curLat = store.getLatInt(nodePointer);
-            curLon = store.getLonInt(nodePointer);
-            curEle = is3D ? store.getEleInt(nodePointer) : 0;
-        }
+        long nodePointer = store.toNodePointer(store.getNodeA(edgePointer));
+        long curLat = store.getLatInt(nodePointer), curLon = store.getLonInt(nodePointer);
+        int curEle = is3D ? store.getEleInt(nodePointer) : 0;
         int[] pos = {0};
         while (pos[0] < pillarBytesLen) {
             curLat = (int) (curLat + readZigZagVarInt(bytes, pos));
