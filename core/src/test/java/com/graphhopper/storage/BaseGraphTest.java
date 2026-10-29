@@ -432,6 +432,30 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     }
 
     @Test
+    public void testFirstPillarRelativeToNodeA() {
+        BaseGraph graph = createGHStorage(defaultGraphLoc, true);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 49.0, 9.0, 300);
+        na.setNode(1, 49.001, 9.001, 310);
+        EdgeIteratorState edge = graph.edge(0, 1);
+        long geoRefBefore = graph.getMaxGeoRef();
+        // set via the reversed state, i.e. stored in reverse order
+        edge.detach(true).setWayGeometry(Helper.createPointList3D(49.0009, 9.0009, 309, 49.0001, 9.0001, 301));
+        // 1 byte header + 2 pillars with 3 small deltas of 2 bytes each. Absolute first pillar would need 20 bytes.
+        assertEquals(13, graph.getMaxGeoRef() - geoRefBefore);
+        assertEquals(Helper.createPointList3D(49.0, 9.0, 300, 49.0001, 9.0001, 301, 49.0009, 9.0009, 309, 49.001, 9.001, 310),
+                edge.fetchWayGeometry(ALL));
+        assertEquals(Helper.createPointList3D(49.0009, 9.0009, 309, 49.0001, 9.0001, 301),
+                edge.detach(true).fetchWayGeometry(PILLAR_ONLY));
+
+        // moving nodeA would shift the pillars, nodeB and elevation changes are fine
+        assertThrows(IllegalStateException.class, () -> na.setNode(0, 49.0, 9.1, 300));
+        na.setNode(0, 49.0, 9.0, 305);
+        na.setNode(1, 49.002, 9.001, 310);
+        graph.close();
+    }
+
+    @Test
     public void testPillarNodesOverflow() {
         BaseGraph graph = createGHStorage();
         int tooManyNodes = 65536;

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 
 /**
@@ -37,8 +38,11 @@ class GHNodeAccess implements NodeAccess {
     @Override
     public final void setNode(int nodeId, double lat, double lon, double ele) {
         store.ensureNodeCapacity(nodeId);
-        store.setLat(store.toNodePointer(nodeId), lat);
-        store.setLon(store.toNodePointer(nodeId), lon);
+        long nodePointer = store.toNodePointer(nodeId);
+        if (store.getLatInt(nodePointer) != Helper.degreeToInt(lat) || store.getLonInt(nodePointer) != Helper.degreeToInt(lon))
+            checkNoGeometryRelativeTo(nodeId);
+        store.setLat(nodePointer, lat);
+        store.setLon(nodePointer, lon);
 
         if (store.withElevation()) {
             // meter precision is sufficient for now
@@ -48,6 +52,19 @@ class GHNodeAccess implements NodeAccess {
                 store.bounds.update(lat, lon, ele);
         } else {
             store.bounds.update(lat, lon);
+        }
+    }
+
+    // the first pillar is stored relative to nodeA, so moving nodeA would silently shift the pillars
+    private void checkNoGeometryRelativeTo(int nodeId) {
+        int edge = store.getEdgeRef(store.toNodePointer(nodeId));
+        while (edge != EdgeIterator.NO_EDGE) {
+            long edgePointer = store.toEdgePointer(edge);
+            boolean isNodeA = store.getNodeA(edgePointer) == nodeId;
+            if (isNodeA && store.getGeoRef(edgePointer) > 0)
+                throw new IllegalStateException("Cannot change coordinates of node " + nodeId + " because edge " + edge
+                        + " stores its geometry relative to it. Set the node coordinates before calling setWayGeometry.");
+            edge = isNodeA ? store.getLinkA(edgePointer) : store.getLinkB(edgePointer);
         }
     }
 

@@ -518,6 +518,18 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         return Helper.uIntToEle(nodes.getInt(nodePointer + N_ELE));
     }
 
+    public int getLatInt(long nodePointer) {
+        return nodes.getInt(nodePointer + N_LAT);
+    }
+
+    public int getLonInt(long nodePointer) {
+        return nodes.getInt(nodePointer + N_LON);
+    }
+
+    public int getEleInt(long nodePointer) {
+        return nodes.getInt(nodePointer + N_ELE);
+    }
+
     public int getTurnCostRef(long nodePointer) {
         return nodes.getInt(nodePointer + N_TC);
     }

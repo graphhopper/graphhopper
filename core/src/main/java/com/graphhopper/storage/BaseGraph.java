@@ -477,7 +477,7 @@ public class BaseGraph implements Graph, Closeable {
                 // longer possible to find the copies corresponding to an edge, so we deny this
                 throw new IllegalStateException("This edge has already been copied so we can no longer change the geometry, pointer=" + edgePointer);
 
-            EncodedBytes encoded = createWayGeometryBytes(pillarNodes, reverse);
+            EncodedBytes encoded = createWayGeometryBytes(pillarNodes, reverse, store.getNodeA(edgePointer));
 
             if (existingGeoRef > 0) {
                 int existingByteSize = readEntryByteSize(existingGeoRef);
@@ -508,9 +508,11 @@ public class BaseGraph implements Graph, Closeable {
      * Creates bytes from the geometry for storage. First comes 1 byte for the bytes length L if L < 0xFF.
      * If more bytes are required then L == 0xFF and 4 more bytes are required.
      * Then come the pillar bytes: for each coordinate the zigzag-varint Δlat, Δlon, (Δele if 3D) is calculated.
+     * The first pillar is relative to nodeA (the stored base node), i.e. changing the coordinates of nodeA
+     * shifts all pillars and the geometry has to be set again.
      * @return The bytes in EncodedBytes may be over-allocated, i.e. use EncodedBytes.length and not EncodedBytes.bytes.length.
      */
-    private EncodedBytes createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
+    private EncodedBytes createWayGeometryBytes(PointList pillarNodes, boolean reverse, int nodeA) {
         int len = pillarNodes.size();
         if (len > MAX_PILLAR_NODES) throw new IllegalArgumentException("Too many pillar nodes: " + len);
         if (reverse) pillarNodes.reverse();
@@ -524,9 +526,10 @@ public class BaseGraph implements Graph, Closeable {
         int offset = 1;
         // Use long to avoid int overflow when computing deltas near the anti-meridian (e.g. 179.9 -> -179.9).
         // The varint encoder/decoder receives the lower 32 bits (int cast), so the round-trip is exact.
-        long prevLat = 0, prevLon = 0;
-        int prevEle = 0;
+        long nodePointer = store.toNodePointer(nodeA);
+        long prevLat = store.getLatInt(nodePointer), prevLon = store.getLonInt(nodePointer);
         boolean is3D = nodeAccess.is3D();
+        int prevEle = is3D ? store.getEleInt(nodePointer) : 0;
         for (int i = 0; i < len; i++) {
             long lat = Helper.degreeToInt(pillarNodes.getLat(i));
             long lon = Helper.degreeToInt(pillarNodes.getLon(i));
@@ -626,6 +629,12 @@ public class BaseGraph implements Graph, Closeable {
         // Use long accumulators to mirror the encode path and avoid implicit int overflow near the anti-meridian.
         long curLat = 0, curLon = 0;
         int curEle = 0;
+        if (pillarBytesLen > 0) {
+            long nodePointer = store.toNodePointer(store.getNodeA(edgePointer));
+            curLat = store.getLatInt(nodePointer);
+            curLon = store.getLonInt(nodePointer);
+            curEle = is3D ? store.getEleInt(nodePointer) : 0;
+        }
         int[] pos = {0};
         while (pos[0] < pillarBytesLen) {
             curLat = (int) (curLat + readZigZagVarInt(bytes, pos));

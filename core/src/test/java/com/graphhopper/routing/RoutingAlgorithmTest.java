@@ -754,6 +754,12 @@ public class RoutingAlgorithmTest {
     public void testWithCoordinates(Fixture f) {
         Weighting weighting = new SpeedWeighting(f.carSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
+        // set nodes before the geometry as the first pillar is stored relative to the base node
+        graph.getNodeAccess().setNode(0, 1, 0.6);
+        graph.getNodeAccess().setNode(1, 1, 1.5);
+        graph.getNodeAccess().setNode(2, 0, 0);
+        graph.getNodeAccess().setNode(3, 0, 1);
+        graph.getNodeAccess().setNode(4, 0, 2);
         graph.edge(0, 1).setDistance(0).set(f.carSpeedEnc, 60, 60).
                 setWayGeometry(Helper.createPointList(1.5, 1));
         graph.edge(2, 3).setDistance(0).set(f.carSpeedEnc, 60, 60).
