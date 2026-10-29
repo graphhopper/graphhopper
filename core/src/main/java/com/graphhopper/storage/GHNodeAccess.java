@@ -55,7 +55,8 @@ class GHNodeAccess implements NodeAccess {
         }
     }
 
-    // the first pillar is stored relative to nodeA, so moving nodeA would silently shift the pillars
+    // The first pillar is stored relative to nodeA, so moving nodeA would silently shift the pillars.
+    // Only called if lat or lon change. For a regular import this loop is empty (new tower nodes have no edges yet).
     private void checkNoGeometryRelativeTo(int nodeId) {
         int edge = store.getEdgeRef(store.toNodePointer(nodeId));
         while (edge != EdgeIterator.NO_EDGE) {
