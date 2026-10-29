@@ -440,13 +440,16 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         EdgeIteratorState edge = graph.edge(0, 1);
         long geoRefBefore = graph.getMaxGeoRef();
         // set via the reversed state, i.e. stored in reverse order
-        edge.detach(true).setWayGeometry(Helper.createPointList3D(49.0009, 9.0009, 309, 49.0001, 9.0001, 301));
-        // 1 byte header + 2 pillars with 3 small deltas of 2 bytes each. Absolute first pillar would need 20 bytes.
-        assertEquals(13, graph.getMaxGeoRef() - geoRefBefore);
-        assertEquals(Helper.createPointList3D(49.0, 9.0, 300, 49.0001, 9.0001, 301, 49.0009, 9.0009, 309, 49.001, 9.001, 310),
+        edge.detach(true).setWayGeometry(Helper.createPointList3D(49.0009, 9.0009, 308.98, 49.0001, 9.0001, 301.07));
+        // 1 byte header + 2 pillars with small deltas: lat+lon 2 bytes each, ele 1 byte (1 m) and 2 bytes (8 m)
+        assertEquals(12, graph.getMaxGeoRef() - geoRefBefore);
+        assertEquals(Helper.createPointList3D(49.0, 9.0, 300, 49.0001, 9.0001, 301.05, 49.0009, 9.0009, 309, 49.001, 9.001, 310),
                 edge.fetchWayGeometry(ALL));
-        assertEquals(Helper.createPointList3D(49.0009, 9.0009, 309, 49.0001, 9.0001, 301),
-                edge.detach(true).fetchWayGeometry(PILLAR_ONLY));
+        PointList pillars = edge.detach(true).fetchWayGeometry(PILLAR_ONLY);
+        assertEquals(Helper.createPointList3D(49.0009, 9.0009, 309, 49.0001, 9.0001, 301.05), pillars);
+        // pillar elevation is rounded to 5cm
+        assertEquals(309.00, pillars.getEle(0), 1e-4);
+        assertEquals(301.05, pillars.getEle(1), 1e-4);
 
         // moving nodeA would shift the pillars, nodeB and elevation changes are fine
         assertThrows(IllegalStateException.class, () -> na.setNode(0, 49.0, 9.1, 300));
