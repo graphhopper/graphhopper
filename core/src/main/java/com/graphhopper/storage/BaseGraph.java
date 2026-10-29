@@ -55,6 +55,8 @@ public class BaseGraph implements Graph, Closeable {
     private static final int MAX_PILLAR_NODES = 65535;
     // Worst-case bytes per varint-encoded signed int.
     private static final int MAX_VARINT_BYTES = 5;
+    // Pillar elevation is stored in dm (node elevation in mm) as DEM accuracy is far below that.
+    private static final int PILLAR_ELE_FACTOR = 50;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final KVStorage edgeKVStorage;
@@ -507,7 +509,7 @@ public class BaseGraph implements Graph, Closeable {
     /**
      * Creates bytes from the geometry for storage. First comes 1 byte for the bytes length L if L < 0xFF.
      * If more bytes are required then L == 0xFF and 4 more bytes are required.
-     * Then come the pillar bytes: for each coordinate the zigzag-varint Δlat, Δlon, (Δele if 3D) is calculated.
+     * Then come the pillar bytes: for each coordinate the zigzag-varint Δlat, Δlon, (Δele in dm if 3D) is calculated.
      * The first pillar is relative to nodeA (the stored base node), i.e. changing the coordinates of nodeA
      * shifts all pillars and the geometry has to be set again.
      * @return The bytes in EncodedBytes may be over-allocated, i.e. use EncodedBytes.length and not EncodedBytes.bytes.length.
@@ -529,7 +531,7 @@ public class BaseGraph implements Graph, Closeable {
         long nodePointer = store.toNodePointer(nodeA);
         long prevLat = store.getLatInt(nodePointer), prevLon = store.getLonInt(nodePointer);
         boolean is3D = nodeAccess.is3D();
-        int prevEle = is3D ? store.getEleInt(nodePointer) : 0;
+        int prevEle = is3D ? toPillarEle(store.getEleInt(nodePointer)) : 0;
         for (int i = 0; i < len; i++) {
             long lat = Helper.degreeToInt(pillarNodes.getLat(i));
             long lon = Helper.degreeToInt(pillarNodes.getLon(i));
@@ -538,7 +540,7 @@ public class BaseGraph implements Graph, Closeable {
             prevLat = lat;
             prevLon = lon;
             if (is3D) {
-                int ele = Helper.eleToUInt(pillarNodes.getEle(i));
+                int ele = toPillarEle(Helper.eleToUInt(pillarNodes.getEle(i)));
                 offset = writeZigZagVarInt(bytes, offset, ele - prevEle);
                 prevEle = ele;
             }
@@ -553,6 +555,10 @@ public class BaseGraph implements Graph, Closeable {
         bytes[0] = (byte) 0xFF;
         bitUtil.fromInt(bytes, pillarBytesLen, 1);
         return new EncodedBytes(bytes, 5 + pillarBytesLen);
+    }
+
+    private static int toPillarEle(int eleUInt) {
+        return (eleUInt + PILLAR_ELE_FACTOR / 2) / PILLAR_ELE_FACTOR;
     }
 
     private static int writeZigZagVarInt(byte[] bytes, int offset, int value) {
@@ -629,7 +635,7 @@ public class BaseGraph implements Graph, Closeable {
         // Use long accumulators to mirror the encode path and avoid implicit int overflow near the anti-meridian.
         long nodePointer = store.toNodePointer(store.getNodeA(edgePointer));
         long curLat = store.getLatInt(nodePointer), curLon = store.getLonInt(nodePointer);
-        int curEle = is3D ? store.getEleInt(nodePointer) : 0;
+        int curEle = is3D ? toPillarEle(store.getEleInt(nodePointer)) : 0;
         int[] pos = {0};
         while (pos[0] < pillarBytesLen) {
             curLat = (int) (curLat + readZigZagVarInt(bytes, pos));
@@ -638,7 +644,7 @@ public class BaseGraph implements Graph, Closeable {
             double lon = Helper.intToDegree((int) curLon);
             if (is3D) {
                 curEle += readZigZagVarInt(bytes, pos);
-                pillarNodes.add(lat, lon, Helper.uIntToEle(curEle));
+                pillarNodes.add(lat, lon, Helper.uIntToEle(curEle * PILLAR_ELE_FACTOR));
             } else {
                 pillarNodes.add(lat, lon);
             }
