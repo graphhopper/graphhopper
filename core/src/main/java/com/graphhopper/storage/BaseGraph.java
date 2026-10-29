@@ -55,7 +55,7 @@ public class BaseGraph implements Graph, Closeable {
     private static final int MAX_PILLAR_NODES = 65535;
     // Worst-case bytes per varint-encoded signed int.
     private static final int MAX_VARINT_BYTES = 5;
-    // Pillar elevation is stored in dm (node elevation in mm) as DEM accuracy is far below that.
+    // Pillar elevation is stored in 5cm units (node elevation in mm) as DEM accuracy is far below that.
     private static final int PILLAR_ELE_FACTOR = 50;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
@@ -509,7 +509,7 @@ public class BaseGraph implements Graph, Closeable {
     /**
      * Creates bytes from the geometry for storage. First comes 1 byte for the bytes length L if L < 0xFF.
      * If more bytes are required then L == 0xFF and 4 more bytes are required.
-     * Then come the pillar bytes: for each coordinate the zigzag-varint Δlat, Δlon, (Δele in dm if 3D) is calculated.
+     * Then come the pillar bytes: for each coordinate the zigzag-varint Δlat, Δlon, (Δele in 5cm units if 3D) is calculated.
      * The first pillar is relative to nodeA (the stored base node), i.e. changing the coordinates of nodeA
      * shifts all pillars and the geometry has to be set again.
      * @return The bytes in EncodedBytes may be over-allocated, i.e. use EncodedBytes.length and not EncodedBytes.bytes.length.
