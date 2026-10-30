@@ -10,71 +10,14 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
+import static com.graphhopper.routing.util.parsers.AccessResolver.ALLOWED;
+import static com.graphhopper.routing.util.parsers.AccessResolver.RESTRICTED;
 
+/**
+ * Writes the boolean access of a mode: blocking rules, then the AccessResolver, barrier nodes, ferries and the
+ * direction.
+ */
 public class ModeAccessParser implements TagParser {
-
-    public static final Set<String> ALLOWED = Set.of("yes", "designated", "official", "permissive", "destination");
-    public static final Set<String> RESTRICTED = Set.of("no", "restricted", "military", "emergency",
-            "private", "permit", "service", "delivery", "customers", "agricultural", "forestry");
-    // a locked barrier is passable only with these values, not with destination
-    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive");
-    private static final Map<String, String> MOTORROAD_DEFAULTS = Map.of("foot", "no", "bicycle", "no");
-    static final Map<String, Map<String, String>> HIGHWAY_TYPE_DEFAULTS;
-    static final Map<String, Map<String, String>> BARRIER_TYPE_DEFAULTS;
-
-    static {
-        // https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access_restrictions
-        Map<String, Map<String, String>> m = new HashMap<>();
-        // For implied bicycle defaults we use "dismount" rather than "no" on highways where
-        // pushing a bike is physically reasonable (pedestrian streets, footways, stairs, indoor
-        // corridors, station platforms). Our routing layer treats DISMOUNT as "can push" —
-        // usable but qualified — whereas NO is treated as a hard block. motorway/motorway_link
-        // keep "no" because bikes are legally prohibited even on foot. Explicit bicycle=no tags
-        // on a way still resolve to NO; only the implicit highway-type defaults become DISMOUNT.
-        m.put("motorway", Map.of("motor_vehicle", "designated", "foot", "no", "bicycle", "no"));
-        m.put("motorway_link", Map.of("motor_vehicle", "designated", "foot", "no", "bicycle", "no"));
-        m.put("steps", Map.of("motor_vehicle", "no", "bicycle", "dismount", "foot", "designated"));
-        m.put("footway", Map.of("motor_vehicle", "no", "bicycle", "dismount", "foot", "designated"));
-        m.put("cycleway", Map.of("motor_vehicle", "no", "bicycle", "designated", "foot", "no"));
-        m.put("pedestrian", Map.of("motor_vehicle", "no", "bicycle", "dismount", "foot", "designated"));
-        m.put("path", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
-        m.put("bridleway", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
-        m.put("busway", Map.of("access", "no", "bus", "designated"));
-        m.put("construction", Map.of("access", "no"));
-        m.put("proposed", Map.of("access", "no"));
-        m.put("raceway", Map.of("access", "no"));
-        // corridor stays bicycle=no (not "dismount") because BikeCommonAccessParser doesn't list
-        // it in allowedHighways — bike_access is already false there. Marking road_access as
-        // DISMOUNT would suggest "can push" while access says "can't use it at all".
-        m.put("corridor", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "yes"));
-        m.put("platform", Map.of("motor_vehicle", "no", "bicycle", "dismount", "foot", "yes"));
-        HIGHWAY_TYPE_DEFAULTS = Map.copyOf(m);
-
-        // https://wiki.openstreetmap.org/wiki/Key:barrier
-        Map<String, Map<String, String>> b = new HashMap<>();
-        b.put("fence", Map.of("access", "no"));
-        b.put("wall", Map.of("access", "no"));
-        b.put("hedge", Map.of("access", "no"));
-        b.put("retaining_wall", Map.of("access", "no"));
-        b.put("city_wall", Map.of("access", "no"));
-        b.put("ditch", Map.of("access", "no"));
-        b.put("kerb", Map.of("vehicle", "yes", "foot", "yes"));
-        b.put("cattle_grid", Map.of("motor_vehicle", "yes", "foot", "yes", "bicycle", "yes"));
-        b.put("bollard", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
-        b.put("block", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
-        b.put("log", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
-        b.put("chain", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
-        b.put("jersey_barrier", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
-        b.put("cycle_barrier", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
-        b.put("motorcycle_barrier", Map.of("motor_vehicle", "no", "foot", "yes", "bicycle", "yes"));
-        b.put("bus_trap", Map.of("motor_vehicle", "no", "bus", "yes", "foot", "yes", "bicycle", "yes"));
-        b.put("sump_buster", Map.of("motor_vehicle", "no", "bus", "yes", "foot", "yes", "bicycle", "yes"));
-        b.put("kissing_gate", Map.of("vehicle", "no", "foot", "yes"));
-        b.put("stile", Map.of("vehicle", "no", "foot", "yes"));
-        b.put("turnstile", Map.of("vehicle", "no", "foot", "yes"));
-        BARRIER_TYPE_DEFAULTS = Map.copyOf(b);
-    }
     private static final Set<String> ONEWAYS_FW = Set.of("yes", "true", "1");
 
     /**
@@ -82,27 +25,28 @@ public class ModeAccessParser implements TagParser {
      * dimensions; a car-like vehicle restricts highways, adds dimensions etc.
      */
     public static class Options {
+        public static final Set<String> CAR_HIGHWAYS = Set.of("motorway", "motorway_link", "trunk", "trunk_link",
+                "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
+                "unclassified", "residential", "living_street", "service", "road", "track", "pedestrian");
+        public static final Set<String> CAR_BARRIERS = Set.of("kissing_gate", "fence", "bollard", "stile", "turnstile",
+                "cycle_barrier", "motorcycle_barrier", "block", "bus_trap", "sump_buster", "jersey_barrier");
+        static final Predicate<ReaderWay> IMPASSABLE = way -> way.hasTag("highway") && (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"));
+        static final Predicate<ReaderWay> EMERGENCY_ACCESS = way -> way.hasTag("highway", "service") && way.hasTag("service", "emergency_access");
+
         final List<String> restrictionKeys;
         Set<String> allowed = ALLOWED;
         Set<String> restricted = RESTRICTED;
-        boolean skipEmergency = true;
+        final List<Predicate<ReaderWay>> blocked = new ArrayList<>(List.of(IMPASSABLE, EMERGENCY_ACCESS));
         Set<String> highways;
         Set<String> trackTypes;
-        Function<ReaderWay, Map<String, String>> impliedDefaults = ModeAccessParser::osmDefaults;
-        Map<String, Map<String, String>> barrierDefaults = BARRIER_TYPE_DEFAULTS;
-        Predicate<ReaderWay> blocked = way -> false;
+        Function<ReaderWay, Map<String, String>> impliedDefaults = AccessResolver::osmDefaults;
+        Map<String, Map<String, String>> barrierDefaults = AccessResolver.BARRIER_TYPE_DEFAULTS;
         Set<String> onewayHighways = Set.of("motorway", "motorway_link");
         List<String> directionalKeys;
         List<String> backwardLaneKeys = List.of();
         boolean legacyOneway;
         boolean impliedFerryAccess;
         VehicleConditions conditions;
-
-        public static final Set<String> CAR_HIGHWAYS = Set.of("motorway", "motorway_link", "trunk", "trunk_link",
-                "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-                "unclassified", "residential", "living_street", "service", "road", "track", "pedestrian");
-        public static final Set<String> CAR_BARRIERS = Set.of("kissing_gate", "fence", "bollard", "stile", "turnstile",
-                "cycle_barrier", "motorcycle_barrier", "block", "bus_trap", "sump_buster", "jersey_barrier");
 
         /**
          * A motor vehicle like the former CarAccessParser: highway allowlist, tracks only grade1, grade2 or
@@ -181,12 +125,21 @@ public class ModeAccessParser implements TagParser {
         }
 
         public Options skipEmergency(boolean skipEmergency) {
-            this.skipEmergency = skipEmergency;
+            blocked.remove(EMERGENCY_ACCESS);
+            if (skipEmergency) blocked.add(EMERGENCY_ACCESS);
             return this;
         }
 
         /**
-         * @param highways the accepted highway values, null for all
+         * @param blocked an additional rule that closes the way regardless of its access values, e.g. explicitOnly
+         */
+        public Options blocked(Predicate<ReaderWay> blocked) {
+            this.blocked.add(blocked);
+            return this;
+        }
+
+        /**
+         * @param highways the accepted highway values, every other highway is blocked, null for all
          */
         public Options highways(Set<String> highways) {
             this.highways = highways;
@@ -194,11 +147,21 @@ public class ModeAccessParser implements TagParser {
         }
 
         /**
-         * @param trackTypes the accepted tracktype values of highway=track ("" for untagged), null for all
+         * @param trackTypes the accepted tracktype values of highway=track ("" for untagged), other tracks are
+         *                   blocked, null for all
          */
         public Options trackTypes(Set<String> trackTypes) {
             this.trackTypes = trackTypes;
             return this;
+        }
+
+        List<Predicate<ReaderWay>> blockingRules() {
+            List<Predicate<ReaderWay>> rules = new ArrayList<>(blocked);
+            if (highways != null)
+                rules.add(way -> way.hasTag("highway") && !way.hasTag("highway", highways));
+            if (trackTypes != null)
+                rules.add(way -> way.hasTag("highway", "track") && !trackTypes.contains(way.getTag("tracktype", "")));
+            return rules;
         }
 
         /**
@@ -214,14 +177,6 @@ public class ModeAccessParser implements TagParser {
          */
         public Options barrierDefaults(Map<String, Map<String, String>> barrierDefaults) {
             this.barrierDefaults = barrierDefaults;
-            return this;
-        }
-
-        /**
-         * @param blocked a rule beyond the access values, e.g. explicitOnly
-         */
-        public Options blocked(Predicate<ReaderWay> blocked) {
-            this.blocked = blocked;
             return this;
         }
 
@@ -270,31 +225,31 @@ public class ModeAccessParser implements TagParser {
         }
 
         /**
-         * @param conditions the vehicle dimensions for limits like maxweight and the non-temporal conditionals, null for none
+         * @param conditions the vehicle dimensions: ways with a lower limit like maxweight are blocked and the
+         *                   non-temporal conditionals are evaluated, null for none
          */
         public Options conditions(VehicleConditions conditions) {
             this.conditions = conditions;
-            return this;
+            return blocked(way -> way.hasTag("highway") && conditions.exceedsLimits(way));
         }
     }
 
-    private final Set<String> allowed;
-    private final Set<String> restricted;
-    private final List<String> restrictionKeys;
     private final List<String> vehicleForward;
     private final List<String> vehicleBackward;
     private final List<String> onewayModeKeys;
     private final BooleanEncodedValue accessEnc;
     private final BooleanEncodedValue roundaboutEnc;
+    private final AccessResolver resolver;
+    private final List<Predicate<ReaderWay>> blockingRules;
     private final Options options;
 
     public ModeAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc, Options options) {
         this.accessEnc = accessEnc;
         this.roundaboutEnc = roundaboutEnc;
         this.options = options;
-        this.restrictionKeys = options.restrictionKeys;
-        this.allowed = options.allowed;
-        this.restricted = options.restricted;
+        resolver = new AccessResolver(options.restrictionKeys, options.allowed, options.restricted,
+                options.impliedDefaults, options.barrierDefaults, options.conditions);
+        blockingRules = options.blockingRules();
         vehicleForward = options.directionalKeys.stream().map(r -> r + ":forward").toList();
         vehicleBackward = options.directionalKeys.stream().map(r -> r + ":backward").toList();
         onewayModeKeys = options.directionalKeys.stream().map(r -> "oneway:" + r).toList();
@@ -312,7 +267,7 @@ public class ModeAccessParser implements TagParser {
     }
 
     public List<String> getRestrictionKeys() {
-        return restrictionKeys;
+        return resolver.getRestrictionKeys();
     }
 
     public BooleanEncodedValue getAccessEnc() {
@@ -324,114 +279,29 @@ public class ModeAccessParser implements TagParser {
         return accessEnc.getName();
     }
 
-    /**
-     * The access values implied by the highway type and motorroad=yes
-     */
-    public static Map<String, String> osmDefaults(ReaderWay way) {
-        String highwayValue = way.getTag("highway");
-        Map<String, String> defaults = highwayValue == null ? Map.of() : HIGHWAY_TYPE_DEFAULTS.getOrDefault(highwayValue, Map.of());
-        // motorroad=yes is an annoying special case: it's not a highway=* value but a separate tag
-        // that implies foot=no, bicycle=no. If we find more tags like this, we'll need a more
-        // general mechanism for non-highway implied defaults.
-        if (way.hasTag("motorroad", "yes")) {
-            Map<String, String> merged = new HashMap<>(defaults);
-            MOTORROAD_DEFAULTS.forEach(merged::putIfAbsent);
-            return merged;
-        }
-        return defaults;
-    }
-
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        String highwayValue = way.getTag("highway");
-        if (highwayValue != null || FerrySpeedCalculator.isFerry(way)) {
-            handleHighwayAndFerryTags(edgeId, edgeIntAccess, way, highwayValue);
-        }
         // don't want platforms and other random stuff here for now
-    }
-
-    private void handleHighwayAndFerryTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, String highwayValue) {
-        if (options.skipEmergency && "service".equals(highwayValue) && "emergency_access".equals(way.getTag("service")))
+        if (!way.hasTag("highway") && !FerrySpeedCalculator.isFerry(way))
             return;
-        if (highwayValue != null) {
-            if (options.highways != null && !options.highways.contains(highwayValue))
+        for (Predicate<ReaderWay> rule : blockingRules)
+            if (rule.test(way))
                 return;
-            if (options.trackTypes != null && "track".equals(highwayValue) && !options.trackTypes.contains(way.getTag("tracktype", "")))
-                return;
-            if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
-                return;
-        }
-        if (options.blocked.test(way))
-            return;
 
-        Map<String, String> defaults = options.impliedDefaults.apply(way);
-        int firstIndex = -1;
-        String firstValue = "";
-        for (int i = 0; i < restrictionKeys.size(); i++) {
-            String key = restrictionKeys.get(i);
-            // a conditional of the same key beats its plain value, e.g. hgv:conditional=no @ (weight > 7.5) and hgv=yes
-            String conditional = options.conditions == null ? null : options.conditions.conditional(way, key);
-            // none @ destination lifts a restriction like yes
-            if ("none".equals(conditional)) conditional = "yes";
-            if (conditional != null && (allowed.contains(conditional) || restricted.contains(conditional))) {
-                firstIndex = i;
-                firstValue = conditional;
-                break;
-            }
-            String explicit = recognized(way.getTag(key));
-            if (explicit != null) {
-                firstIndex = i;
-                firstValue = explicit;
-                break;
-            }
-            // unknown value — fall through to implied default for same key, then keep looking
-            String implied = defaults.get(key);
-            if (implied != null) {
-                firstIndex = i;
-                firstValue = implied;
-                break;
-            }
-        }
-        if (restricted.contains(firstValue) && !hasPermissiveTemporalRestriction(way, firstIndex, restrictionKeys, allowed))
-            return;
-
-        if (highwayValue != null && options.conditions != null && options.conditions.exceedsLimits(way))
+        AccessResolver.Result result = resolver.resolve(way);
+        if (resolver.isRestricted(way, result))
             return;
 
         if (way.hasTag("gh:barrier_edge") && way.hasTag("node_tags")) {
             List<Map<String, Object>> nodeTags = way.getTag("node_tags", null);
-            Map<String, Object> firstNodeTags = nodeTags.get(0);
-            String barrierValue = firstNodeTags.containsKey("barrier") ? (String) firstNodeTags.get("barrier") : "";
-            Map<String, String> barrierDefaults = options.barrierDefaults.getOrDefault(barrierValue, Map.of());
-            // Walk restriction keys checking explicit node tags and barrier type defaults. Unlike for ways an
-            // unknown explicit value hides the less specific explicit values, only the defaults are still considered.
-            String nodeValue = "";
-            boolean unknown = false;
-            for (String key : restrictionKeys) {
-                String explicit = unknown ? null : (String) firstNodeTags.get(key);
-                if (explicit != null) {
-                    if (allowed.contains(explicit) || restricted.contains(explicit)) {
-                        nodeValue = explicit;
-                        break;
-                    }
-                    unknown = true;
-                }
-                String implied = barrierDefaults.get(key);
-                if (implied != null) {
-                    nodeValue = implied;
-                    break;
-                }
-            }
-            if (restricted.contains(nodeValue))
-                return;
-            if ("yes".equals(firstNodeTags.get("locked")) && !INTENDED.contains(nodeValue))
+            if (resolver.isBarrier(nodeTags.get(0)))
                 return;
         }
 
         if (FerrySpeedCalculator.isFerry(way)) {
-            if (allowed.contains(firstValue)
+            if (resolver.isAllowed(result.value())
                     // implied default is allowed only if foot and bicycle is not specified:
-                    || options.impliedFerryAccess && firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle")
+                    || options.impliedFerryAccess && result.value().isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle")
                     // if hgv is allowed then smaller trucks and cars are allowed too even if not specified
                     || options.impliedFerryAccess && way.hasTag("hgv", "yes")) {
                 // ferry is allowed via explicit tag
@@ -443,8 +313,8 @@ public class ModeAccessParser implements TagParser {
         boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
         boolean forward, backward;
         if (options.legacyOneway) {
-            boolean forwardClosed = way.hasTag("oneway", "-1") || way.hasTag(vehicleForward, restricted);
-            boolean oneway = forwardClosed || isRoundabout || way.hasTag("oneway", ONEWAYS_FW) || way.hasTag(vehicleBackward, restricted);
+            boolean forwardClosed = way.hasTag("oneway", "-1") || way.hasTag(vehicleForward, options.restricted);
+            boolean oneway = forwardClosed || isRoundabout || way.hasTag("oneway", ONEWAYS_FW) || way.hasTag(vehicleBackward, options.restricted);
             forward = !forwardClosed;
             backward = !oneway || forwardClosed || hasBackwardLane(way);
         } else {
@@ -455,23 +325,6 @@ public class ModeAccessParser implements TagParser {
             accessEnc.setBool(false, edgeId, edgeIntAccess, true);
         if (backward)
             accessEnc.setBool(true, edgeId, edgeIntAccess, true);
-    }
-
-    /**
-     * @return the allowed or restricted value of a tag like "yes;forestry" (allowed wins), null if unknown
-     */
-    private String recognized(String value) {
-        if (value == null) return null;
-        if (allowed.contains(value)) return value;
-        if (restricted.contains(value)) return value;
-        if (value.indexOf(';') < 0) return null;
-        String result = null;
-        for (String raw : value.split(";")) {
-            String v = raw.trim();
-            if (allowed.contains(v)) return v;
-            if (restricted.contains(v)) result = v;
-        }
-        return result;
     }
 
     /**
@@ -491,7 +344,7 @@ public class ModeAccessParser implements TagParser {
         if (ONEWAYS_FW.contains(modeOneway)) return true;
         if ("-1".equals(modeOneway)) return false;
         // 2. mode-specific directional prohibition: <mode>:forward=no
-        if (restricted.contains(way.getFirstValue(vehicleForward))) return false;
+        if (resolver.isRestricted(way.getFirstValue(vehicleForward))) return false;
         // 3. generic oneway tag (forward direction is only closed by oneway=-1;
         //    motorway/roundabout imply forward-oneway, which leaves forward open)
         return !way.hasTag("oneway", "-1");
@@ -505,7 +358,7 @@ public class ModeAccessParser implements TagParser {
         if ("-1".equals(modeOneway)) return true;
         if (hasBackwardLane(way)) return true;
         // 2. mode-specific directional prohibition: <mode>:backward=no
-        if (restricted.contains(way.getFirstValue(vehicleBackward))) return false;
+        if (resolver.isRestricted(way.getFirstValue(vehicleBackward))) return false;
         // 3. generic oneway tag, then implied oneway from highway type / roundabout.
         //    oneway=no explicitly relaxes the motorway/roundabout implication.
         if (way.hasTag("oneway", ONEWAYS_FW)) return false;
