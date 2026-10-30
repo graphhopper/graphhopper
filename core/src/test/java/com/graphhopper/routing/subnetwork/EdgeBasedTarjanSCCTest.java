@@ -24,7 +24,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.subnetwork.EdgeBasedTarjanSCC.ConnectedComponents;
-import com.graphhopper.routing.subnetwork.TarjanSCCTest.IntWithArray;
+import com.graphhopper.routing.subnetwork.NodeBasedTarjanSCCTest.IntWithArray;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.GHUtility;
@@ -36,7 +36,7 @@ import java.util.Arrays;
 
 import java.util.Set;
 
-import static com.graphhopper.routing.subnetwork.TarjanSCCTest.buildComponentSet;
+import static com.graphhopper.routing.subnetwork.NodeBasedTarjanSCCTest.buildComponentSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

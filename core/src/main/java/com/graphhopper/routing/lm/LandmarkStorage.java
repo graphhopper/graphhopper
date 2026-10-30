@@ -29,8 +29,8 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
-import com.graphhopper.routing.subnetwork.TarjanSCC;
-import com.graphhopper.routing.subnetwork.TarjanSCC.ConnectedComponents;
+import com.graphhopper.routing.subnetwork.NodeBasedTarjanSCC;
+import com.graphhopper.routing.subnetwork.NodeBasedTarjanSCC.ConnectedComponents;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -272,7 +272,7 @@ public class LandmarkStorage {
         EdgeFilter tarjanFilter = edge -> accessFilter.accept(edge) && Double.isFinite(weighting.calcEdgeWeight(edge, false));
 
         StopWatch sw = new StopWatch().start();
-        ConnectedComponents graphComponents = TarjanSCC.findComponents(graph, tarjanFilter, true);
+        ConnectedComponents graphComponents = NodeBasedTarjanSCC.findComponents(graph, tarjanFilter, true);
         if (logDetails)
             LOGGER.info("Calculated " + graphComponents.getComponents().size() + " subnetworks via tarjan in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
 

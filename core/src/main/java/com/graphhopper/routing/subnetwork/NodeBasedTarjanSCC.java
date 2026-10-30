@@ -49,7 +49,7 @@ import java.util.List;
  *
  * @author easbar
  */
-public class TarjanSCC {
+public class NodeBasedTarjanSCC {
     private final Graph graph;
     private final EdgeExplorer explorer;
     private final EdgeFilter edgeFilter;
@@ -75,7 +75,7 @@ public class TarjanSCC {
      *                                    which can be useful to save some memory.
      */
     public static ConnectedComponents findComponents(Graph graph, EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
-        return new TarjanSCC(graph, edgeFilter, excludeSingleNodeComponents).findComponents();
+        return new NodeBasedTarjanSCC(graph, edgeFilter, excludeSingleNodeComponents).findComponents();
     }
 
     /**
@@ -86,10 +86,10 @@ public class TarjanSCC {
      * @see #findComponents(Graph, EdgeFilter, boolean)
      */
     public static ConnectedComponents findComponentsRecursive(Graph graph, EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
-        return new TarjanSCC(graph, edgeFilter, excludeSingleNodeComponents).findComponentsRecursive();
+        return new NodeBasedTarjanSCC(graph, edgeFilter, excludeSingleNodeComponents).findComponentsRecursive();
     }
 
-    private TarjanSCC(Graph graph, EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
+    private NodeBasedTarjanSCC(Graph graph, EdgeFilter edgeFilter, boolean excludeSingleNodeComponents) {
         this.graph = graph;
         this.edgeFilter = edgeFilter;
         explorer = graph.createEdgeExplorer(edgeFilter);
@@ -136,7 +136,8 @@ public class TarjanSCC {
             } else if (nodeOnStack.get(w))
                 nodeLowLink[v] = Math.min(nodeLowLink[v], nodeIndex[w]);
         }
-        buildComponent(v);
+        if (nodeLowLink[v] == nodeIndex[v])
+            buildComponent(v);
     }
 
     private void setupNextNode(int v) {
@@ -148,31 +149,29 @@ public class TarjanSCC {
     }
 
     private void buildComponent(int v) {
-        if (nodeLowLink[v] == nodeIndex[v]) {
-            if (tarjanStack.getLast() == v) {
-                tarjanStack.removeLast();
-                nodeOnStack.clear(v);
-                components.numComponents++;
-                components.numNodes++;
-                if (!excludeSingleNodeComponents)
-                    components.singleNodeComponents.set(v);
-            } else {
-                IntArrayList component = new IntArrayList();
-                while (true) {
-                    int w = tarjanStack.removeLast();
-                    component.add(w);
-                    nodeOnStack.clear(w);
-                    if (w == v)
-                        break;
-                }
-                component.trimToSize();
-                assert component.size() > 1;
-                components.numComponents++;
-                components.numNodes += component.size();
-                components.components.add(component);
-                if (component.size() > components.biggestComponent.size())
-                    components.biggestComponent = component;
+        if (tarjanStack.getLast() == v) {
+            tarjanStack.removeLast();
+            nodeOnStack.clear(v);
+            components.numComponents++;
+            components.numNodes++;
+            if (!excludeSingleNodeComponents)
+                components.singleNodeComponents.set(v);
+        } else {
+            IntArrayList component = new IntArrayList();
+            while (true) {
+                int w = tarjanStack.removeLast();
+                component.add(w);
+                nodeOnStack.clear(w);
+                if (w == v)
+                    break;
             }
+            component.trimToSize();
+            assert component.size() > 1;
+            components.numComponents++;
+            components.numNodes += component.size();
+            components.components.add(component);
+            if (component.size() > components.biggestComponent.size())
+                components.biggestComponent = component;
         }
     }
 
@@ -186,7 +185,8 @@ public class TarjanSCC {
                 pop();
                 switch (dfsState) {
                     case BUILD_COMPONENT:
-                        buildComponent(v);
+                        if (nodeLowLink[v] == nodeIndex[v])
+                            buildComponent(v);
                         break;
                     case UPDATE:
                         nodeLowLink[v] = Math.min(nodeLowLink[v], nodeLowLink[w]);
@@ -295,7 +295,7 @@ public class TarjanSCC {
         }
 
         /**
-         * The set of nodes that form their own (single-node) component. If {@link TarjanSCC#excludeSingleNodeComponents}
+         * The set of nodes that form their own (single-node) component. If {@link NodeBasedTarjanSCC#excludeSingleNodeComponents}
          * is enabled this set will be empty.
          */
         public BitSet getSingleNodeComponents() {

@@ -5,7 +5,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.PtGraph;
-import com.graphhopper.routing.subnetwork.TarjanSCC;
+import com.graphhopper.routing.subnetwork.NodeBasedTarjanSCC;
 import com.graphhopper.routing.util.EdgeFilter;
 
 import java.util.*;
@@ -17,7 +17,7 @@ public class Analysis {
 
     public static List<List<GtfsStorage.FeedIdWithStopId>> findStronglyConnectedComponentsOfStopGraph(PtGraph ptGraph) {
         PtGraphAsAdjacencyList ptGraphAsAdjacencyList = new PtGraphAsAdjacencyList(ptGraph);
-        TarjanSCC.ConnectedComponents components = TarjanSCC.findComponents(ptGraphAsAdjacencyList, EdgeFilter.ALL_EDGES, false);
+        NodeBasedTarjanSCC.ConnectedComponents components = NodeBasedTarjanSCC.findComponents(ptGraphAsAdjacencyList, EdgeFilter.ALL_EDGES, false);
         List<List<GtfsStorage.FeedIdWithStopId>> stronglyConnectedComponentsOfStopGraph = new ArrayList<>();
         for (IntArrayList component : components.getComponents()) {
             ArrayList<GtfsStorage.FeedIdWithStopId> stopsOfComponent = new ArrayList<>();

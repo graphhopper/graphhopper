@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 
 /**
@@ -43,7 +42,7 @@ import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
  * some special treatment as well (this was written when base graph could still have loops!).
  *
  * @author easbar
- * @see TarjanSCC
+ * @see NodeBasedTarjanSCC
  */
 public class EdgeBasedTarjanSCC {
     private final Graph graph;
@@ -170,7 +169,8 @@ public class EdgeBasedTarjanSCC {
             int q = createEdgeKey(iter, false);
             handleNeighbor(p, q, iter.getAdjNode());
         }
-        buildComponent(p);
+        if (edgeKeyLowLink.get(p) == edgeKeyIndex.get(p))
+            buildComponent(p);
     }
 
     private void setupNextEdgeKey(int p) {
@@ -190,22 +190,20 @@ public class EdgeBasedTarjanSCC {
     }
 
     private void buildComponent(int p) {
-        if (edgeKeyLowLink.get(p) == edgeKeyIndex.get(p)) {
-            if (tarjanStack.getLast() == p) {
-                tarjanStack.removeLast();
-                edgeKeyOnStack.remove(p);
-                consumer.singleEdgeComponent(p);
-            } else {
-                consumer.beginComponent();
-                while (true) {
-                    int q = tarjanStack.removeLast();
-                    edgeKeyOnStack.remove(q);
-                    consumer.edgeKey(q);
-                    if (q == p)
-                        break;
-                }
-                consumer.endComponent();
+        if (tarjanStack.getLast() == p) {
+            tarjanStack.removeLast();
+            edgeKeyOnStack.remove(p);
+            consumer.singleEdgeComponent(p);
+        } else {
+            consumer.beginComponent();
+            while (true) {
+                int q = tarjanStack.removeLast();
+                edgeKeyOnStack.remove(q);
+                consumer.edgeKey(q);
+                if (q == p)
+                    break;
             }
+            consumer.endComponent();
         }
     }
 
@@ -244,7 +242,8 @@ public class EdgeBasedTarjanSCC {
             pop();
             switch (dfsState) {
                 case BUILD_COMPONENT:
-                    buildComponent(p);
+                    if (edgeKeyLowLink.get(p) == edgeKeyIndex.get(p))
+                        buildComponent(p);
                     break;
                 case UPDATE:
                     edgeKeyLowLink.minTo(p, edgeKeyLowLink.get(q));
