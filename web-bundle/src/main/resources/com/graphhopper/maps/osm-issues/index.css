@@ -569,6 +569,18 @@ input.changed {
     margin: 0 -1px;
 }
 
+/* the row of sign icons under the Mapillary layer */
+#sign-key {
+    margin: 0 0 6px 22px;
+}
+
+#sign-key img {
+    width: 18px;
+    height: 18px;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
 .dot.osm {
     background: #2e9e4f;
 }

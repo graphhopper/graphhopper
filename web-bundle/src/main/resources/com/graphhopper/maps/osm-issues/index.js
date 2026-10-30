@@ -165,37 +165,54 @@ const issueLayer = new ol.layer.Vector({
     }
 });
 
-// Mapillary's traffic sign detections, narrowed to the height signs. They answer the question the
-// elevation cannot: is there a sign here at all, or would a visit only produce maxheight=default.
-// Detections carry no value, so the number still has to be read off the photo.
-const HEIGHT_SIGNS = new Set([
-    'regulatory--height-limit--g1',
-    'warning--height-restriction--g2', 'warning--height-restriction--g3',
-    'warning--height-restriction--g4', 'warning--height-restriction--g5',
-    'information--height-limit--g1', 'information--height-limit--g2',
-    'complementary--height-limit--g1', 'complementary--height-limit--g2'
-]);
+// Mapillary's traffic sign detections, narrowed to the restrictions a truck router cares about
+// (not every access sign: "no entry" and "road closed" were in and taken out again as too much).
+// They answer the question the elevation cannot: is there a sign here at all, or would a visit only
+// produce maxheight=default. Detections carry no value, so the number still has to be read off the
+// photo. Matched by prefix: Mapillary numbers the regional variants of a sign g1, g2, ... and that
+// list changes, so it is not spelled out here.
+//
+// The icons are our own: a red ring with a simple face. Mapillary's own icons carry placeholder
+// numbers (it draws "3 m" on every height limit), and the detection does not carry the real value -
+// unlike speed limits, where it is part of the class name - so a question mark is all we can say.
+const SIGN_GROUPS = [
+    {key: 'height', name: 'height limit',
+        re: /^(regulatory|information|complementary)--height-limit--|^warning--height-restriction--/,
+        face: '<path d="M11.3 6.6 L18.7 6.6 L15 10.2 Z"/><path d="M11.3 23.4 L18.7 23.4 L15 19.8 Z"/>'
+            + '<text x="15" y="18.1" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="8.6" font-weight="700">? m</text>'},
+    {key: 'weight', name: 'weight limit',
+        re: /^regulatory--weight-limit(-per-axle)?--/,
+        face: '<text x="15" y="18.8" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="10" font-weight="700">? t</text>'},
+    {key: 'hgv', name: 'no heavy goods vehicles',
+        re: /^regulatory--no-heavy-goods-vehicles--/,
+        // a lorry: cargo box, cab, two wheels
+        face: '<rect x="7" y="10" width="11.5" height="8.5"/><path d="M18.5 12.5 L21.8 12.5 L24 15.5 L24 18.5 L18.5 18.5 Z"/>'
+            + '<circle cx="10.5" cy="20" r="1.9"/><circle cx="20.5" cy="20" r="1.9"/>'},
+    {key: 'motor', name: 'no motor vehicles',
+        re: /^regulatory--no-motor-vehicles(-except-motorcycles)?--/,
+        // motorcycle above, car below, as on the sign
+        face: '<path d="M11 10.5 L13 7 L17.5 7 L19 10.5 Z"/><circle cx="11" cy="10.5" r="1.9"/><circle cx="19" cy="10.5" r="1.9"/>'
+            + '<path d="M7 20.5 L7 17.5 L9.5 14.5 L19 14.5 L22.5 17.5 L22.5 20.5 Z"/><circle cx="10.5" cy="21" r="1.8"/><circle cx="19.5" cy="21" r="1.8"/>'},
+];
+const signGroup = value => value ? SIGN_GROUPS.find(g => g.re.test(value)) : undefined;
 
-// Our own sign: the red ring and the two arrows of a height restriction, with a question mark
-// where the number would be. Mapillary's own icon carries a placeholder height (it draws "3 m" on
-// every one of them) and the detection does not carry the real value - unlike speed limits, where
-// it is part of the class name - so anything but a question mark here would be invented.
-const SIGN_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgdmlld0JveD0iMCAwIDMwIDMwIj48Y2lyY2xlIGN4PSIxNSIgY3k9IjE1IiByPSIxMiIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZDAwMjFiIiBzdHJva2Utd2lkdGg9IjMuNCIvPjxwYXRoIGQ9Ik0xMS4zIDYuNiBMMTguNyA2LjYgTDE1IDEwLjIgWiIgZmlsbD0iIzFhMWExYSIvPjxwYXRoIGQ9Ik0xMS4zIDIzLjQgTDE4LjcgMjMuNCBMMTUgMTkuOCBaIiBmaWxsPSIjMWExYTFhIi8+PHRleHQgeD0iMTUiIHk9IjE4LjEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiMxYTFhMWEiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsQXJpYWwsc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4LjYiIGZvbnQtd2VpZ2h0PSI3MDAiPj8gbTwvdGV4dD48L3N2Zz4=';
-// the same sign a little smaller, with an empty distance plate below it
-const AHEAD_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMCIgaGVpZ2h0PSIzNCIgdmlld0JveD0iMCAwIDMwIDM0Ij48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNSAxMikgc2NhbGUoMC44KSB0cmFuc2xhdGUoLTE1IC0xNSkiPjxjaXJjbGUgY3g9IjE1IiBjeT0iMTUiIHI9IjEyIiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNkMDAyMWIiIHN0cm9rZS13aWR0aD0iMy40Ii8+PHBhdGggZD0iTTExLjMgNi42IEwxOC43IDYuNiBMMTUgMTAuMiBaIiBmaWxsPSIjMWExYTFhIi8+PHBhdGggZD0iTTExLjMgMjMuNCBMMTguNyAyMy40IEwxNSAxOS44IFoiIGZpbGw9IiMxYTFhMWEiLz48dGV4dCB4PSIxNSIgeT0iMTguMSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzFhMWExYSIgZm9udC1mYW1pbHk9IkhlbHZldGljYSxBcmlhbCxzYW5zLXNlcmlmIiBmb250LXNpemU9IjguNiIgZm9udC13ZWlnaHQ9IjcwMCI+PyBtPC90ZXh0PjwvZz48cmVjdCB4PSI3LjUiIHk9IjI1LjUiIHdpZHRoPSIxNSIgaGVpZ2h0PSI3IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiMxYTFhMWEiIHN0cm9rZS13aWR0aD0iMS4yIi8+PC9zdmc+';
-
-const signStyle = new ol.style.Style({
-    image: new ol.style.Icon({src: SIGN_ICON, scale: 1})
-});
-
+const RING = '<circle cx="15" cy="15" r="12" fill="#ffffff" stroke="#d0021b" stroke-width="3.4"/>';
+const svgUrl = (w, h, body) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' + body + '</svg>');
 // A distance plate ("in 350 m") under the sign means the restriction is further ahead, not here.
 // Mapillary detects the plate as a feature of its own, without the number, usually a metre or two
 // from the sign it belongs to. It misses some, so no plate does not prove the sign is at the spot.
 const PLATE_RADIUS_M = 5;
-const aheadStyle = new ol.style.Style({
+for (const g of SIGN_GROUPS) {
+    const sign = RING + '<g fill="#1a1a1a">' + g.face + '</g>';
+    g.icon = svgUrl(30, 30, sign);
+    g.style = new ol.style.Style({image: new ol.style.Icon({src: g.icon, scale: 1})});
+    // the same sign a little smaller, faded, with an empty distance plate below it
+    const ahead = svgUrl(30, 34, '<g transform="translate(15 12) scale(0.8) translate(-15 -15)">' + sign + '</g>'
+        + '<rect x="7.5" y="25.5" width="15" height="7" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.2"/>');
     // anchored on the middle of the ring, like the plain sign
-    image: new ol.style.Icon({src: AHEAD_ICON, anchor: [0.5, 12 / 34], opacity: 0.6})
-});
+    g.aheadStyle = new ol.style.Style({image: new ol.style.Icon({src: ahead, anchor: [0.5, 12 / 34], opacity: 0.6})});
+}
 
 const signFormat = new ol.format.MVT();
 const readSigns = signFormat.readFeatures.bind(signFormat);
@@ -208,7 +225,7 @@ signFormat.readFeatures = (source, options) => {
     const stretch = 1 / Math.cos(ol.proj.toLonLat(plates[0])[1] * Math.PI / 180);
     const radius = PLATE_RADIUS_M * stretch;
     for (const f of features) {
-        if (!HEIGHT_SIGNS.has(f.get('value'))) continue;
+        if (!signGroup(f.get('value'))) continue;
         const [x, y] = at(f);
         // tile features are RenderFeatures, which have no set(), but hand out their properties
         if (plates.some(([px, py]) => Math.hypot(px - x, py - y) <= radius))
@@ -233,8 +250,10 @@ const signLayer = new ol.layer.VectorTile({
         attributions: 'signs &copy; <a href="https://www.mapillary.com" target="_blank">Mapillary</a>',
         url: 'https://tiles.mapillary.com/maps/vtp/mly_map_feature_traffic_sign/2/{z}/{x}/{y}'
     }),
-    style: feature => !HEIGHT_SIGNS.has(feature.get('value')) ? null
-        : feature.get('distance_plate') ? aheadStyle : signStyle
+    style: feature => {
+        const g = signGroup(feature.get('value'));
+        return !g ? null : feature.get('distance_plate') ? g.aheadStyle : g.style;
+    }
 });
 
 // What OpenStreetMap already says, as an overlay: the same crossings, but the ones that already
@@ -507,8 +526,10 @@ $('private').onchange = () => {
 };
 
 /** a layer that is on unless the user turned it off - they are the point of the map */
-function layerSwitch(box, layer, key, changed = () => {}) {
-    box.checked = !box.disabled && localStorage.getItem(key) !== 'no';
+function layerSwitch(box, layer, key, changed = () => {}, onByDefault = true) {
+    // the saved choice wins; before any choice, the layer's default
+    const saved = localStorage.getItem(key);
+    box.checked = !box.disabled && (saved ? saved !== 'no' : onByDefault);
     layer.setVisible(box.checked);
     box.onchange = () => {
         localStorage.setItem(key, box.checked ? 'yes' : 'no');
@@ -526,7 +547,9 @@ layerSwitch($('layer-osm'), osmTagLayer, 'layer_osm', () => {
     osmTags.forget();
     load();
 });
-$('key-sign').style.backgroundImage = 'url(' + SIGN_ICON + ')';
+$('key-sign').style.backgroundImage = 'url(' + SIGN_GROUPS[0].icon + ')';
+// one of each sign in the legend, the name on hover
+$('sign-key').innerHTML = SIGN_GROUPS.map(g => '<img src="' + g.icon + '" title="' + g.name + '" alt="' + g.name + '">').join('');
 if (settings.mapillaryToken) {
     signLayer.getSource().setUrl('https://tiles.mapillary.com/maps/vtp/mly_map_feature_traffic_sign'
         + '/2/{z}/{x}/{y}?access_token=' + encodeURIComponent(settings.mapillaryToken));
@@ -534,7 +557,10 @@ if (settings.mapillaryToken) {
     $('layer-signs').disabled = true;
     $('layer-signs').parentNode.title = 'needs a mapillaryToken in config.js';
 }
-layerSwitch($('layer-signs'), signLayer, 'layer_signs');
+// off by default: green is what OSM has, the coloured dots what it lacks - the signs come on top
+// when someone wants to check a spot against a camera
+layerSwitch($('layer-signs'), signLayer, 'layer_signs', () => $('sign-key').hidden = !$('layer-signs').checked, false);
+$('sign-key').hidden = !$('layer-signs').checked;
 updateNotes();
 
 // the filter section stays folded the way the user left it
@@ -600,7 +626,7 @@ map.on('singleclick', evt => {
     // in OSM turns out to be wrong on the photo
     const feature = hit(issueLayer, 6) || hit(osmTagLayer, 6);
     if (feature) return openIssue(feature);
-    const sign = hit(signLayer, 8, f => HEIGHT_SIGNS.has(f.get('value')));
+    const sign = hit(signLayer, 8, f => signGroup(f.get('value')));
     if (sign) return openSign(sign);
     // clicking the map itself is how you put the panel away - no button needed for that
     if (!$('edit').hidden) closeEdit();
