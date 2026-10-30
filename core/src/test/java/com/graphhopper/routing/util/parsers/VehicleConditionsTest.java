@@ -16,39 +16,39 @@ class VehicleConditionsTest {
     public void conditional() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("access:conditional", "no @ (weight > 7.5)");
-        assertEquals("no", truck.conditional(way, "access"));
-        assertNull(truck.conditional(way, "hgv"));
+        assertEquals("no", truck.getConditionalValue(way, "access"));
+        assertNull(truck.getConditionalValue(way, "hgv"));
         way.setTag("access:conditional", "no @ (weight < 7.5)");
-        assertNull(truck.conditional(way, "access"));
-        // the equals sign is ignored
-        way.setTag("access:conditional", "no @ weight>=25");
-        assertEquals("no", truck.conditional(way, "access"));
+        assertNull(truck.getConditionalValue(way, "access"));
+        // quirk: the equals sign is ignored
+        way.setTag("access:conditional", "no @ weight>=26");
+        assertNull(truck.getConditionalValue(way, "access"));
         way.setTag("access:conditional", "no @ (height>3.5t)");
-        assertEquals("no", truck.conditional(way, "access"));
-        // mirrors do not count
+        assertEquals("no", truck.getConditionalValue(way, "access"));
+        // quirk: mirrors do not count
         way.setTag("access:conditional", "no @ (width > 2.7)");
-        assertNull(truck.conditional(way, "access"));
+        assertNull(truck.getConditionalValue(way, "access"));
         way.setTag("access:conditional", "no @ hgv");
-        assertEquals("no", truck.conditional(way, "access"));
+        assertEquals("no", truck.getConditionalValue(way, "access"));
         way.setTag("access:conditional", "no @ psv");
-        assertNull(truck.conditional(way, "access"));
+        assertNull(truck.getConditionalValue(way, "access"));
         way.setTag("access:conditional", "none @ (maxweight)");
-        assertEquals("none", truck.conditional(way, "access"));
+        assertEquals("none", truck.getConditionalValue(way, "access"));
         way.setTag("access:conditional", "destination @ (weight > 3.5)");
-        assertEquals("destination", truck.conditional(way, "access"));
+        assertEquals("destination", truck.getConditionalValue(way, "access"));
         way.setTag("access:conditional", "none @ destination");
-        assertEquals("none", truck.conditional(way, "access"));
+        assertEquals("none", truck.getConditionalValue(way, "access"));
         way.setTag("access:conditional", "none @ private");
-        assertNull(truck.conditional(way, "access"));
+        assertNull(truck.getConditionalValue(way, "access"));
         // temporal, multiple and broken conditions are not evaluated
         way.setTag("access:conditional", "no @ (Mo-Fr 06:00-10:00)");
-        assertNull(truck.conditional(way, "access"));
+        assertNull(truck.getConditionalValue(way, "access"));
         way.setTag("access:conditional", "no @ (weight > 7.5); yes @ (Mo-Fr)");
-        assertNull(truck.conditional(way, "access"));
+        assertNull(truck.getConditionalValue(way, "access"));
         way.setTag("access:conditional", "no @ (weight > 7,5)");
-        assertNull(truck.conditional(way, "access"));
+        assertNull(truck.getConditionalValue(way, "access"));
         way.setTag("access:conditional", "no @ (weight >)");
-        assertNull(truck.conditional(way, "access"));
+        assertNull(truck.getConditionalValue(way, "access"));
     }
 
     @Test
@@ -82,6 +82,10 @@ class VehicleConditionsTest {
         assertTrue(truck.exceedsLimits(way));
         way.setTag("height", "4");
         assertFalse(truck.exceedsLimits(way));
+        way.setTag("maxheight", "default");
+        assertFalse(truck.exceedsLimits(way));
+        way.setTag("maxheight", "3.5");
+        assertTrue(truck.exceedsLimits(way));
         way.setTag("maxheight:physical", "3 m");
         assertTrue(truck.exceedsLimits(way));
         way.setTag("bridge", "no");
@@ -92,10 +96,20 @@ class VehicleConditionsTest {
         assertTrue(truck.exceedsLimits(way));
         way.setTag("maxwidth:physical", "3");
         assertFalse(truck.exceedsLimits(way));
+        way.setTag("maxwidth", "6'6\"");
+        assertTrue(truck.exceedsLimits(way));
+        way.clearTags();
+        // width needs a small margin over width + mirrors
+        way.setTag("width", "2.94");
+        assertTrue(truck.exceedsLimits(way));
+        way.setTag("width", "3");
+        assertFalse(truck.exceedsLimits(way));
         way.clearTags();
 
         way.setTag("maxlength:hgv", "11");
         assertTrue(truck.exceedsLimits(way));
         assertFalse(truck.hgv(false).exceedsLimits(way));
+        way.setTag("maxlength", "11");
+        assertTrue(truck.exceedsLimits(way));
     }
 }

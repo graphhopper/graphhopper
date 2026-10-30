@@ -33,17 +33,12 @@ class TruckVehicles {
             default -> throw new IllegalArgumentException(vehicle);
         };
         ModeAccessParser.Options options = ModeAccessParser.Options.motorVehicle(keys).allow(allow, Set.of());
-        VehicleConditions conditions = new VehicleConditions(keys, options.getAllowed());
         switch (vehicle) {
-            case "car" -> conditions.height(1.99);
-            case "small_truck" -> conditions.height(2.7).width(2, 0.28).length(5.5).weight(2.08 + 1.4);
-            case "truck" -> {
-                conditions.height(3.7).width(2.6, 0.34).length(12).weight(13.0 + 13.0).axes(3).hgv(true);
-                options.trackTypes(Set.of());
-            }
-            case "taxi" -> options.backwardLaneKeys(List.of("psv", "taxi")).trackTypes(Set.of());
+            case "car" -> options.createConditions().height(1.99);
+            case "small_truck" -> options.createConditions().height(2.7).width(2, 0.28).length(5.5).weight(2.08 + 1.4);
+            case "truck" -> options.trackTypes(Set.of()).createConditions().height(3.7).width(2.6, 0.34).length(12).weight(13.0 + 13.0).axes(3).hgv(true);
+            case "taxi" -> options.backwardLaneKeys(List.of("psv", "taxi")).trackTypes(Set.of()).createConditions();
             case "scooter" -> {
-                conditions.height(1.9).width(1, 0).length(2).weight(0.3);
                 Set<String> allowed = new HashSet<>(options.getAllowed());
                 allowed.add("dismount");
                 Set<String> highways = new HashSet<>(ModeAccessParser.Options.CAR_HIGHWAYS);
@@ -54,10 +49,11 @@ class TruckVehicles {
                         barrierDefaults(ModeAccessParser.Options.barriers(barriers)).
                         blocked(ModeAccessParser.Options.explicitOnly("moped", allowed,
                                 Set.of("motorway", "motorway_link", "cycleway", "pedestrian"), 50));
+                options.createConditions().height(1.9).width(1, 0).length(2).weight(0.3);
             }
         }
         return new ModeAccessParser(lookup.getBooleanEncodedValue(VehicleAccess.key(vehicle)),
-                lookup.getBooleanEncodedValue(Roundabout.KEY), options.conditions(conditions));
+                lookup.getBooleanEncodedValue(Roundabout.KEY), options);
     }
 
     static boolean forward(ModeAccessParser parser, ReaderWay way) {

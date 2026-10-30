@@ -89,6 +89,15 @@ class BusModeAccessParserTest {
         assertFalse(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
 
+        // any restricted value closes the direction, not only no (e.g. hgv:forward=delivery on osm way 4474296)
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("bus:forward", "delivery");
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertTrue(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
+
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("vehicle:backward", "no");

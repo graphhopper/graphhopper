@@ -31,7 +31,6 @@ import java.util.Set;
  */
 public class VehicleConditions {
     private static final List<String> LIMIT_KEYS = List.of("maxweight", "maxheight", "maxwidth");
-    private final List<String> restrictionKeys;
     private final List<String> liftKeys;
     private final Set<String> allowed;
     private double weight = 2.5, height = 2, width = 1.9, mirrorWidth = 0, length = 4.5;
@@ -43,7 +42,6 @@ public class VehicleConditions {
      *                if delivery is allowed
      */
     public VehicleConditions(List<String> restrictionKeys, Set<String> allowed) {
-        this.restrictionKeys = restrictionKeys;
         this.allowed = allowed;
         liftKeys = new ArrayList<>(restrictionKeys);
         liftKeys.addAll(LIMIT_KEYS);
@@ -83,27 +81,24 @@ public class VehicleConditions {
         return this;
     }
 
-    public boolean isHgv() {
-        return hgv;
-    }
-
     /**
-     * @return the value of key:conditional if its condition holds for this vehicle, otherwise null
+     * @return the value of key:conditional if its condition applies to this vehicle, otherwise null. E.g. for
+     * maxweight:conditional=none @ (weight>7.5) a 12t truck gets "none", a car null.
      */
-    public String conditional(ReaderWay way, String key) {
+    public String getConditionalValue(ReaderWay way, String key) {
         String tag = way.getTag(key + ":conditional");
         if (tag == null || tag.contains(";")) return null;
         String[] parts = tag.split("@");
         if (parts.length != 2) return null;
         String condition = parts[1].replace('(', ' ').replace(')', ' ').trim();
         try {
-            return holds(condition) ? parts[0].trim() : null;
+            return conditionApplies(condition) ? parts[0].trim() : null;
         } catch (RuntimeException ex) {
             return null;
         }
     }
 
-    private boolean holds(String condition) {
+    private boolean conditionApplies(String condition) {
         // none @ delivery, no @ hgv, none @ maxweight
         if (allowed.contains(condition) || liftKeys.contains(condition)) return true;
         boolean less = true;
@@ -156,7 +151,7 @@ public class VehicleConditions {
 
     private boolean limitLifted(ReaderWay way) {
         for (String key : liftKeys) {
-            String value = conditional(way, key);
+            String value = getConditionalValue(way, key);
             if (value != null && (allowed.contains(value) || "none".equals(value)))
                 return true;
         }

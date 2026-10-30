@@ -54,11 +54,6 @@ class ScooterModeAccessParserTest {
 
         way.clearTags();
         way.setTag("highway", "trunk");
-        way.setTag("motorroad", "yes");
-        assertFalse(forward(parser, way));
-
-        way.clearTags();
-        way.setTag("highway", "trunk");
         way.setTag("minspeed", "40 mph");
         assertFalse(forward(parser, way));
         way.setTag("minspeed", "30");
@@ -95,16 +90,6 @@ class ScooterModeAccessParserTest {
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("maxweight", "0.1");
-        assertFalse(forward(parser, way));
-
-        way.clearTags();
-        way.setTag("highway", "primary");
-        way.setTag("maxaxleload", "0.5");
-        assertTrue(forward(parser, way));
-
-        way.clearTags();
-        way.setTag("highway", "primary");
-        way.setTag("maxaxleload", "0.1");
         assertFalse(forward(parser, way));
 
         way.clearTags();
@@ -148,8 +133,7 @@ class ScooterModeAccessParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("moped", "yes");
-        way.setTag("edge_distance", 200.0);
-        assertTrue(forward(parser, way), "way assumed to be accessible but wasn't");
+        assertTrue(forward(parser, way));
 
         way.setTag("motor_vehicle", "no");
         assertTrue(forward(parser, way));

@@ -30,11 +30,11 @@ import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPe
  * (highway type, barrier type) is used if the key is absent or its value unknown.
  */
 public class AccessResolver {
+    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive");
+    // quirk: locked barriers need destination for now
     public static final Set<String> ALLOWED = Set.of("yes", "designated", "official", "permissive", "destination");
     public static final Set<String> RESTRICTED = Set.of("no", "restricted", "military", "emergency",
             "private", "permit", "service", "delivery", "customers", "agricultural", "forestry");
-    // a locked barrier is passable only with these values, not with destination
-    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive");
     private static final Map<String, String> MOTORROAD_DEFAULTS = Map.of("foot", "no", "bicycle", "no");
     static final Map<String, Map<String, String>> HIGHWAY_TYPE_DEFAULTS;
     static final Map<String, Map<String, String>> BARRIER_TYPE_DEFAULTS;
@@ -44,10 +44,8 @@ public class AccessResolver {
         Map<String, Map<String, String>> m = new HashMap<>();
         // For implied bicycle defaults we use "dismount" rather than "no" on highways where
         // pushing a bike is physically reasonable (pedestrian streets, footways, stairs, indoor
-        // corridors, station platforms). Our routing layer treats DISMOUNT as "can push" —
-        // usable but qualified — whereas NO is treated as a hard block. motorway/motorway_link
-        // keep "no" because bikes are legally prohibited even on foot. Explicit bicycle=no tags
-        // on a way still resolve to NO; only the implicit highway-type defaults become DISMOUNT.
+        // corridors, station platforms). The motorway/motorway_link keep "no" because bikes are
+        // legally prohibited even on foot.
         m.put("motorway", Map.of("motor_vehicle", "designated", "foot", "no", "bicycle", "no"));
         m.put("motorway_link", Map.of("motor_vehicle", "designated", "foot", "no", "bicycle", "no"));
         m.put("steps", Map.of("motor_vehicle", "no", "bicycle", "dismount", "foot", "designated"));
@@ -60,9 +58,6 @@ public class AccessResolver {
         m.put("construction", Map.of("access", "no"));
         m.put("proposed", Map.of("access", "no"));
         m.put("raceway", Map.of("access", "no"));
-        // corridor stays bicycle=no (not "dismount") because BikeCommonAccessParser doesn't list
-        // it in allowedHighways — bike_access is already false there. Marking road_access as
-        // DISMOUNT would suggest "can push" while access says "can't use it at all".
         m.put("corridor", Map.of("motor_vehicle", "no", "bicycle", "no", "foot", "yes"));
         m.put("platform", Map.of("motor_vehicle", "no", "bicycle", "dismount", "foot", "yes"));
         HIGHWAY_TYPE_DEFAULTS = Map.copyOf(m);
@@ -129,9 +124,7 @@ public class AccessResolver {
     public static Map<String, String> osmDefaults(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         Map<String, String> defaults = highwayValue == null ? Map.of() : HIGHWAY_TYPE_DEFAULTS.getOrDefault(highwayValue, Map.of());
-        // motorroad=yes is an annoying special case: it's not a highway=* value but a separate tag
-        // that implies foot=no, bicycle=no. If we find more tags like this, we'll need a more
-        // general mechanism for non-highway implied defaults.
+        // special case motorroad=yes: it's not a highway=* value but a separate tag that implies foot=no, bicycle=no.
         if (way.hasTag("motorroad", "yes")) {
             Map<String, String> merged = new HashMap<>(defaults);
             MOTORROAD_DEFAULTS.forEach(merged::putIfAbsent);
@@ -157,7 +150,7 @@ public class AccessResolver {
         for (int i = 0; i < restrictionKeys.size(); i++) {
             String key = restrictionKeys.get(i);
             // a conditional of the same key beats its plain value, e.g. hgv:conditional=no @ (weight > 7.5) and hgv=yes
-            String conditional = conditions == null ? null : conditions.conditional(way, key);
+            String conditional = conditions == null ? null : conditions.getConditionalValue(way, key);
             // none @ destination lifts a restriction like yes
             if ("none".equals(conditional)) conditional = "yes";
             if (conditional != null && (allowed.contains(conditional) || restricted.contains(conditional)))
@@ -213,6 +206,7 @@ public class AccessResolver {
      */
     private String recognized(String value) {
         if (value == null) return null;
+        value = value.trim();
         if (allowed.contains(value)) return value;
         if (restricted.contains(value)) return value;
         if (value.indexOf(';') < 0) return null;

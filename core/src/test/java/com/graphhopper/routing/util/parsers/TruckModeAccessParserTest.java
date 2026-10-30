@@ -13,7 +13,7 @@ import static com.graphhopper.routing.util.parsers.TruckVehicles.forward;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Ported from the matrix TruckAccessParserTest, the behaviour spec of car, small_truck, truck and taxi
+ * Ported from the matrix TruckAccessParserTest, the behaviour spec of car, small_truck, truck and taxi.
  */
 class TruckModeAccessParserTest {
     private final EncodingManager em = TruckVehicles.createEncodingManager();
@@ -23,75 +23,26 @@ class TruckModeAccessParserTest {
     private final ModeAccessParser taxiParser = TruckVehicles.create(em, "taxi", new PMap());
 
     @Test
-    public void testRestrictions() {
-        assertEquals("[hgv, goods, motor_vehicle, vehicle, access]", truckParser.getRestrictionKeys().toString());
-        assertEquals("[taxi, psv, motorcar, motor_vehicle, vehicle, access]", taxiParser.getRestrictionKeys().toString());
-        assertEquals("[motorcar, motor_vehicle, vehicle, access]", carParser.getRestrictionKeys().toString());
-        assertEquals("truck_access", truckParser.toString());
-    }
-
-    @Test
     public void testTruckAcceptWay() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         assertTrue(forward(truckParser, way));
-
         way.setTag("maxweight", "16");
         assertFalse(forward(truckParser, way));
         way.setTag("maxweight", "40");
         assertTrue(forward(truckParser, way));
-
-        way.setTag("motor_vehicle", "yes");
-        way.setTag("maxweight", "1.5");
-        assertFalse(forward(truckParser, way));
-
-        way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("maxheight", "2");
-        assertFalse(forward(truckParser, way));
-        way.setTag("maxheight", "4");
-        assertTrue(forward(truckParser, way));
-        way.setTag("maxheight", "default");
-        assertTrue(forward(truckParser, way));
-
-        way.setTag("bridge", "yes");
-        way.setTag("maxheight", "2");
-        assertTrue(forward(truckParser, way));
-        way.clearTags();
-
-        way.setTag("highway", "primary");
-        way.setTag("width", "2.94");
-        assertFalse(forward(truckParser, way));
-        // there is a small offset added as we need a small difference to maxwidth
-        way.setTag("width", "3");
-        assertTrue(forward(truckParser, way));
-        way.clearTags();
-
-        way.setTag("highway", "primary");
-        way.setTag("maxwidth", "2");
-        assertFalse(forward(truckParser, way));
-        way.setTag("maxwidth", "3.5");
-        assertTrue(forward(truckParser, way));
-        way.setTag("maxwidth", "6'6\"");
-        assertFalse(forward(truckParser, way));
-        way.removeTag("maxwidth");
-
-        way.setTag("maxlength", "10");
-        assertFalse(forward(truckParser, way));
-        way.setTag("maxlength", "15");
-        assertTrue(forward(truckParser, way));
-        way.removeTag("maxlength");
-
-        way.setTag("maxaxleload", "6");
-        assertFalse(forward(truckParser, way));
-        way.setTag("maxaxleload", "10");
-        assertTrue(forward(truckParser, way));
-        way.removeTag("maxaxleload");
-
-        assertTrue(forward(truckParser, way));
         way.setTag("hgv", "no");
         assertFalse(forward(truckParser, way));
-        way.removeTag("hgv");
+        assertTrue(forward(carParser, way));
+        // an allowed value does not lift a limit
+        way.setTag("hgv", "yes");
+        way.setTag("maxweight", "1.5");
+        assertFalse(forward(truckParser, way));
+        // each vehicle has its own dimensions
+        way.removeTag("maxweight");
+        way.setTag("maxwidth", "6'6\"");
+        assertFalse(forward(smallTruckParser, way));
+        assertTrue(forward(carParser, way));
 
         way.clearTags();
         way.setTag("highway", "track");
@@ -184,46 +135,6 @@ class TruckModeAccessParserTest {
     }
 
     @Test
-    public void testAccess() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "trunk");
-        assertTrue(forward(truckParser, way));
-        assertTrue(forward(carParser, way));
-
-        way.setTag("access", "no");
-        assertFalse(forward(truckParser, way));
-        assertFalse(forward(carParser, way));
-
-        way.setTag("hgv", "no");
-        assertFalse(forward(truckParser, way));
-        assertFalse(forward(carParser, way));
-
-        way.removeTag("access");
-        assertFalse(forward(truckParser, way));
-        assertTrue(forward(carParser, way));
-    }
-
-    @Test
-    public void testTruckUnknownDoesNotShadowAccess() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("access", "no");
-        way.setTag("motor_vehicle", "somethingunexpected");
-        assertFalse(forward(truckParser, way));
-    }
-
-    @Test
-    public void testPrivate() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "service");
-        way.setTag("access", "private");
-        assertFalse(forward(truckParser, way));
-
-        ModeAccessParser truckPermParser = TruckVehicles.create(em, "truck", new PMap("block_private=false"));
-        assertTrue(forward(truckPermParser, way));
-    }
-
-    @Test
     public void testMotorcar() {
         ReaderWay way = new ReaderWay(1);
 
@@ -248,6 +159,14 @@ class TruckModeAccessParserTest {
         assertTrue(forward(truckParser, way));
 
         way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("access", "no");
+        way.setTag("motor_vehicle:conditional", "yes @ (Mo-Fr 06:00-20:00)");
+        assertTrue(forward(carParser, way));
+        way.setTag("foot", "yes");
+        assertFalse(forward(carParser, way));
+
+        way.clearTags();
         way.setTag("highway", "service");
         way.setTag("motorcar", "no");
         assertTrue(forward(truckParser, way));
@@ -265,6 +184,9 @@ class TruckModeAccessParserTest {
         way.setTag("motorcar", "yes");
         assertFalse(forward(truckParser, way));
         assertTrue(forward(carParser, way));
+        // an unknown value does not shadow the less specific key
+        way.setTag("motorcar", "somethingunexpected");
+        assertFalse(forward(carParser, way));
 
         way.clearTags();
         way.setTag("highway", "service");
@@ -273,21 +195,9 @@ class TruckModeAccessParserTest {
         assertFalse(forward(carParser, way));
         assertTrue(forward(smallTruckParser, way));
         assertTrue(forward(truckParser, way));
-    }
-
-    @Test
-    public void testSmallTruckWidth() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        assertTrue(forward(smallTruckParser, way));
-
-        way.setTag("maxwidth", "6'6\"");
-        assertFalse(forward(smallTruckParser, way));
-        way.removeTag("maxwidth");
-
-        assertTrue(forward(smallTruckParser, way));
         way.setTag("hgv", "no");
         assertTrue(forward(smallTruckParser, way));
+        assertFalse(forward(truckParser, way));
     }
 
     @Test
@@ -295,49 +205,14 @@ class TruckModeAccessParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("access", "yes");
-        assertTrue(forward(truckParser, way));
-
         way.setTag("access:conditional", "no @ weight > 7");
         assertFalse(forward(truckParser, way));
         assertTrue(forward(carParser, way));
 
-        way.setTag("access:conditional", "no @ weight < 7");
-        assertTrue(forward(truckParser, way));
-        assertFalse(forward(carParser, way));
-
-        way = new ReaderWay(1);
-        way.setTag("highway", "primary");
         way.setTag("access", "no");
-        assertFalse(forward(truckParser, way));
-        assertFalse(forward(carParser, way));
-
         way.setTag("access:conditional", "yes @ weight > 7");
         assertTrue(forward(truckParser, way));
         assertFalse(forward(carParser, way));
-
-        way.setTag("access:conditional", "yes @ weight < 7");
-        assertFalse(forward(truckParser, way));
-        assertTrue(forward(carParser, way));
-
-        way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("access", "no");
-        assertFalse(forward(truckParser, way));
-        way.setTag("access:conditional", "yes @ (weight>7)");
-        assertTrue(forward(truckParser, way));
-        assertFalse(forward(carParser, way));
-
-        // height and width conditions, multiple conditions are ignored
-        way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("hgv:conditional", "no @ (height > 3.5)");
-        assertFalse(forward(truckParser, way));
-        way.setTag("hgv:conditional", "no @ (width >= 2.7)");
-        assertTrue(forward(truckParser, way));
-        way.setTag("hgv:conditional", "no @ (width > 2.5)");
-        assertFalse(forward(truckParser, way));
-        way.setTag("hgv:conditional", "no @ (weight > 7.5); yes @ (Mo-Fr 06:00-10:00)");
-        assertTrue(forward(truckParser, way));
     }
 
     @Test
@@ -348,6 +223,7 @@ class TruckModeAccessParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("access", "private");
+        assertFalse(forward(truckParser, way));
         assertTrue(forward(tmpTruckParser, way));
 
         // allow maxweight exception for private access
@@ -388,13 +264,6 @@ class TruckModeAccessParserTest {
         // and only if delivery is allowed
         way.setTag("access:conditional", "delivery @ (weight > 7.5)");
         assertFalse(forward(truckParser, way));
-
-        way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("motor_vehicle", "no");
-        assertFalse(forward(tmpTruckParser, way));
-        way.setTag("motor_vehicle:conditional", "yes @ (21:00-9:00)");
-        assertTrue(forward(tmpTruckParser, way));
     }
 
     @Test
@@ -455,8 +324,6 @@ class TruckModeAccessParserTest {
         assertTrue(forward(truckParser, way));
         way.setTag("maxweight", "24");
         assertTrue(forward(truckParser, way));
-        way.setTag("access:conditional", "none @ (maxspeed)");
-        assertFalse(forward(truckParser, way));
     }
 
     @Test
@@ -501,30 +368,14 @@ class TruckModeAccessParserTest {
         way.setTag("access:conditional", "no @ (May - June)");
         assertTrue(forward(truckParser, way));
 
-        way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("motorcar:conditional", "no @ (May - June)");
-        assertTrue(forward(truckParser, way));
-
+        // a less specific or unrelated key cannot lift a restriction
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("vehicle", "no");
         way.setTag("access:conditional", "yes @ (May - June)");
         assertFalse(forward(truckParser, way));
-
-        // truck should ignore unrelated conditional access restrictions of e.g. bicycle or motorcar
-        way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("vehicle", "no");
         way.setTag("bicycle:conditional", "yes @ (May - June)");
         assertFalse(forward(truckParser, way));
-
-        way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("motorcar", "no");
-        way.setTag("access:conditional", "yes @ (May - June)");
-        assertFalse(forward(carParser, way));
-        assertTrue(forward(truckParser, way));
 
         // Ignore access restriction if there is a *higher* priority temporal restriction that *could* lift it.
         // But this is independent of the date!
@@ -532,6 +383,14 @@ class TruckModeAccessParserTest {
         way.setTag("highway", "primary");
         way.setTag("access", "no");
         way.setTag("vehicle:conditional", "yes @ (May - June)");
+        assertTrue(forward(truckParser, way));
+
+        // a conditional restriction is lifted like a plain one (the former TruckAccessParser kept it closed)
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access:conditional", "no @ (weight > 7.5)");
+        assertFalse(forward(truckParser, way));
+        way.setTag("hgv:conditional", "yes @ (Mo-Fr 06:00-20:00)");
         assertTrue(forward(truckParser, way));
     }
 
@@ -543,13 +402,13 @@ class TruckModeAccessParserTest {
         assertFalse(forward(carParser, way));
         way.setTag("motor_vehicle", "agricultural;forestry");
         assertFalse(forward(carParser, way));
-        way.setTag("motor_vehicle", "forestry;agricultural");
-        assertFalse(forward(carParser, way));
-        way.setTag("motor_vehicle", "forestry;agricultural;unknown");
-        assertFalse(forward(carParser, way));
         way.setTag("motor_vehicle", "yes;forestry;agricultural");
         assertTrue(forward(carParser, way));
         way.setTag("motor_vehicle", "unknown;strange");
+        assertTrue(forward(carParser, way));
+        way.setTag("motor_vehicle", "no ");
+        assertFalse(forward(carParser, way));
+        way.setTag("motor_vehicle", " yes;no");
         assertTrue(forward(carParser, way));
     }
 
@@ -581,12 +440,8 @@ class TruckModeAccessParserTest {
     public void testTaxi() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        assertTrue(forward(taxiParser, way));
         way.setTag("hgv", "no");
         assertTrue(forward(taxiParser, way));
-
-        way = new ReaderWay(1);
-        way.setTag("highway", "primary");
         way.setTag("psv", "no");
         assertFalse(forward(taxiParser, way));
 

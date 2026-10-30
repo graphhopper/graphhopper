@@ -225,12 +225,14 @@ public class ModeAccessParser implements TagParser {
         }
 
         /**
-         * @param conditions the vehicle dimensions: ways with a lower limit like maxweight are blocked and the
-         *                   non-temporal conditionals are evaluated, null for none
+         * @return the vehicle dimensions of this mode: ways with a lower limit like maxweight are blocked and the
+         * non-temporal conditionals are evaluated. Call it after the allowed values are final.
          */
-        public Options conditions(VehicleConditions conditions) {
+        public VehicleConditions createConditions() {
+            VehicleConditions conditions = new VehicleConditions(restrictionKeys, allowed);
             this.conditions = conditions;
-            return blocked(way -> way.hasTag("highway") && conditions.exceedsLimits(way));
+            blocked(way -> way.hasTag("highway") && conditions.exceedsLimits(way));
+            return conditions;
         }
     }
 
@@ -300,8 +302,9 @@ public class ModeAccessParser implements TagParser {
 
         if (FerrySpeedCalculator.isFerry(way)) {
             if (resolver.isAllowed(result.value())
+                    // a restricted value here was lifted by a temporal conditional and counts like no value,
                     // implied default is allowed only if foot and bicycle is not specified:
-                    || options.impliedFerryAccess && result.value().isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle")
+                    || options.impliedFerryAccess && (result.value().isEmpty() || resolver.isRestricted(result.value())) && !way.hasTag("foot") && !way.hasTag("bicycle")
                     // if hgv is allowed then smaller trucks and cars are allowed too even if not specified
                     || options.impliedFerryAccess && way.hasTag("hgv", "yes")) {
                 // ferry is allowed via explicit tag
