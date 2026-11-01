@@ -114,6 +114,8 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     private final TerrainEncoding encoding;
     private final boolean interpolate;
+    // stored in half meters: the precision of z12 terrain tiles, and short still covers +-16km
+    static final double ELE_SCALE = 2;
     private final int preferredZoom;
     private int zoom;
     private long hilbertBase;
@@ -250,14 +252,14 @@ public class PMTilesElevationProvider implements ElevationProvider {
             short v11 = tile.get(x0 + 1, y0 + 1);
             if (v00 == Short.MIN_VALUE || v10 == Short.MIN_VALUE || v01 == Short.MIN_VALUE || v11 == Short.MIN_VALUE)
                 return Double.NaN;
-            return v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy)
-                    + v01 * (1 - fx) * fy + v11 * fx * fy;
+            return (v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy)
+                    + v01 * (1 - fx) * fy + v11 * fx * fy) / ELE_SCALE;
         } else {
             int ix = Math.max(0, Math.min(w - 1, (int) Math.round(px)));
             int iy = Math.max(0, Math.min(h - 1, (int) Math.round(py)));
             short val = tile.get(ix, iy);
             if (val == Short.MIN_VALUE) return Double.NaN;
-            return val;
+            return val / ELE_SCALE;
         }
     }
 
@@ -299,13 +301,16 @@ public class PMTilesElevationProvider implements ElevationProvider {
 
     /**
      * Try to mmap an existing .tile file. Returns tile data if the file exists,
-     * or null if not found (either no tileDir or file not yet decoded).
+     * or null if not found (either no tileDir or file not yet decoded) or outdated.
      */
     private PackedTileData tryMmapTileFile(long tileId) throws IOException {
         if (tileDir == null) return null;
         File f = tileFile(tileId);
         if (!f.exists()) return null;
-        return loadTileData(f);
+        PackedTileData data = loadTileData(f);
+        if (data == null && !f.delete())
+            throw new IOException("Cannot remove outdated " + f);
+        return data;
     }
 
     /**
@@ -331,10 +336,8 @@ public class PMTilesElevationProvider implements ElevationProvider {
         try (FileChannel ch = FileChannel.open(f.toPath(), StandardOpenOption.READ)) {
             ByteBuffer buf = ch.map(FileChannel.MapMode.READ_ONLY, 0, f.length());
             buf.order(ByteOrder.LITTLE_ENDIAN);
-            if (!PackedTileCodec.isPackedTile(buf)) {
-                throw new IOException("Unsupported legacy raw .tile format in " + f
-                        + ". Remove cached .tile files so they can be regenerated as packed tiles.");
-            }
+            // outdated format (e.g. elevation in meters) -> regenerate
+            if (!PackedTileCodec.isPackedTile(buf)) return null;
             return toPackedTileData(buf);
         }
     }
@@ -494,7 +497,7 @@ public class PMTilesElevationProvider implements ElevationProvider {
                 // Mapbox uses rgb(0,0,0) = -10000 and Terrarium rgb(0,0,0) = -32768 for
                 // no-data/ocean. No real place is below -1000m, so treat as no-data marker.
                 short s = e < -1000 ? Short.MIN_VALUE
-                        : (short) Math.max(-32768, Math.min(32767, Math.round(e)));
+                        : (short) Math.max(-32768, Math.min(32767, Math.round(e * ELE_SCALE)));
                 if (s != 0) allSeaLevel = false;
 
                 // little-endian, matching ByteBuffer.LITTLE_ENDIAN order

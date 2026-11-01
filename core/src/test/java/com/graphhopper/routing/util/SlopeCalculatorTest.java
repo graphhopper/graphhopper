@@ -31,11 +31,31 @@ class SlopeCalculatorTest {
 
         new SlopeCalculator(maxEnc, averageEnc).execute(graph);
 
-        assertEquals(Math.round(2.0 / 210 * 100), edge.get(averageEnc), 1e-3);
-        assertEquals(-Math.round(2.0 / 210 * 100), edge.getReverse(averageEnc), 1e-3);
+        assertEquals(0.5, edge.get(averageEnc), 1e-3); // (2m - ELE_NOISE) / 210m, stored in 0.5 steps
+        assertEquals(-0.5, edge.getReverse(averageEnc), 1e-3);
 
         assertEquals(Math.round(1.75 / 105 * 100), edge.get(maxEnc), 1e-3);
         assertEquals(-Math.round(1.75 / 105 * 100), edge.getReverse(maxEnc), 1e-3);
+    }
+
+    @Test
+    void ignoreElevationNoise() {
+        DecimalEncodedValue averageEnc = AverageSlope.create();
+        EncodingManager em = new EncodingManager.Builder().add(averageEnc).build();
+        BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
+        NodeAccess na = graph.getNodeAccess();
+        // 0.5m on 14m would be 3.6%
+        na.setNode(0, 51.0, 12.0000, 110);
+        na.setNode(1, 51.0, 12.0002, 110.5);
+        na.setNode(2, 51.0, 12.0004, 112);
+        EdgeIteratorState flat = graph.edge(0, 1);
+        EdgeIteratorState climb = graph.edge(1, 2);
+
+        new SlopeCalculator(null, averageEnc).execute(graph);
+
+        assertEquals(0, flat.get(averageEnc), 1e-3);
+        assertEquals(0, flat.getReverse(averageEnc), 1e-3);
+        assertEquals(7, climb.get(averageEnc), 1e-3); // (1.5m - 0.5m) / 14m
     }
 
     @Test

@@ -11,6 +11,8 @@ public class SlopeCalculator {
     private final DecimalEncodedValue averageSlopeEnc;
     // the elevation data fluctuates a lot and so the slope is not that precise for very short edges.
     private static final double MIN_LENGTH = 2;
+    // elevation noise in meter (precision of the elevation data) which is ignored for the average slope
+    static final double ELE_NOISE = 0.5;
 
     public SlopeCalculator(DecimalEncodedValue max, DecimalEncodedValue averageEnc) {
         this.maxSlopeEnc = max;
@@ -41,7 +43,8 @@ public class SlopeCalculator {
                 continue;
             }
 
-            double towerNodeSlope = calcSlope(pointList.getEle(pointList.size() - 1) - pointList.getEle(0), distance2D);
+            double eleDelta = pointList.getEle(pointList.size() - 1) - pointList.getEle(0);
+            double towerNodeSlope = calcSlope(Math.signum(eleDelta) * Math.max(0, Math.abs(eleDelta) - ELE_NOISE), distance2D);
             if (Double.isNaN(towerNodeSlope))
                 throw new IllegalArgumentException("average_slope was NaN for edge " + iter.getEdge() + " " + pointList);
 

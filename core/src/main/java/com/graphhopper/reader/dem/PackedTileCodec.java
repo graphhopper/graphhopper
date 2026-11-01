@@ -51,7 +51,7 @@ final class PackedTileCodec {
 
     static final int DEFAULT_BLOCK_SIZE = 16;
 
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     // 1-byte header marker/version.
     private static final int HEADER_BYTE = VERSION;
 

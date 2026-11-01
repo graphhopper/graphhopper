@@ -19,7 +19,10 @@ package com.graphhopper.reader.dem;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
@@ -130,6 +133,25 @@ public class PMTilesElevationProviderTest {
         // Very close but on the path
         assertEquals(381, instance.getEle(50.911849, 14.208042), 1);
         assertEquals(361, instance.getEle(50.9119, 14.207466), 1);
+    }
+
+    @Test
+    public void testOutdatedCacheIsRegenerated(@TempDir File dir) throws Exception {
+        instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
+                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, true, 10, dir.getAbsolutePath())
+                .setAutoRemoveTemporaryFiles(false).init();
+        double ele = instance.getEle(50.912142, 14.2076);
+        instance.release();
+
+        // simulate a cache file from an older version
+        File[] files = dir.listFiles((d, name) -> name.endsWith(".tile"));
+        assertEquals(1, files.length);
+        try (RandomAccessFile raf = new RandomAccessFile(files[0], "rw")) {
+            raf.write(1);
+        }
+        instance = new PMTilesElevationProvider("./files/near-badschandau-z10-11.pmtiles",
+                PMTilesElevationProvider.TerrainEncoding.TERRARIUM, true, 10, dir.getAbsolutePath()).init();
+        assertEquals(ele, instance.getEle(50.912142, 14.2076), 1e-6);
     }
 
     @Test
