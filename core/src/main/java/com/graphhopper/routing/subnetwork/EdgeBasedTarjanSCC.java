@@ -503,15 +503,15 @@ public class EdgeBasedTarjanSCC {
      */
     static class BitSetIndex {
         private final BitSet bitSet;
-        private final int[] partialSums;
+        private final int[] counts;
         private final int size;
 
         BitSetIndex(BitSet bitSet) {
             this.bitSet = bitSet;
-            partialSums = new int[bitSet.wlen];
+            counts = new int[bitSet.wlen];
             int count = 0;
             for (int i = 0; i < bitSet.wlen; i++) {
-                partialSums[i] = count;
+                counts[i] = count;
                 count += Long.bitCount(bitSet.bits[i]);
             }
             size = count;
@@ -532,7 +532,7 @@ public class EdgeBasedTarjanSCC {
             long mask = 1L << bit; // same as 1L << (bit % 64)
             if ((bitSet.bits[word] & mask) == 0)
                 return -1;
-            return partialSums[word] + Long.bitCount(bitSet.bits[word] & (mask - 1));
+            return counts[word] + Long.bitCount(bitSet.bits[word] & (mask - 1));
         }
 
         void forEach(IntConsumer bitConsumer) {
