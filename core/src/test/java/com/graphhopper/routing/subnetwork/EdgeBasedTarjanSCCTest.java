@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.subnetwork;
 
+import com.carrotsearch.hppc.BitSet;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -32,12 +33,16 @@ import com.graphhopper.util.RandomGraph;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 import java.util.Set;
 
 import static com.graphhopper.routing.subnetwork.NodeBasedTarjanSCCTest.buildComponentSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EdgeBasedTarjanSCCTest {
@@ -328,6 +333,70 @@ class EdgeBasedTarjanSCCTest {
             edges.add(iter.getEdge());
         ConnectedComponents componentsForStartEdges = EdgeBasedTarjanSCC.findComponentsForStartEdges(g, fwdAccessFilter, edges);
         compareResults(g, seed, components, componentsForStartEdges);
+    }
+
+    @RepeatedTest(20)
+    public void withinEdges_sameAsStartEdgesWithFilter() {
+        long seed = System.nanoTime();
+        Random rnd = new Random(seed);
+        RandomGraph.start().seed(seed).nodes(500).speed(10d).speedZero(0.1).fill(g, speedEnc);
+        BitSet edgeBits = new BitSet();
+        IntArrayList edges = new IntArrayList();
+        double fraction = rnd.nextDouble();
+        for (int edge = 0; edge < g.getEdges(); edge++)
+            if (rnd.nextDouble() < fraction) {
+                edgeBits.set(edge);
+                edges.add(edge);
+            }
+        EdgeBasedTarjanSCC.EdgeTransitionFilter withinEdges = (prev, edge) -> edgeBits.get(edge.getEdge()) && fwdAccessFilter.accept(prev, edge);
+        ConnectedComponents expected = EdgeBasedTarjanSCC.findComponentsForStartEdges(g, withinEdges, edges);
+        int firstEdge = edges.isEmpty() ? 0 : rnd.nextInt(edges.get(0) + 1);
+        BitSet shiftedEdgeBits = new BitSet();
+        for (IntCursor edge : edges)
+            shiftedEdgeBits.set(edge.value - firstEdge);
+
+        List<IntArrayList> components = new ArrayList<>();
+        int[] singleEdgeComponents = {0};
+        EdgeBasedTarjanSCC.findComponentsWithinEdges(g, shiftedEdgeBits, firstEdge, fwdAccessFilter, new EdgeBasedTarjanSCC.SCCConsumer() {
+            @Override
+            public void beginComponent() {
+                components.add(new IntArrayList());
+            }
+
+            @Override
+            public void edgeKey(int edgeKey) {
+                components.getLast().add(edgeKey);
+            }
+
+            @Override
+            public void singleEdgeComponent(int edgeKey) {
+                singleEdgeComponents[0]++;
+            }
+        });
+        // both run the same search in the same order, so even the order of the components and their edge keys is the same
+        assertEquals(expected.getComponents(), components, "seed: " + seed);
+        assertEquals(expected.getTotalComponents(), components.size() + singleEdgeComponents[0], "seed: " + seed);
+    }
+
+    @Test
+    public void bitSetIndex() {
+        BitSet bits = new BitSet();
+        int[] setBits = {3, 63, 64, 65, 200, 1000};
+        for (int b : setBits)
+            bits.set(b);
+        EdgeBasedTarjanSCC.BitSetIndex index = new EdgeBasedTarjanSCC.BitSetIndex(bits);
+        assertEquals(setBits.length, index.size());
+        for (int i = 0; i < setBits.length; i++) {
+            assertEquals(i, index.indexOf(setBits[i]));
+            assertTrue(index.contains(setBits[i]));
+        }
+        for (int b : new int[]{-65, -1, 0, 4, 62, 66, 999, 1001, 5000}) {
+            assertEquals(-1, index.indexOf(b));
+            assertFalse(index.contains(b));
+        }
+        IntArrayList iterated = new IntArrayList();
+        index.forEach(iterated::add);
+        assertEquals(IntArrayList.from(setBits), iterated);
     }
 
     private void compareResults(BaseGraph g, long seed, ConnectedComponents expected, ConnectedComponents given) {

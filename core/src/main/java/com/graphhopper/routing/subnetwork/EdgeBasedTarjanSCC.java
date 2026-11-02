@@ -29,6 +29,7 @@ import com.graphhopper.util.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.IntConsumer;
 
 import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 
@@ -113,6 +114,18 @@ public class EdgeBasedTarjanSCC {
         new EdgeBasedTarjanSCC(graph, edgeTransitionFilter, consumer).findComponents();
     }
 
+    /**
+     * Like {@link #findComponentsForStartEdges} but the search is strictly restricted to the edges
+     * given by {@code edges} and {@code firstEdge} for any {@code edgeTransitionFilter}. This is
+     * more memory efficient in case the restricted set of edges is known in advance. Edge e is
+     * included in the restricted set iff edges.get(e - firstEdge) is true.
+     */
+    public static void findComponentsWithinEdges(Graph graph, BitSet edges, int firstEdge, EdgeTransitionFilter edgeTransitionFilter, SCCConsumer consumer) {
+        BitSetIndex index = new BitSetIndex(edges);
+        EdgeTransitionFilter withinEdges = (prev, edge) -> index.contains(edge.getEdge() - firstEdge) && edgeTransitionFilter.accept(prev, edge);
+        new EdgeBasedTarjanSCC(graph, withinEdges, consumer).findComponentsWithinEdges(index, firstEdge);
+    }
+
     private EdgeBasedTarjanSCC(Graph graph, EdgeTransitionFilter edgeTransitionFilter, SCCConsumer consumer) {
         this.graph = graph;
         this.edgeTransitionFilter = edgeTransitionFilter;
@@ -126,10 +139,6 @@ public class EdgeBasedTarjanSCC {
     private void initForEntireGraph() {
         final int edges = graph.getEdges();
         edgeKeyLowLink = new TarjanArrayIntIntMap(2 * edges);
-    }
-
-    private void initForStartEdges(int edges) {
-        edgeKeyLowLink = new TarjanHashIntIntMap(2 * edges);
     }
 
     private enum State {
@@ -153,7 +162,7 @@ public class EdgeBasedTarjanSCC {
     }
 
     private boolean isUnvisited(int p) {
-        return !edgeKeyLowLink.has(p);
+        return edgeKeyLowLink.get(p) == -1;
     }
 
     private void findComponentForEdgeKey(int p, int adjNode) {
@@ -212,12 +221,17 @@ public class EdgeBasedTarjanSCC {
     }
 
     private void findComponentsForStartEdges(IntContainer startEdges) {
-        initForStartEdges(startEdges.size());
+        edgeKeyLowLink = new TarjanHashIntIntMap(2 * startEdges.size());
         for (IntCursor edge : startEdges) {
             // todo: using getEdgeIteratorState here is not efficient
             EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge.value, Integer.MIN_VALUE);
             findComponentsForEdgeState(edgeState);
         }
+    }
+
+    private void findComponentsWithinEdges(BitSetIndex edgeIndex, int firstEdge) {
+        edgeKeyLowLink = new SparseTarjanArrayIntIntMap(edgeIndex, firstEdge);
+        edgeIndex.forEach(bit -> findComponentsForEdgeState(graph.getEdgeIteratorState(firstEdge + bit, Integer.MIN_VALUE)));
     }
 
     private void findComponentsForEdgeState(EdgeIteratorState edge) {
@@ -245,13 +259,14 @@ public class EdgeBasedTarjanSCC {
                     edgeKeyLowLink.minTo(p, edgeKeyLowLink.get(q));
                     break;
                 case HANDLE_NEIGHBOR:
-                    if (isUnvisited(q)) {
+                    int qLowLink = edgeKeyLowLink.get(q);
+                    if (qLowLink == -1) {
                         // we are pushing updateLowLinks first so it will run *after* findComponent finishes
                         pushUpdateLowLinks(p, q);
                         pushFindComponentForEdgeKey(q, adj);
                     } else {
                         // see explanation in NodeBasedTarjanSCC#findComponentForNode
-                        edgeKeyLowLink.minTo(p, edgeKeyLowLink.get(q));
+                        edgeKeyLowLink.minTo(p, qLowLink);
                     }
                     break;
                 case FIND_COMPONENT:
@@ -366,7 +381,7 @@ public class EdgeBasedTarjanSCC {
         }
 
         /**
-         * The set of edge-keys that form their own (single-edge key) component. If {@link EdgeBasedTarjanSCC#excludeSingleEdgeComponents}
+         * The set of edge-keys that form their own (single-edge key) component. If {@code EdgeBasedTarjanSCC#excludeSingleEdgeComponents}
          * is enabled this set will be empty.
          */
         public BitSet getSingleEdgeComponents() {
@@ -399,8 +414,6 @@ public class EdgeBasedTarjanSCC {
 
         void minTo(int key, int min);
 
-        boolean has(int key);
-
         int get(int key);
     }
 
@@ -420,11 +433,6 @@ public class EdgeBasedTarjanSCC {
         @Override
         public void minTo(int key, int value) {
             arr[key] = Math.min(arr[key], value);
-        }
-
-        @Override
-        public boolean has(int key) {
-            return arr[key] != -1;
         }
 
         @Override
@@ -452,13 +460,84 @@ public class EdgeBasedTarjanSCC {
         }
 
         @Override
-        public boolean has(int key) {
-            return map.containsKey(key);
+        public int get(int key) {
+            return map.getOrDefault(key, -1);
+        }
+    }
+
+    private static class SparseTarjanArrayIntIntMap implements TarjanIntIntMap {
+        private final BitSetIndex index;
+        private final int firstEdge;
+        private final TarjanArrayIntIntMap map;
+
+        SparseTarjanArrayIntIntMap(BitSetIndex index, int firstEdge) {
+            this.index = index;
+            this.firstEdge = firstEdge;
+            map = new TarjanArrayIntIntMap(2 * index.size());
+        }
+
+        @Override
+        public void set(int key, int value) {
+            map.set(getEdgeKeyIndexFromEdgeKey(key), value);
+        }
+
+        @Override
+        public void minTo(int key, int value) {
+            map.minTo(getEdgeKeyIndexFromEdgeKey(key), value);
         }
 
         @Override
         public int get(int key) {
-            return map.getOrDefault(key, -1);
+            return map.get(getEdgeKeyIndexFromEdgeKey(key));
+        }
+
+        private int getEdgeKeyIndexFromEdgeKey(int edgeKey) {
+            return 2 * index.indexOf(getEdgeFromEdgeKey(edgeKey) - firstEdge) + (edgeKey & 1);
+        }
+    }
+
+    /**
+     * Assigns indices 0,1,...n-1 to the set bits of a given BitSet. The index of a bit is the number
+     * of set bits before the bit. We store the previous count for every block of 64 bits for a fast
+     * lookup, around 30MB for 500M bits. Querying for negative bits is ok (they return as 'not set').
+     */
+    static class BitSetIndex {
+        private final BitSet bitSet;
+        private final int[] partialSums;
+        private final int size;
+
+        BitSetIndex(BitSet bitSet) {
+            this.bitSet = bitSet;
+            partialSums = new int[bitSet.wlen];
+            int count = 0;
+            for (int i = 0; i < bitSet.wlen; i++) {
+                partialSums[i] = count;
+                count += Long.bitCount(bitSet.bits[i]);
+            }
+            size = count;
+        }
+
+        int size() {
+            return size;
+        }
+
+        boolean contains(int bit) {
+            return bit >= 0 && bitSet.get(bit);
+        }
+
+        int indexOf(int bit) {
+            int word = bit >>> 6;
+            if (bit < 0 || word >= bitSet.wlen)
+                return -1;
+            long mask = 1L << bit; // same as 1L << (bit % 64)
+            if ((bitSet.bits[word] & mask) == 0)
+                return -1;
+            return partialSums[word] + Long.bitCount(bitSet.bits[word] & (mask - 1));
+        }
+
+        void forEach(IntConsumer bitConsumer) {
+            for (int bit = bitSet.nextSetBit(0); bit >= 0; bit = bitSet.nextSetBit(bit + 1))
+                bitConsumer.accept(bit);
         }
     }
 
