@@ -53,14 +53,13 @@ public class EdgeBasedTarjanSCC {
     private final LongArrayDeque dfsStackPQ;
     private final IntArrayDeque dfsStackAdj;
     private final SCCConsumer consumer;
-    private TarjanIntIntMap edgeKeyIndex;
     private TarjanIntIntMap edgeKeyLowLink;
-    private TarjanIntSet edgeKeyOnStack;
 
     private int currIndex = 0;
     private int p;
     private int q;
     private int adj;
+    private int pIndex;
     private State dfsState;
 
     /**
@@ -126,15 +125,11 @@ public class EdgeBasedTarjanSCC {
 
     private void initForEntireGraph() {
         final int edges = graph.getEdges();
-        edgeKeyIndex = new TarjanArrayIntIntMap(2 * edges);
         edgeKeyLowLink = new TarjanArrayIntIntMap(2 * edges);
-        edgeKeyOnStack = new TarjanArrayIntSet(2 * edges);
     }
 
     private void initForStartEdges(int edges) {
-        edgeKeyIndex = new TarjanHashIntIntMap(2 * edges);
         edgeKeyLowLink = new TarjanHashIntIntMap(2 * edges);
-        edgeKeyOnStack = new TarjanHashIntSet(2 * edges);
     }
 
     private enum State {
@@ -149,16 +144,20 @@ public class EdgeBasedTarjanSCC {
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             int edgeKeyFwd = createEdgeKey(iter, false);
-            if (!edgeKeyIndex.has(edgeKeyFwd))
+            if (isUnvisited(edgeKeyFwd))
                 findComponentForEdgeKey(edgeKeyFwd, iter.getAdjNode());
             int edgeKeyBwd = createEdgeKey(iter, true);
-            if (!edgeKeyIndex.has(edgeKeyBwd))
+            if (isUnvisited(edgeKeyBwd))
                 findComponentForEdgeKey(edgeKeyBwd, iter.getBaseNode());
         }
     }
 
+    private boolean isUnvisited(int p) {
+        return !edgeKeyLowLink.has(p);
+    }
+
     private void findComponentForEdgeKey(int p, int adjNode) {
-        setupNextEdgeKey(p);
+        int pIndex = setupNextEdgeKey(p);
         // we have to create a new explorer on each iteration because of the nested edge iterations
         final int edge = getEdgeFromEdgeKey(p);
         EdgeExplorer explorer = graph.createEdgeExplorer();
@@ -169,36 +168,33 @@ public class EdgeBasedTarjanSCC {
             int q = createEdgeKey(iter, false);
             handleNeighbor(p, q, iter.getAdjNode());
         }
-        if (edgeKeyLowLink.get(p) == edgeKeyIndex.get(p))
+        if (edgeKeyLowLink.get(p) == pIndex)
             buildComponent(p);
     }
 
-    private void setupNextEdgeKey(int p) {
-        edgeKeyIndex.set(p, currIndex);
+    private int setupNextEdgeKey(int p) {
         edgeKeyLowLink.set(p, currIndex);
-        currIndex++;
         tarjanStack.addLast(p);
-        edgeKeyOnStack.add(p);
+        return currIndex++;
     }
 
     private void handleNeighbor(int p, int q, int adj) {
-        if (!edgeKeyIndex.has(q)) {
+        if (isUnvisited(q))
             findComponentForEdgeKey(q, adj);
-            edgeKeyLowLink.minTo(p, edgeKeyLowLink.get(q));
-        } else if (edgeKeyOnStack.contains(q))
-            edgeKeyLowLink.minTo(p, edgeKeyIndex.get(q));
+        // see explanation in NodeBasedTarjanSCC#findComponentForNode
+        edgeKeyLowLink.minTo(p, edgeKeyLowLink.get(q));
     }
 
     private void buildComponent(int p) {
         if (tarjanStack.getLast() == p) {
             tarjanStack.removeLast();
-            edgeKeyOnStack.remove(p);
+            edgeKeyLowLink.set(p, Integer.MAX_VALUE);
             consumer.singleEdgeComponent(p);
         } else {
             consumer.beginComponent();
             while (true) {
                 int q = tarjanStack.removeLast();
-                edgeKeyOnStack.remove(q);
+                edgeKeyLowLink.set(q, Integer.MAX_VALUE);
                 consumer.edgeKey(q);
                 if (q == p)
                     break;
@@ -226,13 +222,13 @@ public class EdgeBasedTarjanSCC {
 
     private void findComponentsForEdgeState(EdgeIteratorState edge) {
         int edgeKeyFwd = createEdgeKey(edge, false);
-        if (!edgeKeyIndex.has(edgeKeyFwd))
+        if (isUnvisited(edgeKeyFwd))
             pushFindComponentForEdgeKey(edgeKeyFwd, edge.getAdjNode());
         startSearch();
         // We need to start the search for both edge keys of this edge, but its important to check if the second
         // has already been found by the first search. So we cannot simply push them both and start the search once.
         int edgeKeyBwd = createEdgeKey(edge, true);
-        if (!edgeKeyIndex.has(edgeKeyBwd))
+        if (isUnvisited(edgeKeyBwd))
             pushFindComponentForEdgeKey(edgeKeyBwd, edge.getBaseNode());
         startSearch();
     }
@@ -242,25 +238,26 @@ public class EdgeBasedTarjanSCC {
             pop();
             switch (dfsState) {
                 case BUILD_COMPONENT:
-                    if (edgeKeyLowLink.get(p) == edgeKeyIndex.get(p))
+                    if (edgeKeyLowLink.get(p) == pIndex)
                         buildComponent(p);
                     break;
                 case UPDATE:
                     edgeKeyLowLink.minTo(p, edgeKeyLowLink.get(q));
                     break;
                 case HANDLE_NEIGHBOR:
-                    if (edgeKeyIndex.has(q) && edgeKeyOnStack.contains(q))
-                        edgeKeyLowLink.minTo(p, edgeKeyIndex.get(q));
-                    if (!edgeKeyIndex.has(q)) {
+                    if (isUnvisited(q)) {
                         // we are pushing updateLowLinks first so it will run *after* findComponent finishes
                         pushUpdateLowLinks(p, q);
                         pushFindComponentForEdgeKey(q, adj);
+                    } else {
+                        // see explanation in NodeBasedTarjanSCC#findComponentForNode
+                        edgeKeyLowLink.minTo(p, edgeKeyLowLink.get(q));
                     }
                     break;
                 case FIND_COMPONENT:
-                    setupNextEdgeKey(p);
+                    int pIndex = setupNextEdgeKey(p);
                     // we push buildComponent first so it will run *after* we finished traversing the edges
-                    pushBuildComponent(p);
+                    pushBuildComponent(p, pIndex);
                     final int edge = getEdgeFromEdgeKey(p);
                     EdgeIterator it = explorer.setBaseNode(adj);
                     while (it.next()) {
@@ -283,9 +280,10 @@ public class EdgeBasedTarjanSCC {
     private void pop() {
         long l = dfsStackPQ.removeLast();
         int a = dfsStackAdj.removeLast();
-        // We are maintaining two stacks to hold four kinds of information: two edge keys (p&q), the adj node and the
-        // kind of code ('state') we want to execute for a given stack item. The following code combined with the pushXYZ
-        // methods does the fwd/bwd conversion between this information and the values on our stack(s).
+        // We are maintaining two stacks to hold five kinds of information: two edge keys (p&q), the adj node, the index
+        // of p (only needed to build the component) and the kind of code ('state') we want to execute for a given stack
+        // item. The following code combined with the pushXYZ methods does the fwd/bwd conversion between this information
+        // and the values on our stack(s).
         int low = bitUtil.getIntLow(l);
         int high = bitUtil.getIntHigh(l);
         if (a == -1) {
@@ -293,11 +291,12 @@ public class EdgeBasedTarjanSCC {
             p = low;
             q = high;
             adj = -1;
-        } else if (a == -2 && high == -2) {
+        } else if (a <= -2 && high == -2) {
             dfsState = State.BUILD_COMPONENT;
             p = low;
             q = -1;
             adj = -1;
+            pIndex = -2 - a;
         } else if (high == -1) {
             dfsState = State.FIND_COMPONENT;
             p = low;
@@ -318,10 +317,10 @@ public class EdgeBasedTarjanSCC {
         dfsStackAdj.addLast(-1);
     }
 
-    private void pushBuildComponent(int p) {
-        assert p >= 0;
+    private void pushBuildComponent(int p, int pIndex) {
+        assert p >= 0 && pIndex >= 0;
         dfsStackPQ.addLast(bitUtil.toLong(p, -2));
-        dfsStackAdj.addLast(-2);
+        dfsStackAdj.addLast(-2 - pIndex);
     }
 
     private void pushFindComponentForEdgeKey(int p, int adj) {
@@ -460,62 +459,6 @@ public class EdgeBasedTarjanSCC {
         @Override
         public int get(int key) {
             return map.getOrDefault(key, -1);
-        }
-    }
-
-    private interface TarjanIntSet {
-        void add(int key);
-
-        boolean contains(int key);
-
-        void remove(int key);
-    }
-
-    private static class TarjanArrayIntSet implements TarjanIntSet {
-        private final BitSet set;
-
-        TarjanArrayIntSet(int keys) {
-            set = new BitSet(keys);
-            if (!set.getClass().getName().contains("hppc"))
-                throw new IllegalStateException("Was meant to be hppc BitSet");
-        }
-
-        @Override
-        public void add(int key) {
-            set.set(key);
-        }
-
-        @Override
-        public boolean contains(int key) {
-            return set.get(key);
-        }
-
-        @Override
-        public void remove(int key) {
-            set.clear(key);
-        }
-    }
-
-    private static class TarjanHashIntSet implements TarjanIntSet {
-        private final IntScatterSet set;
-
-        TarjanHashIntSet(int keys) {
-            set = new IntScatterSet(keys);
-        }
-
-        @Override
-        public void add(int key) {
-            set.add(key);
-        }
-
-        @Override
-        public boolean contains(int key) {
-            return set.contains(key);
-        }
-
-        @Override
-        public void remove(int key) {
-            set.remove(key);
         }
     }
 

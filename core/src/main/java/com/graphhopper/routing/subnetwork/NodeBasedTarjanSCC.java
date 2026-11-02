@@ -54,9 +54,7 @@ public class NodeBasedTarjanSCC {
     private final EdgeExplorer explorer;
     private final EdgeFilter edgeFilter;
     private final BitUtil bitUtil = BitUtil.LITTLE;
-    private final int[] nodeIndex;
     private final int[] nodeLowLink;
-    private final BitSet nodeOnStack;
     private final IntArrayDeque tarjanStack;
     private final LongArrayDeque dfsStack;
     private final ConnectedComponents components;
@@ -65,6 +63,7 @@ public class NodeBasedTarjanSCC {
     private int currIndex = 0;
     private int v;
     private int w;
+    private int vIndex;
     private State dfsState;
 
     /**
@@ -94,13 +93,8 @@ public class NodeBasedTarjanSCC {
         this.edgeFilter = edgeFilter;
         explorer = graph.createEdgeExplorer(edgeFilter);
 
-        nodeIndex = new int[graph.getNodes()];
         nodeLowLink = new int[graph.getNodes()];
-        Arrays.fill(nodeIndex, -1);
         Arrays.fill(nodeLowLink, -1);
-        nodeOnStack = new BitSet(graph.getNodes());
-        if (!nodeOnStack.getClass().getName().contains("hppc"))
-            throw new IllegalStateException("Was meant to be hppc BitSet");
         tarjanStack = new IntArrayDeque();
         dfsStack = new LongArrayDeque();
         components = new ConnectedComponents(excludeSingleNodeComponents ? -1 : graph.getNodes());
@@ -116,7 +110,7 @@ public class NodeBasedTarjanSCC {
 
     private ConnectedComponents findComponentsRecursive() {
         for (int node = 0; node < graph.getNodes(); node++) {
-            if (nodeIndex[node] == -1) {
+            if (isUnvisited(node)) {
                 findComponentForNode(node);
             }
         }
@@ -124,34 +118,41 @@ public class NodeBasedTarjanSCC {
     }
 
     private void findComponentForNode(int v) {
-        setupNextNode(v);
+        int vIndex = setupNextNode(v);
         // we have to create a new explorer on each iteration because of the nested edge iterations
         EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
         EdgeIterator iter = explorer.setBaseNode(v);
         while (iter.next()) {
             int w = iter.getAdjNode();
-            if (nodeIndex[w] == -1) {
+            if (isUnvisited(w))
                 findComponentForNode(w);
-                nodeLowLink[v] = Math.min(nodeLowLink[v], nodeLowLink[w]);
-            } else if (nodeOnStack.get(w))
-                nodeLowLink[v] = Math.min(nodeLowLink[v], nodeIndex[w]);
+            // Naively there would be three cases:
+            // 1) w was not visited yet -> lowLink[v] reduces to lowLink[w] (if w can reach a lower node, so can v (through w))
+            // 2) w was visited already and belongs to current component -> lowLink[v] reduces to w's index (we found a lower back link into our component)
+            // 3) w was visited already and belongs to a finished component -> nothing to do
+            // But they are all covered by this assignment (see Pearce 'A Space-Efficient Algorithm for Finding Strongly Connected Components')
+            // because assigning w's low link is equal (or better) than assigning w's index (case 2), and case 3 is a no-op, because we set the low link to int.max for finished components
+            // This way we don't need to store each nodes index and do not need to keep track about all the nodes of the current component (the nodeIndex and nodeOnStack data structures we used before)
+            nodeLowLink[v] = Math.min(nodeLowLink[v], nodeLowLink[w]);
         }
-        if (nodeLowLink[v] == nodeIndex[v])
+        if (nodeLowLink[v] == vIndex)
             buildComponent(v);
     }
 
-    private void setupNextNode(int v) {
-        nodeIndex[v] = currIndex;
+    private boolean isUnvisited(int node) {
+        return nodeLowLink[node] == -1;
+    }
+
+    private int setupNextNode(int v) {
         nodeLowLink[v] = currIndex;
-        currIndex++;
         tarjanStack.addLast(v);
-        nodeOnStack.set(v);
+        return currIndex++;
     }
 
     private void buildComponent(int v) {
         if (tarjanStack.getLast() == v) {
             tarjanStack.removeLast();
-            nodeOnStack.clear(v);
+            nodeLowLink[v] = Integer.MAX_VALUE;
             components.numComponents++;
             components.numNodes++;
             if (!excludeSingleNodeComponents)
@@ -161,7 +162,7 @@ public class NodeBasedTarjanSCC {
             while (true) {
                 int w = tarjanStack.removeLast();
                 component.add(w);
-                nodeOnStack.clear(w);
+                nodeLowLink[w] = Integer.MAX_VALUE;
                 if (w == v)
                     break;
             }
@@ -177,7 +178,7 @@ public class NodeBasedTarjanSCC {
 
     private ConnectedComponents findComponents() {
         for (int node = 0; node < graph.getNodes(); ++node) {
-            if (nodeIndex[node] != -1)
+            if (!isUnvisited(node))
                 continue;
 
             pushFindComponentForNode(node);
@@ -185,26 +186,27 @@ public class NodeBasedTarjanSCC {
                 pop();
                 switch (dfsState) {
                     case BUILD_COMPONENT:
-                        if (nodeLowLink[v] == nodeIndex[v])
+                        if (nodeLowLink[v] == vIndex)
                             buildComponent(v);
                         break;
                     case UPDATE:
                         nodeLowLink[v] = Math.min(nodeLowLink[v], nodeLowLink[w]);
                         break;
                     case HANDLE_NEIGHBOR: {
-                        if (nodeIndex[w] != -1 && nodeOnStack.get(w))
-                            nodeLowLink[v] = Math.min(nodeLowLink[v], nodeIndex[w]);
-                        if (nodeIndex[w] == -1) {
+                        if (isUnvisited(w)) {
                             // we are pushing updateLowLinks first so it will run *after* findComponent finishes
                             pushUpdateLowLinks(v, w);
                             pushFindComponentForNode(w);
+                        } else {
+                            // see explanation in findComponentForNode
+                            nodeLowLink[v] = Math.min(nodeLowLink[v], nodeLowLink[w]);
                         }
                         break;
                     }
                     case FIND_COMPONENT: {
-                        setupNextNode(v);
+                        int vIndex = setupNextNode(v);
                         // we push buildComponent first so it will run *after* we finished traversing the edges
-                        pushBuildComponent(v);
+                        pushBuildComponent(v, vIndex);
                         EdgeIterator iter = explorer.setBaseNode(v);
                         while (iter.next()) {
                             pushHandleNeighbor(v, iter.getAdjNode());
@@ -225,9 +227,10 @@ public class NodeBasedTarjanSCC {
 
     private void pop() {
         long l = dfsStack.removeLast();
-        // We are maintaining a stack of longs to hold three kinds of information: two node indices (v&w) and the kind
-        // of code ('state') we want to execute for a given stack item. The following code combined with the pushXYZ
-        // methods does the fwd/bwd conversion between this information and a single long value.
+        // We are maintaining a stack of longs to hold four kinds of information: two node indices (v&w), the DFS index of
+        // v (only needed to build the component) and the kind of code ('state') we want to execute for a given stack
+        // item. The following code combined with the pushXYZ methods does the fwd/bwd conversion between this information
+        // and a single long value.
         int low = bitUtil.getIntLow(l);
         int high = bitUtil.getIntHigh(l);
         if (low > 0 && high > 0) {
@@ -238,10 +241,11 @@ public class NodeBasedTarjanSCC {
             dfsState = State.UPDATE;
             v = low - 1;
             w = -high - 1;
-        } else if (low == 0) {
+        } else if (low < 0) {
             dfsState = State.BUILD_COMPONENT;
             v = high - 1;
             w = -1;
+            vIndex = -low - 1;
         } else {
             dfsState = State.FIND_COMPONENT;
             v = low - 1;
@@ -261,9 +265,10 @@ public class NodeBasedTarjanSCC {
         dfsStack.addLast(bitUtil.toLong(v + 1, -(w + 1)));
     }
 
-    private void pushBuildComponent(int v) {
+    private void pushBuildComponent(int v, int vIndex) {
         assert v >= 0 && v < Integer.MAX_VALUE;
-        dfsStack.addLast(bitUtil.toLong(0, v + 1));
+        assert vIndex >= 0 && vIndex < Integer.MAX_VALUE;
+        dfsStack.addLast(bitUtil.toLong(-(vIndex + 1), v + 1));
     }
 
     private void pushFindComponentForNode(int v) {
