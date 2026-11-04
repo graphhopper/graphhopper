@@ -310,6 +310,26 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertEquals(RoadClass.LIVING_STREET, edge4.get(rcEnc));
     }
 
+    @Test
+    public void setWayGeometry_copiesKeepSharingTheGeometry() {
+        BaseGraph graph = createGHStorage();
+        EdgeIteratorState edge = graph.edge(3, 5).setWayGeometry(Helper.createPointList(1, 1));
+        EdgeIteratorState copy = graph.copyEdge(edge.getEdge(), true);
+        // fits: written in place, the copy sees it as it shares the entry
+        PointList fits = Helper.createPointList(1.1, 1.1);
+        assertTrue(graph.setWayGeometryIfFits(edge.getEdge(), fits));
+        assertEquals(fits, copy.fetchWayGeometry(PILLAR_ONLY));
+        // longer: needs a new entry, the copy must move too, otherwise it can no longer be found
+        PointList longer = Helper.createPointList(1, 1, 2, 2, 3, 3);
+        assertFalse(graph.setWayGeometryIfFits(edge.getEdge(), longer));
+        edge.setWayGeometry(longer);
+        assertEquals(longer, copy.fetchWayGeometry(PILLAR_ONLY));
+        IntArrayList copies = new IntArrayList();
+        graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), 3, edge.getEdge(), copies::add);
+        assertEquals(2, copies.size());
+        assertTrue(copies.contains(edge.getEdge()) && copies.contains(copy.getEdge()), copies.toString());
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void copyEdge_multiple(boolean withGeometries) {

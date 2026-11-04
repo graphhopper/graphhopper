@@ -534,6 +534,7 @@ public class GraphHopper {
         osmReaderConfig.setElevationSmoothingRamerMax(ghConfig.getInt("graph.elevation.edge_smoothing.ramer.max_elevation", osmReaderConfig.getElevationSmoothingRamerMax()));
         osmReaderConfig.setLongEdgeSamplingDistance(ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", osmReaderConfig.getLongEdgeSamplingDistance()));
         osmReaderConfig.setElevationMaxWayPointDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", osmReaderConfig.getElevationMaxWayPointDistance()));
+        osmReaderConfig.setTowerSmoothingRadius(ghConfig.getDouble("graph.elevation.tower_smoothing_radius", osmReaderConfig.getTowerSmoothingRadius()));
         routerConfig.setElevationWayPointMaxDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", routerConfig.getElevationWayPointMaxDistance()));
         ElevationProvider elevationProvider = createElevationProvider(ghConfig);
         setElevationProvider(elevationProvider);
@@ -919,6 +920,12 @@ public class GraphHopper {
 
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
+
+        if (hasElevation() && osmReaderConfig.getTowerSmoothingRadius() > 0)
+            new TowerNodeElevationSmoothing(baseGraph.getBaseGraph(),
+                    encodingManager.hasEncodedValue(RoadClass.KEY) ? encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class) : null,
+                    encodingManager.hasEncodedValue(RoadEnvironment.KEY) ? encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class) : null,
+                    osmReaderConfig.getTowerSmoothingRadius(), osmReaderConfig.getWorkerThreads()).execute();
 
         calculateSlope();
 

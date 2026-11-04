@@ -77,7 +77,7 @@ public class RouteResourceWithEleTest {
         assertTrue(distance < 2700, "distance wasn't correct:" + distance);
 
         JsonNode cson = path.get("points");
-        assertTrue(cson.toString().contains("[7.421392,43.7307,66.0]"), "no elevation?");
+        assertEquals(3, cson.get("coordinates").get(0).size(), "no elevation?");
 
         // Although we include elevation DO NOT include it in the bbox as bbox.toGeoJSON messes up when reading
         // or reading with and without elevation would be too complex for the client with no real use

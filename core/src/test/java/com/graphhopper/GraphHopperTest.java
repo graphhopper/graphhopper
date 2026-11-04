@@ -1092,6 +1092,8 @@ public class GraphHopperTest {
                 setFileBacked(true);
 
         hopper.setElevationProvider(new SRTMProvider(DIR));
+        // the raw elevations are checked below
+        hopper.getReaderConfig().setTowerSmoothingRadius(0);
         hopper.importOrLoad();
 
         GHResponse rsp = hopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
@@ -1146,6 +1148,8 @@ public class GraphHopperTest {
                 setFileBacked(true);
 
         if (!withTunnelInterpolation) {
+            // compare with the raw elevation data
+            hopper.getReaderConfig().setTowerSmoothingRadius(0);
             hopper.setImportRegistry(new DefaultImportRegistry() {
                 @Override
                 public ImportUnit createImportUnit(String name) {
@@ -1212,7 +1216,9 @@ public class GraphHopperTest {
         hopper.getRouterConfig().setElevationWayPointMaxDistance(1.);
         hopper.getReaderConfig().
                 setElevationMaxWayPointDistance(1.).
-                setLongEdgeSamplingDistance(30);
+                setLongEdgeSamplingDistance(30).
+                // the sampled elevations are checked below
+                setTowerSmoothingRadius(0);
 
         SRTMProvider elevationProvider = new SRTMProvider(DIR);
         elevationProvider.setInterpolate(true);
@@ -2334,6 +2340,7 @@ public class GraphHopperTest {
                 setProfiles(TestProfiles.accessAndSpeed("car"));
         if (elevation)
             h.setElevationProvider(new SRTMProvider(DIR));
+        h.getReaderConfig().setTowerSmoothingRadius(0);
         h.importOrLoad();
 
         List<GHPoint> reqPoints = asList(

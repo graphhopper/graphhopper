@@ -389,7 +389,7 @@ public class RouteResourceCustomModelTest {
                 "   \"priority\": [{\"if\": \"car_access == false || hgv == NO || max_width < 3 || max_height < 4\", \"multiply_by\": \"0\"}]}}";
         JsonNode path = getPath(body);
         assertEquals(7350, path.get("distance").asDouble(), 10);
-        assertEquals(952 * 1000, path.get("time").asLong(), 1_000);
+        assertEquals(951 * 1000, path.get("time").asLong(), 1_000);
     }
 
     @Test

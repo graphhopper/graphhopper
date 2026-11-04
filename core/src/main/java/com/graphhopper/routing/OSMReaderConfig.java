@@ -34,6 +34,7 @@ public class OSMReaderConfig {
     private double smoothElevationAverageWindowSize = 150.0;
     private int ramerElevationSmoothingMax = 5;
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
+    private double towerSmoothingRadius = 30;
     private int workerThreads = OSMInput.defaultWorkerThreads();
     private double defaultElevation = 0;
 
@@ -133,6 +134,19 @@ public class OSMReaderConfig {
 
     public void setSmoothElevationAverageWindowSize(double smoothElevationAverageWindowSize) {
         this.smoothElevationAverageWindowSize = smoothElevationAverageWindowSize;
+    }
+
+    public double getTowerSmoothingRadius() {
+        return towerSmoothingRadius;
+    }
+
+    /**
+     * Sets the radius in meters for smoothing the elevation of the tower nodes along the road after the import,
+     * see TowerNodeElevationSmoothing. 0 disables it.
+     */
+    public OSMReaderConfig setTowerSmoothingRadius(double towerSmoothingRadius) {
+        this.towerSmoothingRadius = towerSmoothingRadius;
+        return this;
     }
 
     public double getLongEdgeSamplingDistance() {
