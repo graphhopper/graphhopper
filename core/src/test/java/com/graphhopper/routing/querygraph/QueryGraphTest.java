@@ -73,9 +73,6 @@ public class QueryGraphTest {
         // 0     1
         // |
         // 2
-        // set nodes before the geometry as the first pillar is stored relative to the base node
-        g.getNodeAccess().setNode(0, 1, 0);
-        g.getNodeAccess().setNode(1, 1, 2.5);
         g.edge(0, 2).setDistance(0).set(speedEnc, 60, 60);
         g.edge(0, 1).setDistance(0).set(speedEnc, 60, 60).
                 setWayGeometry(Helper.createPointList(1.5, 1, 1.5, 1.5));
@@ -155,7 +152,6 @@ public class QueryGraphTest {
         // 0     1
         // |    /
         // 2  3
-        g.getNodeAccess().setNode(0, 1, 0);
         g.edge(0, 2).setDistance(0).set(speedEnc, 60, 60);
         EdgeIteratorState edgeWithGeo = g.edge(0, 1).setDistance(0).set(speedEnc, 60, 60)
                 .setWayGeometry(Helper.createPointList(1.5, 1, 1.5, 1.5));
@@ -302,7 +298,6 @@ public class QueryGraphTest {
         g.edge(0, 1).setDistance(0).set(speedEnc, 60, 60);
         g.edge(1, 3).setDistance(0).set(speedEnc, 60, 60);
         g.edge(3, 4).setDistance(0).set(speedEnc, 60, 60);
-        g.getNodeAccess().setNode(1, 0, 0.001);
         EdgeIteratorState edge = g.edge(1, 3).setDistance(20).set(speedEnc, 60, 60).setWayGeometry(Helper.createPointList(-0.001, 0.001, -0.001, 0.002));
         updateDistancesFor(g, 0, 0, 0);
         updateDistancesFor(g, 1, 0, 0.001);
@@ -427,7 +422,6 @@ public class QueryGraphTest {
          *  /       \
          * A         B
          */
-        g.getNodeAccess().setNode(nodeA, 1, 0);
         g.edge(nodeA, nodeB).setDistance(0).set(speedEnc, 60, 0).
                 setWayGeometry(Helper.createPointList(1.5, 3, 1.5, 7));
         updateDistancesFor(g, nodeA, 1, 0);
@@ -1152,7 +1146,6 @@ public class QueryGraphTest {
         //
         //  0 ---(snap A)---(snap B)---(snap C)--- 1
         //
-        g.getNodeAccess().setNode(0, 1, 0);
         EdgeIteratorState edge = g.edge(0, 1).setDistance(0).set(speedEnc, 60, 60)
                 .setWayGeometry(Helper.createPointList(1, 1, 1, 2, 1, 3));
         updateDistancesFor(g, 0, 1, 0);

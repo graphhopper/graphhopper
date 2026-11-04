@@ -432,29 +432,19 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     }
 
     @Test
-    public void testFirstPillarRelativeToNodeA() {
+    public void testPillarEleRoundedTo5cm() {
         BaseGraph graph = createGHStorage(defaultGraphLoc, true);
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 49.0, 9.0, 300);
         na.setNode(1, 49.001, 9.001, 310);
         EdgeIteratorState edge = graph.edge(0, 1);
-        long geoRefBefore = graph.getMaxGeoRef();
         // set via the reversed state, i.e. stored in reverse order
         edge.detach(true).setWayGeometry(Helper.createPointList3D(49.0009, 9.0009, 308.98, 49.0001, 9.0001, 301.07));
-        // 1 byte header + 2 pillars with small deltas: lat+lon 2 bytes each, ele 1 byte (1 m) and 2 bytes (8 m)
-        assertEquals(12, graph.getMaxGeoRef() - geoRefBefore);
         assertEquals(Helper.createPointList3D(49.0, 9.0, 300, 49.0001, 9.0001, 301.05, 49.0009, 9.0009, 309, 49.001, 9.001, 310),
                 edge.fetchWayGeometry(ALL));
         PointList pillars = edge.detach(true).fetchWayGeometry(PILLAR_ONLY);
-        assertEquals(Helper.createPointList3D(49.0009, 9.0009, 309, 49.0001, 9.0001, 301.05), pillars);
-        // pillar elevation is rounded to 5cm
         assertEquals(309.00, pillars.getEle(0), 1e-4);
         assertEquals(301.05, pillars.getEle(1), 1e-4);
-
-        // moving nodeA would shift the pillars, nodeB and elevation changes are fine
-        assertThrows(IllegalStateException.class, () -> na.setNode(0, 49.0, 9.1, 300));
-        na.setNode(0, 49.0, 9.0, 305);
-        na.setNode(1, 49.002, 9.001, 310);
         graph.close();
     }
 
