@@ -511,25 +511,6 @@ public class BaseGraph implements Graph, Closeable {
         }
     }
 
-    /**
-     * Sets the pillar nodes of the edge (in storage direction) only if they fit into the existing geometry entry,
-     * i.e. without allocating. This makes it safe to call for different edges from several threads.
-     *
-     * @return false if the edge has no geometry entry or if the new geometry needs more bytes. Then nothing is written
-     * and {@link EdgeIteratorState#setWayGeometry} must be used.
-     */
-    public boolean setWayGeometryIfFits(int edge, PointList pillarNodes) {
-        if (pillarNodes.isEmpty() || pillarNodes.getDimension() != nodeAccess.getDimension())
-            throw new IllegalArgumentException("pillar nodes must not be empty and must have the dimension of the graph");
-        long existingGeoRef = store.getGeoRef(store.toEdgePointer(edge));
-        if (existingGeoRef <= 0)
-            return false;
-        EncodedBytes encoded = createWayGeometryBytes(pillarNodes, false);
-        if (encoded.length > readEntryByteSize(existingGeoRef))
-            return false;
-        wayGeometry.setBytes(existingGeoRef, encoded.bytes, encoded.length);
-        return true;
-    }
 
     public EdgeIntAccess getEdgeAccess() {
         return store;

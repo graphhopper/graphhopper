@@ -317,11 +317,10 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         EdgeIteratorState copy = graph.copyEdge(edge.getEdge(), true);
         // fits: written in place, the copy sees it as it shares the entry
         PointList fits = Helper.createPointList(1.1, 1.1);
-        assertTrue(graph.setWayGeometryIfFits(edge.getEdge(), fits));
+        edge.setWayGeometry(fits);
         assertEquals(fits, copy.fetchWayGeometry(PILLAR_ONLY));
         // longer: needs a new entry, the copy must move too, otherwise it can no longer be found
         PointList longer = Helper.createPointList(1, 1, 2, 2, 3, 3);
-        assertFalse(graph.setWayGeometryIfFits(edge.getEdge(), longer));
         edge.setWayGeometry(longer);
         assertEquals(longer, copy.fetchWayGeometry(PILLAR_ONLY));
         IntArrayList copies = new IntArrayList();

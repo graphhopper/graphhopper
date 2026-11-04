@@ -28,6 +28,7 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
@@ -109,9 +110,9 @@ public class TowerNodeElevationSmoothing {
             }
             changed.addAndGet(count);
         });
-        int[] pillarEdges = updateEdges(delta);
-        LOGGER.info("TowerNodeElevationSmoothing: changed {} of {} tower nodes within {} m, took {}s, shifted pillars of {} edges ({} with a new geometry entry), took {}s, threads: {}",
-                changed.get(), graph.getNodes(), radius, (int) smoothTime, pillarEdges[0], pillarEdges[1], (int) sw.stop().getSeconds(), threads);
+        int shifted = updateEdges(delta);
+        LOGGER.info("TowerNodeElevationSmoothing: changed {} of {} tower nodes within {} m, took {}s, shifted pillars of {} edges, took {}s, threads: {}",
+                changed.get(), graph.getNodes(), radius, (int) smoothTime, shifted, (int) sw.stop().getSeconds(), threads);
     }
 
     private short[] calcHeadings() {
@@ -155,54 +156,60 @@ public class TowerNodeElevationSmoothing {
 
     /**
      * Updates the edges at changed tower nodes (which must be already set): shifts the pillar nodes and calculates
-     * the distance again, as it includes the elevation. Most geometries fit into their existing entry and are written
-     * in parallel. A longer geometry needs a new entry at the end of the storage, which is done on one thread.
-     * The copies of an edge for turn restrictions share its geometry, so only the edge with the smallest id writes it.
+     * the distance again, as it includes the elevation. The edges are processed in batches: the new geometries are
+     * calculated in parallel, the distances are set there too, and then the geometries are written on one thread,
+     * because writing a longer geometry allocates storage. The copies of an edge for turn restrictions share its
+     * geometry, so only the edge with the smallest id updates it.
      *
-     * @return the number of edges with shifted pillar nodes and how many of them got a new geometry entry
+     * @return the number of edges with shifted pillar nodes
      */
-    private int[] updateEdges(float[] delta) {
-        AtomicInteger shifted = new AtomicInteger();
-        IntArrayList longer = new IntArrayList();
-        forEachChunk(graph.getEdges(), (from, to) -> {
-            EdgeExplorer explorer = graph.createEdgeExplorer();
-            IntArrayList copies = new IntArrayList(), chunkLonger = new IntArrayList();
-            int count = 0;
-            for (int edge = from; edge < to; edge++) {
-                EdgeIteratorState state = graph.getEdgeIteratorState(edge, Integer.MIN_VALUE);
-                if (delta[state.getBaseNode()] == 0 && delta[state.getAdjNode()] == 0) continue;
-                copies.clear();
-                graph.forEdgeAndCopiesOfEdge(explorer, state.getBaseNode(), edge, copies::add);
-                if (min(copies) != edge) continue;
-                PointList pl = state.fetchWayGeometry(FetchMode.ALL);
-                if (pl.size() > 2) {
-                    shiftPillars(pl, delta[state.getBaseNode()], delta[state.getAdjNode()]);
-                    if (!graph.setWayGeometryIfFits(edge, pl.shallowCopy(1, pl.size() - 1, false))) {
-                        chunkLonger.add(edge);
+    private int updateEdges(float[] delta) {
+        int batchSize = 2 * chunkSize, taskSize = Math.max(1, chunkSize / 50);
+        PointList[] pillars = new PointList[batchSize];
+        int shifted = 0;
+        for (int batchStart = 0; batchStart < graph.getEdges(); batchStart += batchSize) {
+            int start = batchStart, size = Math.min(batchSize, graph.getEdges() - batchStart);
+            Arrays.fill(pillars, null);
+            forEachChunk(size, taskSize, (from, to) -> {
+                EdgeExplorer explorer = graph.createEdgeExplorer();
+                IntArrayList copies = new IntArrayList();
+                for (int i = from; i < to; i++) {
+                    EdgeIteratorState state = graph.getEdgeIteratorState(start + i, Integer.MIN_VALUE);
+                    float deltaBase = delta[state.getBaseNode()], deltaAdj = delta[state.getAdjNode()];
+                    if (deltaBase == 0 && deltaAdj == 0 || findCopies(explorer, state, copies) != state.getEdge())
                         continue;
+                    PointList pl = state.fetchWayGeometry(FetchMode.ALL);
+                    if (pl.size() > 2) {
+                        shiftPillars(pl, deltaBase, deltaAdj);
+                        pillars[i] = pl.shallowCopy(1, pl.size() - 1, false);
                     }
-                    count++;
+                    // like OSMReader, for the edge and its copies
+                    double distance = Math.min(BaseGraph.MAX_DIST_METERS, Math.max(0.001, DistanceCalcEarth.DIST_EARTH.calcDistance(pl)));
+                    for (IntCursor c : copies)
+                        graph.getEdgeIteratorState(c.value, Integer.MIN_VALUE).setDistance(distance);
                 }
-                setDistance(copies, pl);
+            });
+            for (int i = 0; i < size; i++) {
+                if (pillars[i] == null) continue;
+                graph.getEdgeIteratorState(start + i, Integer.MIN_VALUE).setWayGeometry(pillars[i]);
+                shifted++;
             }
-            shifted.addAndGet(count);
-            synchronized (longer) {
-                longer.addAll(chunkLonger);
-            }
-        });
-        // the original pillar nodes of these edges are still stored, so do the same again but with a new entry
-        EdgeExplorer explorer = graph.createEdgeExplorer();
-        IntArrayList copies = new IntArrayList();
-        for (IntCursor c : longer) {
-            EdgeIteratorState state = graph.getEdgeIteratorState(c.value, Integer.MIN_VALUE);
-            PointList pl = state.fetchWayGeometry(FetchMode.ALL);
-            shiftPillars(pl, delta[state.getBaseNode()], delta[state.getAdjNode()]);
-            state.setWayGeometry(pl.shallowCopy(1, pl.size() - 1, false));
-            copies.clear();
-            graph.forEdgeAndCopiesOfEdge(explorer, state.getBaseNode(), c.value, copies::add);
-            setDistance(copies, pl);
         }
-        return new int[]{shifted.get() + longer.size(), longer.size()};
+        return shifted;
+    }
+
+    /**
+     * Fills copies with the edge and its copies that share the geometry.
+     *
+     * @return the smallest edge id of them
+     */
+    private int findCopies(EdgeExplorer explorer, EdgeIteratorState edge, IntArrayList copies) {
+        copies.clear();
+        graph.forEdgeAndCopiesOfEdge(explorer, edge.getBaseNode(), edge.getEdge(), copies::add);
+        int min = Integer.MAX_VALUE;
+        for (IntCursor c : copies)
+            min = Math.min(min, c.value);
+        return min;
     }
 
     /**
@@ -223,22 +230,6 @@ public class TowerNodeElevationSmoothing {
 
     private double weight(double distanceToTower) {
         return Math.max(0, 1 - distanceToTower / radius);
-    }
-
-    /**
-     * Sets the distance (like OSMReader) for the edges that share this geometry.
-     */
-    private void setDistance(IntArrayList edges, PointList pl) {
-        double distance = Math.min(BaseGraph.MAX_DIST_METERS, Math.max(0.001, DistanceCalcEarth.DIST_EARTH.calcDistance(pl)));
-        for (IntCursor c : edges)
-            graph.getEdgeIteratorState(c.value, Integer.MIN_VALUE).setDistance(distance);
-    }
-
-    private static int min(IntArrayList list) {
-        int min = Integer.MAX_VALUE;
-        for (IntCursor c : list)
-            min = Math.min(min, c.value);
-        return min;
     }
 
     /**
@@ -321,8 +312,12 @@ public class TowerNodeElevationSmoothing {
     }
 
     private void forEachChunk(int size, BiConsumer<Integer, Integer> range) {
-        GHUtility.runConcurrently(IntStream.range(0, (size + chunkSize - 1) / chunkSize).mapToObj(c ->
-                () -> range.accept(c * chunkSize, Math.min(size, (c + 1) * chunkSize))), threads);
+        forEachChunk(size, chunkSize, range);
+    }
+
+    private void forEachChunk(int size, int chunk, BiConsumer<Integer, Integer> range) {
+        GHUtility.runConcurrently(IntStream.range(0, (size + chunk - 1) / chunk).mapToObj(c ->
+                () -> range.accept(c * chunk, Math.min(size, (c + 1) * chunk))), threads);
     }
 
     private double heading(int edgeKey) {
