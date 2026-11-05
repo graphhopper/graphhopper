@@ -46,6 +46,8 @@ import java.util.stream.IntStream;
  * the road within the radius in both directions. At junctions the road continues with the straightest edge.</li>
  * <li>The window is symmetric: if the road ends on one side the other side is cut to the same length, so a dead end
  * keeps its elevation.</li>
+ * <li>The change is limited to {@link #MAX_CHANGE}: noise is smaller, while the mean would flatten real summits,
+ * valley floors and kinks of steep paths by up to 20 m.</li>
  * <li>Steps are a real change of the elevation, so the road ends there. Bridges, tunnels and ferries are
  * interpolated before: the road ends there too and their tower nodes keep their elevation.</li>
  * <li>The pillar nodes within the radius are shifted along with their tower nodes so that the elevation profile
@@ -58,6 +60,8 @@ public class TowerNodeElevationSmoothing {
     static final double STEP = 10;
     // max heading change for an edge to count as the continuation of the road at a junction
     static final double MAX_TURN = Math.toRadians(45);
+    // max elevation change of a tower node in meters
+    static final double MAX_CHANGE = 2;
     // headings are stored quantized to 1e-4 rad, plus two markers for edges that are not part of a road
     private static final double HEADING_SCALE = Short.MAX_VALUE / Math.PI;
     // no length or steps
@@ -95,7 +99,7 @@ public class TowerNodeElevationSmoothing {
         StopWatch sw = new StopWatch().start();
         headings = calcHeadings();
         // staged: the smoothing must read the original elevations of the neighbors
-        float[] delta = calcDeltas();
+        short[] delta = calcTowerEleDeltas();
         headings = null;
         float smoothTime = sw.stop().getSeconds();
 
@@ -105,7 +109,7 @@ public class TowerNodeElevationSmoothing {
             int count = 0;
             for (int node = from; node < to; node++) {
                 if (delta[node] == 0) continue;
-                nodeAccess.setNode(node, nodeAccess.getLat(node), nodeAccess.getLon(node), nodeAccess.getEle(node) + delta[node]);
+                nodeAccess.setNode(node, nodeAccess.getLat(node), nodeAccess.getLon(node), nodeAccess.getEle(node) + delta[node] / 100.0);
                 count++;
             }
             changed.addAndGet(count);
@@ -136,10 +140,10 @@ public class TowerNodeElevationSmoothing {
     }
 
     /**
-     * @return the elevation change of every tower node, 0 if it is not smoothed
+     * @return the elevation change of every tower node in centimeters (to save memory), 0 if it is not smoothed
      */
-    private float[] calcDeltas() {
-        float[] delta = new float[graph.getNodes()];
+    private short[] calcTowerEleDeltas() {
+        short[] delta = new short[graph.getNodes()];
         forEachChunk(graph.getNodes(), (from, to) -> {
             EdgeExplorer explorer = graph.createEdgeExplorer();
             double[] fwd = new double[(int) (radius / STEP)], bwd = new double[fwd.length];
@@ -148,7 +152,7 @@ public class TowerNodeElevationSmoothing {
                 double own = nodeAccess.getEle(node);
                 double newEle = smooth(explorer, node, own, keys, fwd, bwd);
                 if (!Double.isNaN(newEle))
-                    delta[node] = (float) (newEle - own);
+                    delta[node] = (short) Math.round(100 * Math.max(-MAX_CHANGE, Math.min(MAX_CHANGE, newEle - own)));
             }
         });
         return delta;
@@ -163,7 +167,7 @@ public class TowerNodeElevationSmoothing {
      *
      * @return the number of edges with shifted pillar nodes
      */
-    private int updateEdges(float[] delta) {
+    private int updateEdges(short[] delta) {
         int batchSize = 2 * chunkSize, taskSize = Math.max(1, chunkSize / 50);
         PointList[] pillars = new PointList[batchSize];
         int shifted = 0;
@@ -175,7 +179,7 @@ public class TowerNodeElevationSmoothing {
                 IntArrayList copies = new IntArrayList();
                 for (int i = from; i < to; i++) {
                     EdgeIteratorState state = graph.getEdgeIteratorState(start + i, Integer.MIN_VALUE);
-                    float deltaBase = delta[state.getBaseNode()], deltaAdj = delta[state.getAdjNode()];
+                    double deltaBase = delta[state.getBaseNode()] / 100.0, deltaAdj = delta[state.getAdjNode()] / 100.0;
                     if (deltaBase == 0 && deltaAdj == 0 || findCopies(explorer, state, copies) != state.getEdge())
                         continue;
                     PointList pl = state.fetchWayGeometry(FetchMode.ALL);

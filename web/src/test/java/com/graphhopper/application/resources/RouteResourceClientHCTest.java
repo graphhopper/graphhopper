@@ -120,8 +120,8 @@ public class RouteResourceClientHCTest {
         ResponsePath res = rsp.getBest();
         isBetween(70, 80, res.getPoints().size());
         isBetween(2900, 3000, res.getDistance());
-        isBetween(130, 140, res.getAscend());
-        isBetween(80, 90, res.getDescend());
+        isBetween(120, 130, res.getAscend());
+        isBetween(75, 85, res.getDescend());
         isBetween(1900, 2000, res.getRouteWeight());
 
         // change vehicle
@@ -153,7 +153,7 @@ public class RouteResourceClientHCTest {
 
         ResponsePath path = paths.get(0);
         assertEquals(52, path.getPoints().size());
-        assertEquals(1690, path.getDistance(), 1);
+        assertEquals(1689, path.getDistance(), 1);
         assertTrue(path.getInstructions().toString().contains("Avinguda de Tarragona"), path.getInstructions().toString());
 
         path = paths.get(1);

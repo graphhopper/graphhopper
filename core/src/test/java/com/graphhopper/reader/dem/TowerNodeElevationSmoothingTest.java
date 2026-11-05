@@ -129,6 +129,21 @@ public class TowerNodeElevationSmoothingTest {
     }
 
     @Test
+    public void changeIsLimited() {
+        BaseGraph graph = new BaseGraph.Builder(new EncodingManager.Builder().build()).set3D(true).create();
+        NodeAccess na = graph.getNodeAccess();
+        // straight road with tower nodes every 12 m and a 10 m spike at node 4: the mean would lower it by about 9 m
+        for (int i = 0; i < 9; i++)
+            na.setNode(i, 51.0, 13 + i * 12 / 70_057.0, i == 4 ? 110 : 100);
+        for (int i = 1; i < 9; i++)
+            graph.edge(i - 1, i).setDistance(12);
+
+        new TowerNodeElevationSmoothing(graph, null, null, 30, 2).execute();
+
+        assertEquals(110 - TowerNodeElevationSmoothing.MAX_CHANGE, na.getEle(4), 0.01);
+    }
+
+    @Test
     public void parallelIsDeterministic() {
         BaseGraph original = grid(), single = grid(), parallel = grid();
         new TowerNodeElevationSmoothing(single, null, null, 30, 1).execute();

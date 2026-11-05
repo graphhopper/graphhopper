@@ -110,11 +110,11 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoMotorcycleCurvature() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2647, 117));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3710, 170));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 2761, 166));
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2358, 137));
-        queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2186, 116));
+        queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2659, 117));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3718, 170));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 2765, 166));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2366, 137));
+        queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2194, 116));
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
         GraphHopper hopper = createHopper(MONACO, new Profile("car").setCustomModel(
                 CustomModel.merge(getCustomModel("motorcycle.json"), getCustomModel("curvature.json"))));
@@ -265,12 +265,12 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoFoot3D() {
         // most routes have same number of points as testMonaceFoot results but longer distance due to elevation difference
         List<Query> queries = createMonacoFoot();
-        queries.get(0).getPoints().get(1).expectedDistance = 1594;
+        queries.get(0).getPoints().get(1).expectedDistance = 1598;
         queries.get(2).getPoints().get(1).expectedDistance = 2247;
-        queries.get(3).getPoints().get(1).expectedDistance = 1470;
+        queries.get(3).getPoints().get(1).expectedDistance = 1476;
 
         // or slightly longer tour with less nodes: list.get(1).setDistance(1, 3610);
-        queries.get(1).getPoints().get(1).expectedDistance = 3564;
+        queries.get(1).getPoints().get(1).expectedDistance = 3570;
         queries.get(1).getPoints().get(1).expectedPoints = 141;
 
         Profile profile = TestProfiles.accessSpeedAndPriority("foot");
@@ -296,7 +296,7 @@ public class RoutingAlgorithmWithOSMTest {
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'
         queries.add(new Query(49.974972, 11.515657, 49.991022, 11.512299, 2362, 67));
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
-        queries.add(new Query(49.990967, 11.545258, 50.023182, 11.555386, 5679, 118));
+        queries.add(new Query(49.990967, 11.545258, 50.023182, 11.555386, 5683, 118));
         GraphHopper hopper = createHopper(BAYREUTH, new Profile("hike").setCustomModel(getCustomModel("hike.json")));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
@@ -318,21 +318,21 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoBike3D() {
         List<Query> queries = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km after BridgeTunnelTowerCorrection
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2661, 118));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2656, 118));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4238, 247));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4247, 220));
         // 3.
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2766, 163));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2772, 167));
         // 4.
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1769, 90));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1589, 85));
 
         // try reverse direction
         // 1.
-        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2573, 115));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4157, 165));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2851, 145));
+        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2578, 115));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 3892, 165));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2826, 142));
         // 4. avoid tunnel(s)!
-        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1595, 88));
+        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1621, 96));
         // tests here still assert that reverse oneways are excluded
         GraphHopper hopper = createHopper(MONACO,
                 new Profile("bike").setCustomModel(CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json")).
