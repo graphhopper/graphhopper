@@ -146,11 +146,11 @@ public class TowerNodeElevationSmoothing {
         short[] delta = new short[graph.getNodes()];
         forEachChunk(graph.getNodes(), (from, to) -> {
             EdgeExplorer explorer = graph.createEdgeExplorer();
-            double[] fwd = new double[(int) (radius / STEP)], bwd = new double[fwd.length];
+            double[] fwdEle = new double[(int) (radius / STEP)], bwdEle = new double[fwdEle.length];
             IntArrayList keys = new IntArrayList();
             for (int node = from; node < to; node++) {
                 double own = nodeAccess.getEle(node);
-                double newEle = smooth(explorer, node, own, keys, fwd, bwd);
+                double newEle = smooth(explorer, node, own, keys, fwdEle, bwdEle);
                 if (!Double.isNaN(newEle))
                     delta[node] = (short) Math.round(100 * Math.max(-MAX_CHANGE, Math.min(MAX_CHANGE, newEle - own)));
             }
@@ -159,11 +159,12 @@ public class TowerNodeElevationSmoothing {
     }
 
     /**
-     * Updates the edges at changed tower nodes (which must be already set): shifts the pillar nodes and calculates
-     * the distance again, as it includes the elevation. The edges are processed in batches: the new geometries are
-     * calculated in parallel, the distances are set there too, and then the geometries are written on one thread,
-     * because writing a longer geometry allocates storage. The copies of an edge for turn restrictions share its
-     * geometry, so only the edge with the smallest id updates it.
+     * Updates the edges at changed tower nodes (which must be already set): adjusts the elevation of pillar nodes
+     * and calculates the distance again, as it includes the elevation. The edges are processed in batches:
+     * the new geometries are calculated in parallel, the distances are set there too, and then the geometries
+     * are written on one thread, because writing a longer geometry (which is very rare) allocates storage and
+     * storage is not write thread safe. The copies of an edge for turn restrictions share its geometry, so
+     * only the edge with the smallest id updates it.
      *
      * @return the number of edges with shifted pillar nodes
      */
@@ -180,6 +181,7 @@ public class TowerNodeElevationSmoothing {
                 for (int i = from; i < to; i++) {
                     EdgeIteratorState state = graph.getEdgeIteratorState(start + i, Integer.MIN_VALUE);
                     double deltaBase = delta[state.getBaseNode()] / 100.0, deltaAdj = delta[state.getAdjNode()] / 100.0;
+                    // skip edge copies but the original should loop over them at the end to update the distance
                     if (deltaBase == 0 && deltaAdj == 0 || findCopies(explorer, state, copies) != state.getEdge())
                         continue;
                     PointList pl = state.fetchWayGeometry(FetchMode.ALL);
@@ -239,7 +241,7 @@ public class TowerNodeElevationSmoothing {
     /**
      * @return the smoothed elevation of the node or NaN if it keeps its elevation
      */
-    private double smooth(EdgeExplorer explorer, int node, double own, IntArrayList keys, double[] fwd, double[] bwd) {
+    private double smooth(EdgeExplorer explorer, int node, double own, IntArrayList keys, double[] fwdEle, double[] bwdEle) {
         keys.clear();
         EdgeIterator iter = explorer.setBaseNode(node);
         while (iter.next()) {
@@ -265,12 +267,13 @@ public class TowerNodeElevationSmoothing {
                 }
             }
             if (bestPair < 0) return Double.NaN;
-            int n = Math.min(walk(explorer, keys.get(bestPair / size), fwd, 0, 0, STEP),
-                    walk(explorer, keys.get(bestPair % size), bwd, 0, 0, STEP));
+            // pick same samples from each side (bestPair / size == i and bestPair % size == j)
+            int n = Math.min(walk(explorer, keys.get(bestPair / size), fwdEle, 0, 0, STEP),
+                    walk(explorer, keys.get(bestPair % size), bwdEle, 0, 0, STEP));
             if (n > 0) {
                 double sum = own;
                 for (int i = 0; i < n; i++)
-                    sum += fwd[i] + bwd[i];
+                    sum += fwdEle[i] + bwdEle[i];
                 return sum / (1 + 2 * n);
             }
             lastTurn = bestTurn;
@@ -357,6 +360,7 @@ public class TowerNodeElevationSmoothing {
      */
     static double headingTowards(PointList pl, boolean fromEnd) {
         int n = pl.size(), i = fromEnd ? n - 1 : 0;
+        // zero-length segments: barrier edges (all points identical) or duplicate OSM points (without simplification)
         for (int k = 1; k < n; k++) {
             int j = fromEnd ? n - 1 - k : k;
             if (pl.getLat(j) != pl.getLat(i) || pl.getLon(j) != pl.getLon(i))
