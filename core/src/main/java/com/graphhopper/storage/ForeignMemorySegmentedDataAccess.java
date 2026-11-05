@@ -63,6 +63,7 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
         ensureCapacity(Math.max(10 * 4, bytes));
+        initialized = true;
         return this;
     }
 
@@ -125,6 +126,7 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
                     MemorySegment.copy(buffer, 0, seg, BYTE_LAYOUT, 0, read);
                     segments[s] = seg;
                 }
+                initialized = true;
                 return true;
             }
         } catch (IOException ex) {
@@ -138,6 +140,8 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already closed");
         if (readOnly)
             throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
+        if (!initialized)
+            throw new IllegalStateException("not initialized");
         ensureParentDirectoryExists();
 
         try {
