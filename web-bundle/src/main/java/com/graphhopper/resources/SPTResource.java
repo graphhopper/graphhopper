@@ -1,19 +1,15 @@
 package com.graphhopper.resources;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -65,6 +61,14 @@ public class SPTResource {
         this.encodingManager = encodingManager;
     }
 
+    /**
+     * Finds the weighting for the search and snaps its start point. Override this to support profiles that are not
+     * part of the config.
+     */
+    protected SearchStart createStart(String profileName, PMap hints, GHPoint point) {
+        return SearchStart.create(graphHopper, profileName, hints, point);
+    }
+
     // Annotating this as application/json because errors come out as json, and
     // IllegalArgumentExceptions are not mapped to a fixed mediatype, because in RouteResource, it could be GPX.
     @GET
@@ -88,19 +92,12 @@ public class SPTResource {
         profileName = profileResolver.resolveProfile(profileResolverHints);
         removeLegacyParameters(hintsMap);
 
-        Profile profile = graphHopper.getProfile(profileName);
-        if (profile == null)
-            throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
-        LocationIndex locationIndex = graphHopper.getLocationIndex();
-        BaseGraph graph = graphHopper.getBaseGraph();
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
-        BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName));
-        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, new DefaultSnapFilter(weighting, inSubnetworkEnc));
-        if (!snap.isValid())
-            throw new IllegalArgumentException("Point not found:" + point);
-        QueryGraph queryGraph = QueryGraph.create(graph, snap);
+        SearchStart start = createStart(profileName, hintsMap, point.get());
+        Weighting weighting = start.weighting();
+        Snap snap = start.snap();
+        QueryGraph queryGraph = QueryGraph.create(graphHopper.getBaseGraph(), snap);
         NodeAccess nodeAccess = queryGraph.getNodeAccess();
-        TraversalMode traversalMode = profile.hasTurnCosts() ? EDGE_BASED : NODE_BASED;
+        TraversalMode traversalMode = weighting.hasTurnCosts() ? EDGE_BASED : NODE_BASED;
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, queryGraph.wrapWeighting(weighting), reverseFlow, traversalMode);
 
         if (distanceInMeter.orElseThrow(() -> new IllegalArgumentException("query param distance_limit is not a number.")) > 0) {
