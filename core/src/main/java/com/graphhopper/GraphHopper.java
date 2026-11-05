@@ -923,8 +923,8 @@ public class GraphHopper {
 
         if (hasElevation() && osmReaderConfig.getTowerSmoothingRadius() > 0)
             new TowerNodeElevationSmoothing(baseGraph.getBaseGraph(),
-                    encodingManager.hasEncodedValue(RoadClass.KEY) ? encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class) : null,
-                    encodingManager.hasEncodedValue(RoadEnvironment.KEY) ? encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class) : null,
+                    encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class),
+                    encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class),
                     osmReaderConfig.getTowerSmoothingRadius(), osmReaderConfig.getWorkerThreads()).execute();
 
         calculateSlope();
