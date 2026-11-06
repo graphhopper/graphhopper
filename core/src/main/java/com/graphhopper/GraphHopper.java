@@ -92,6 +92,7 @@ public class GraphHopper {
     boolean removeZipped = true;
     boolean calcChecksums = false;
     private boolean skipProfileMatchCheck = false;
+    private int maxCustomModelSetSize = 10_000;
     // for custom areas:
     private String customAreasDirectory = "";
     // for graph:
@@ -589,6 +590,11 @@ public class GraphHopper {
             throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarkCount
                     + " should be less or equal to landmark count of " + lmPreparationHandler.getLandmarks());
         routerConfig.setActiveLandmarkCount(activeLandmarkCount);
+        maxCustomModelSetSize = ghConfig.getInt("routing.custom_model.max_set_size",
+                maxCustomModelSetSize);
+        if (maxCustomModelSetSize < 0)
+            throw new IllegalArgumentException("routing.custom_model.max_set_size must not be "
+                    + "negative, but was: " + maxCustomModelSetSize);
 
         calcChecksums = ghConfig.getBool("graph.calc_checksums", false);
         skipProfileMatchCheck = ghConfig.getBool("graph.skip_profile_match_check", false);
@@ -1435,7 +1441,8 @@ public class GraphHopper {
     }
 
     protected WeightingFactory createWeightingFactory() {
-        return new DefaultWeightingFactory(baseGraph.getBaseGraph(), getEncodingManager());
+        return new DefaultWeightingFactory(baseGraph.getBaseGraph(), getEncodingManager(),
+                maxCustomModelSetSize);
     }
 
     public GHResponse route(GHRequest request) {

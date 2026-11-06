@@ -268,6 +268,8 @@ public class ValueExpressionVisitor {
         for (Map.Entry<String, CustomModel.Parameter> entry : parameters.entrySet()) {
             String name = CustomModelParser.PARAM_PREFIX + entry.getKey();
             if (expression.trim().equals(name)) return entry.getValue().toString();
+            // avoids building the literal of every parameter, e.g. of a large set
+            if (!expression.contains(name)) continue;
             // parenthesized canonical literal, as e.g. "speed--2" for a negative value would not compile
             String literal = entry.getValue().value() instanceof Number number ? "(" + number.doubleValue() + ")" : entry.getValue().value().toString();
             expression = expression.replaceAll("\\b" + name + "\\b", literal);

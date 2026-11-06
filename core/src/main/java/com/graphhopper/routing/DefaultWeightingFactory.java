@@ -34,6 +34,7 @@ import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.checkParameterOverrides;
+import static com.graphhopper.routing.weighting.custom.CustomModelParser.checkSetSize;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.createWeightingConfig;
 import static com.graphhopper.util.Helper.toLowerCase;
 
@@ -41,10 +42,19 @@ public class DefaultWeightingFactory implements WeightingFactory {
 
     private final BaseGraph graph;
     private final EncodingManager encodingManager;
+    private final int maxSetSize;
 
     public DefaultWeightingFactory(BaseGraph graph, EncodingManager encodingManager) {
+        this(graph, encodingManager, Integer.MAX_VALUE);
+    }
+
+    public DefaultWeightingFactory(BaseGraph graph, EncodingManager encodingManager,
+                                   int maxSetSize) {
+        if (maxSetSize < 0)
+            throw new IllegalArgumentException("maxSetSize must not be negative, but was: " + maxSetSize);
         this.graph = graph;
         this.encodingManager = encodingManager;
+        this.maxSetSize = maxSetSize;
     }
 
     @Override
@@ -63,8 +73,10 @@ public class DefaultWeightingFactory implements WeightingFactory {
         Weighting weighting = null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
-            if (queryCustomModel != null)
+            if (queryCustomModel != null) {
+                checkSetSize(queryCustomModel, maxSetSize);
                 checkParameterOverrides(profile.getCustomModel(), queryCustomModel);
+            }
 
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))

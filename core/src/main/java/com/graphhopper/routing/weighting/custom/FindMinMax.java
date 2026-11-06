@@ -62,7 +62,7 @@ public class FindMinMax {
             Object newValue = entry.getValue().value();
             if (equalValues(base.value(), newValue)) continue;
             if (!(base.value() instanceof Number oldValue) || !(newValue instanceof Number))
-                throw cannotChange(name, base.value(), newValue, "");
+                throw cannotChange(name, base, entry.getValue(), "");
             boolean increased = ((Number) newValue).doubleValue() > oldValue.doubleValue();
             checkWeightOnlyIncreases(baseModel, name, increased, baseModel.getParameters(), parameters, lookup);
         }

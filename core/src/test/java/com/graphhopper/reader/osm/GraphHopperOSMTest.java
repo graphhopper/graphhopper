@@ -42,7 +42,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -794,6 +797,49 @@ public class GraphHopperOSMTest {
             assertEquals("bike2", hopper.getProfiles().get(0).getName());
             hopper.close();
         }
+    }
+
+    @Test
+    public void testProfileWithSetMustNotBeChanged() {
+        List<Integer> ways = IntStream.range(1000, 1030).boxed().toList();
+        {
+            GraphHopper hopper = createHopperWithClosedWays(ways);
+            hopper.importOrLoad();
+            hopper.close();
+        }
+        {
+            // another order and duplicates do not change the profile
+            List<Integer> reordered = new ArrayList<>(ways);
+            Collections.reverse(reordered);
+            reordered.add(ways.get(0));
+            GraphHopper hopper = createHopperWithClosedWays(reordered);
+            hopper.importOrLoad();
+            hopper.close();
+        }
+        {
+            // problem: a changed member changes the profile, even the last one of a set that is printed by its digest
+            List<Integer> changed = new ArrayList<>(ways);
+            changed.set(changed.size() - 1, 2000);
+            GraphHopper hopper = createHopperWithClosedWays(changed);
+            IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
+            assertTrue(e.getMessage().contains("Profile 'car' does not match"), e.getMessage());
+            hopper.close();
+        }
+    }
+
+    private GraphHopper createHopperWithClosedWays(List<Integer> closedWays) {
+        Profile profile = TestProfiles.constantSpeed("car", 60);
+        profile.getCustomModel().setParameter("closed_ways", closedWays).
+                addToPriority(If("p_closed_ways.contains(osm_way_id)", MULTIPLY, "0"));
+        GraphHopper hopper = new GraphHopper();
+        hopper.init(new GraphHopperConfig()
+                .putObject("graph.location", ghLoc)
+                .putObject("datareader.file", testOsm)
+                .putObject("import.osm.ignored_highways", "")
+                .putObject("graph.encoded_values", "osm_way_id")
+                .setProfiles(List.of(profile))
+        );
+        return hopper;
     }
 
     private GraphHopper createHopperWithProfiles(List<Profile> profiles) {

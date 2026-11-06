@@ -1,5 +1,6 @@
 package com.graphhopper.routing.weighting.custom;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.DefaultWeightingFactory;
@@ -21,6 +22,19 @@ import static com.graphhopper.json.Statement.Op.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CustomWeightingHelperTest {
+
+    @Test
+    public void testCreateIntSet() {
+        IntHashSet set = CustomWeightingHelper.createIntSet(List.of(Integer.MIN_VALUE, 0, 7, 7, Integer.MAX_VALUE));
+        assertEquals(4, set.size());
+        assertTrue(set.contains(Integer.MIN_VALUE));
+        assertTrue(set.contains(0));
+        assertTrue(set.contains(7));
+        assertTrue(set.contains(Integer.MAX_VALUE));
+        assertFalse(set.contains(1));
+        assertFalse(set.contains(-1));
+        assertTrue(CustomWeightingHelper.createIntSet(List.of()).isEmpty());
+    }
 
     @Test
     public void testInRectangle() {
