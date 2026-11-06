@@ -2,8 +2,12 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
@@ -15,10 +19,13 @@ import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static com.graphhopper.json.Statement.*;
+import static com.graphhopper.json.Statement.Op.ADD;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
@@ -47,6 +54,7 @@ class CustomWeightingTest {
                 .add(MaxSpeed.create())
                 .add(RoadClass.create())
                 .add(RoadClassLink.create())
+                .add(OSMWayID.create())
                 .add(new DecimalEncodedValueImpl("my_priority", 4, 0.05, false))
                 .addTurnCostEncodedValue(turnRestrictionEnc)
                 .build();
@@ -133,6 +141,230 @@ class CustomWeightingTest {
     }
 
     @Test
+    public void testSetParameters() {
+        IntEncodedValue wayIdEnc = encodingManager.getIntEncodedValue(OSMWayID.KEY);
+        EdgeIteratorState closed = graph.edge(0, 1).set(avSpeedEnc, 25, 25).setDistance(1000).set(wayIdEnc, 23323061);
+        EdgeIteratorState open = graph.edge(1, 2).set(avSpeedEnc, 25, 25).setDistance(1000).set(wayIdEnc, 5023188);
+
+        CustomModel customModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).setParameter("closed_ways", List.of(23323061, 1));
+        customModel.addToPriority(If("p_closed_ways.contains(osm_way_id)", MULTIPLY, "0"));
+        Weighting weighting = createWeighting(customModel);
+        assertEquals(Double.POSITIVE_INFINITY, weighting.calcEdgeWeight(closed, false));
+        assertEquals(1440, weighting.calcEdgeWeight(open, false));
+
+        // like for other parameters a different set shares the compiled class, only init changes
+        Weighting changed = createWeighting(new CustomModel(customModel).setParameter("closed_ways", List.of(5023188)));
+        assertEquals(1440, changed.calcEdgeWeight(closed, false));
+        assertEquals(Double.POSITIVE_INFINITY, changed.calcEdgeWeight(open, false));
+
+        // a set is only usable in conditions
+        CustomModel valueModel = createSpeedCustomModel(avSpeedEnc).setParameter("closed_ways", List.of(1));
+        valueModel.addToSpeed(If("true", MULTIPLY, "p_closed_ways"));
+        assertThrows(IllegalArgumentException.class, () -> createWeighting(valueModel));
+
+        // an empty set excludes nothing and a negated or combined condition works too
+        assertEquals(1440, createWeighting(new CustomModel(customModel).setParameter("closed_ways", List.of())).calcEdgeWeight(closed, false));
+        CustomModel openModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).setParameter("open_ways", List.of(5023188));
+        openModel.addToPriority(If("!p_open_ways.contains(osm_way_id) && car_average_speed < 50", MULTIPLY, "0"));
+        assertEquals(Double.POSITIVE_INFINITY, createWeighting(openModel).calcEdgeWeight(closed, false));
+        assertEquals(1440, createWeighting(openModel).calcEdgeWeight(open, false));
+
+        // a large set, next to a number parameter in a value expression
+        CustomModel largeModel = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).setParameter("factor", 0.5).
+                setParameter("closed_ways", IntStream.range(23313062, 23333062).boxed().toList());
+        largeModel.addToPriority(If("p_closed_ways.contains(osm_way_id)", MULTIPLY, "0"));
+        largeModel.addToSpeed(If("true", MULTIPLY, "p_factor"));
+        assertEquals(Double.POSITIVE_INFINITY, createWeighting(largeModel).calcEdgeWeight(closed, false));
+        assertEquals(2 * 1440, createWeighting(largeModel).calcEdgeWeight(open, false));
+
+        // only contains with an int argument, and contains only on a set
+        for (String condition : List.of("p_closed_ways.add(osm_way_id)", "p_closed_ways.removeAll(osm_way_id)",
+                "p_closed_ways.contains(road_class)", "p_closed_ways.contains(osm_way_id).equals(true)", "p_closed_ways", "p_factor.contains(osm_way_id)")) {
+            CustomModel invalid = createSpeedCustomModel(avSpeedEnc).setParameter("closed_ways", List.of(1)).setParameter("factor", 1.0);
+            invalid.addToPriority(If(condition, MULTIPLY, "0"));
+            assertThrows(IllegalArgumentException.class, () -> createWeighting(invalid), condition);
+        }
+    }
+
+    @Test
+    public void testSetParameterWithOtherIntEncodedValues() {
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        IntEncodedValue lanesEnc = Lanes.create(), mtbEnc = MtbRating.create(), hikeEnc = HikeRating.create(), horseEnc = HorseRating.create();
+        IntEncodedValue zoneEnc = new IntEncodedValueImpl("zone_id", 20, false);
+        IntEncodedValue twoDirEnc = new IntEncodedValueImpl("lane_group", 4, true);
+        IntEncodedValue offsetEnc = new IntEncodedValueImpl("offset", 5, -10, false, false);
+        EncodingManager em = new EncodingManager.Builder().add(speedEnc).add(lanesEnc).add(mtbEnc).add(hikeEnc).add(horseEnc)
+                .add(zoneEnc).add(twoDirEnc).add(offsetEnc).add(MaxSpeed.create()).add(Roundabout.create()).build();
+        BaseGraph g = new BaseGraph.Builder(em).create();
+        EdgeIteratorState edge = g.edge(0, 1).set(speedEnc, 25).setDistance(1000).set(lanesEnc, 2).set(mtbEnc, 3).set(hikeEnc, 4)
+                .set(horseEnc, 5).set(zoneEnc, 1_000_000).set(twoDirEnc, 6, 7).set(offsetEnc, -5);
+
+        // the built-in int encoded values and custom ones like an id
+        for (IntEncodedValue enc : List.of(lanesEnc, mtbEnc, hikeEnc, horseEnc, zoneEnc)) {
+            CustomModel model = createSpeedCustomModel(speedEnc).setDistanceInfluence(0d).setParameter("values", List.of(edge.get(enc)));
+            model.addToPriority(If("p_values.contains(" + enc.getName() + ")", MULTIPLY, "0"));
+            assertEquals(Double.POSITIVE_INFINITY, CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, model).calcEdgeWeight(edge, false), enc.getName());
+            model.setParameter("values", List.of(edge.get(enc) + 1));
+            assertEquals(1440, CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, model).calcEdgeWeight(edge, false), enc.getName());
+        }
+
+        // like for == the value of the direction is used and backward_ gives the reverse direction
+        CustomModel twoDirModel = createSpeedCustomModel(speedEnc).setDistanceInfluence(0d).setParameter("values", List.of(6));
+        twoDirModel.addToPriority(If("p_values.contains(lane_group)", MULTIPLY, "0"));
+        Weighting twoDir = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, twoDirModel);
+        assertEquals(Double.POSITIVE_INFINITY, twoDir.calcEdgeWeight(edge, false));
+        assertEquals(1440, twoDir.calcEdgeWeight(edge, true));
+        CustomModel backwardModel = createSpeedCustomModel(speedEnc).setDistanceInfluence(0d).setParameter("values", List.of(6));
+        backwardModel.addToPriority(If("p_values.contains(backward_lane_group)", MULTIPLY, "0"));
+        Weighting backward = CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, backwardModel);
+        assertEquals(1440, backward.calcEdgeWeight(edge, false));
+        assertEquals(Double.POSITIVE_INFINITY, backward.calcEdgeWeight(edge, true));
+
+        // negative values work too
+        CustomModel offsetModel = createSpeedCustomModel(speedEnc).setDistanceInfluence(0d).setParameter("values", List.of(-5));
+        offsetModel.addToPriority(If("p_values.contains(offset)", MULTIPLY, "0"));
+        assertEquals(Double.POSITIVE_INFINITY, CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, offsetModel).calcEdgeWeight(edge, false));
+        offsetModel.setParameter("values", List.of(5));
+        assertEquals(1440, CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, offsetModel).calcEdgeWeight(edge, false));
+
+        // decimal and boolean encoded values are rejected
+        for (String ev : List.of("max_speed", "roundabout")) {
+            CustomModel invalid = createSpeedCustomModel(speedEnc).setParameter("values", List.of(1));
+            invalid.addToPriority(If("p_values.contains(" + ev + ")", MULTIPLY, "0"));
+            assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeighting(em, NO_TURN_COST_PROVIDER, invalid), ev);
+        }
+    }
+
+    @Test
+    public void testSetParametersReuseCompiledClass() throws Exception {
+        IntEncodedValue wayIdEnc = encodingManager.getIntEncodedValue(OSMWayID.KEY);
+        EdgeIteratorState edge1 = graph.edge(0, 1).set(avSpeedEnc, 25, 25).setDistance(1000).set(wayIdEnc, 1);
+        EdgeIteratorState edge2 = graph.edge(1, 2).set(avSpeedEnc, 25, 25).setDistance(1000).set(wayIdEnc, 2);
+        // a priority statement that only this test uses, so its class key is not in the cache yet
+        CustomModel model = createSpeedCustomModel(avSpeedEnc).setDistanceInfluence(0d).setParameter("reuse_ways", List.of(1));
+        model.addToPriority(If("p_reuse_ways.contains(osm_way_id)", MULTIPLY, "0"));
+        String key = model.createClassKey();
+
+        Field cacheField = CustomModelParser.class.getDeclaredField("CACHE");
+        cacheField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<String, Class<?>> cache = (Map<String, Class<?>>) cacheField.get(null);
+        Weighting weighting1 = createWeighting(model);
+        Class<?> compiled = cache.get(key);
+        assertNotNull(compiled);
+
+        // models with other members, an empty or a large set have the same key and do not compile a new class
+        Weighting weighting2 = createWeighting(new CustomModel(model).setParameter("reuse_ways", List.of(2)));
+        Weighting empty = createWeighting(new CustomModel(model).setParameter("reuse_ways", List.of()));
+        Weighting large = createWeighting(new CustomModel(model).setParameter("reuse_ways", IntStream.range(2, 10_000).boxed().toList()));
+        assertSame(compiled, cache.get(key));
+
+        // each weighting keeps its own members, also when used interleaved
+        for (int i = 0; i < 2; i++) {
+            assertEquals(Double.POSITIVE_INFINITY, weighting1.calcEdgeWeight(edge1, false));
+            assertEquals(Double.POSITIVE_INFINITY, weighting2.calcEdgeWeight(edge2, false));
+            assertEquals(1440, weighting1.calcEdgeWeight(edge2, false));
+            assertEquals(1440, weighting2.calcEdgeWeight(edge1, false));
+            assertEquals(1440, empty.calcEdgeWeight(edge1, false));
+            assertEquals(Double.POSITIVE_INFINITY, large.calcEdgeWeight(edge2, false));
+            assertEquals(1440, large.calcEdgeWeight(edge1, false));
+        }
+    }
+
+    @Test
+    public void testSetParametersInTurnPenalty() {
+        BaseGraph turnGraph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
+        IntEncodedValue wayIdEnc = encodingManager.getIntEncodedValue(OSMWayID.KEY);
+        EdgeIteratorState edge01 = turnGraph.edge(0, 1).set(avSpeedEnc, 60, 60).setDistance(100).set(wayIdEnc, 10);
+        EdgeIteratorState edge12 = turnGraph.edge(1, 2).set(avSpeedEnc, 60, 60).setDistance(100).set(wayIdEnc, 20);
+        EdgeIteratorState edge23 = turnGraph.edge(2, 3).set(avSpeedEnc, 60, 60).setDistance(100).set(wayIdEnc, 30);
+        CustomModel model = createSpeedCustomModel(avSpeedEnc).setParameter("to_ways", List.of(20)).setParameter("from_ways", List.of(10));
+        model.addToTurnPenalty(If("p_to_ways.contains(osm_way_id)", ADD, "100"));
+        model.addToTurnPenalty(If("p_from_ways.contains(prev_osm_way_id)", ADD, "1000"));
+
+        // osm_way_id is read from the outgoing edge and prev_osm_way_id from the incoming one
+        Weighting weighting = createTurnWeighting(encodingManager, turnGraph, model);
+        assertEquals(10 * 1100, weighting.calcTurnWeight(edge01.getEdge(), 1, edge12.getEdge()));
+        assertEquals(0, weighting.calcTurnWeight(edge12.getEdge(), 2, edge23.getEdge()));
+        // the other members are used without a new class
+        weighting = createTurnWeighting(encodingManager, turnGraph, new CustomModel(model).setParameter("to_ways", List.of(30)).setParameter("from_ways", List.of()));
+        assertEquals(0, weighting.calcTurnWeight(edge01.getEdge(), 1, edge12.getEdge()));
+        assertEquals(10 * 100, weighting.calcTurnWeight(edge12.getEdge(), 2, edge23.getEdge()));
+    }
+
+    @Test
+    public void testSetParametersInTurnPenaltyWithTwoDirections() {
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        IntEncodedValue laneGroupEnc = new IntEncodedValueImpl("lane_group", 4, true);
+        BooleanEncodedValue restrictionEnc = TurnRestriction.create("car");
+        EncodingManager em = new EncodingManager.Builder().add(speedEnc).add(laneGroupEnc).addTurnCostEncodedValue(restrictionEnc).build();
+        BaseGraph turnGraph = new BaseGraph.Builder(em).withTurnCosts(true).create();
+        EdgeIteratorState edge01 = turnGraph.edge(0, 1).set(speedEnc, 60).setDistance(100).set(laneGroupEnc, 1, 2);
+        // the value is 6 in the direction 1->2 and 7 in the direction 2->1
+        EdgeIteratorState edge12 = turnGraph.edge(1, 2).set(speedEnc, 60).setDistance(100).set(laneGroupEnc, 6, 7);
+
+        // like for == the value of the travel direction of the outgoing edge is used, 1->2
+        CustomModel model = createSpeedCustomModel(speedEnc).setParameter("groups", List.of(6));
+        model.addToTurnPenalty(If("p_groups.contains(lane_group)", ADD, "100"));
+        assertEquals(10 * 100, createTurnWeighting(em, turnGraph, model).calcTurnWeight(edge01.getEdge(), 1, edge12.getEdge()));
+        model.setParameter("groups", List.of(7));
+        assertEquals(0, createTurnWeighting(em, turnGraph, model).calcTurnWeight(edge01.getEdge(), 1, edge12.getEdge()));
+
+        // and of the incoming edge, 2->1
+        CustomModel prevModel = createSpeedCustomModel(speedEnc).setParameter("groups", List.of(7));
+        prevModel.addToTurnPenalty(If("p_groups.contains(prev_lane_group)", ADD, "100"));
+        assertEquals(10 * 100, createTurnWeighting(em, turnGraph, prevModel).calcTurnWeight(edge12.getEdge(), 1, edge01.getEdge()));
+        prevModel.setParameter("groups", List.of(6));
+        assertEquals(0, createTurnWeighting(em, turnGraph, prevModel).calcTurnWeight(edge12.getEdge(), 1, edge01.getEdge()));
+    }
+
+    private static Weighting createTurnWeighting(EncodingManager em, BaseGraph graph, CustomModel model) {
+        CustomWeighting.Config config = CustomModelParser.createWeightingConfig(model, em);
+        BooleanEncodedValue restrictionEnc = em.getTurnBooleanEncodedValue(TurnRestriction.key("car"));
+        return new CustomWeighting(new DefaultTurnCostProvider(restrictionEnc, graph, new TurnCostsConfig(), config.getTurnPenaltyMapping()), config);
+    }
+
+    @Test
+    public void testCheckSetSize() {
+        CustomModel query = new CustomModel().setParameter("ways", List.of(1, 2)).setParameter("nodes", List.of(3)).setParameter("factor", 4.0);
+        CustomModelParser.checkSetSize(query, 3);
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.checkSetSize(query, 2));
+        assertTrue(ex.getMessage().contains("not have more than 2 members in total, but had: 3"), ex.getMessage());
+
+        // checked for every request
+        Profile profile = new Profile("car").setCustomModel(createSpeedCustomModel(avSpeedEnc)
+                .setParameter("ways", List.of()).setParameter("nodes", List.of()).setParameter("factor", 1.0));
+        PMap hints = new PMap().putObject(CustomModel.KEY, query);
+        new DefaultWeightingFactory(graph, encodingManager, 3).createWeighting(profile, hints, false);
+        assertThrows(IllegalArgumentException.class, () -> new DefaultWeightingFactory(graph, encodingManager, 2).createWeighting(profile, hints, false));
+
+        // the sets of the server-side model are not limited
+        Profile largeProfile = new Profile("car").setCustomModel(createSpeedCustomModel(avSpeedEnc).setParameter("ways", List.of(1, 2, 3)));
+        new DefaultWeightingFactory(graph, encodingManager, 2).createWeighting(largeProfile, new PMap(), false);
+        new DefaultWeightingFactory(graph, encodingManager, 2).createWeighting(largeProfile, new PMap().putObject(CustomModel.KEY, new CustomModel()), false);
+
+        // zero allows only empty sets in a request, a negative limit is refused
+        new DefaultWeightingFactory(graph, encodingManager, 0).createWeighting(profile, new PMap().putObject(CustomModel.KEY,
+                new CustomModel().setParameter("ways", List.of())), false);
+        assertThrows(IllegalArgumentException.class, () -> new DefaultWeightingFactory(graph, encodingManager, 0).createWeighting(profile,
+                new PMap().putObject(CustomModel.KEY, new CustomModel().setParameter("ways", List.of(1))), false));
+        assertThrows(IllegalArgumentException.class, () -> new DefaultWeightingFactory(graph, encodingManager, -1));
+        Exception configEx = assertThrows(IllegalArgumentException.class, () -> new GraphHopper().init(
+                new GraphHopperConfig().putObject("graph.location", "target/unused-gh")
+                        .putObject("import.osm.ignored_highways", "")
+                        .putObject("routing.custom_model.max_set_size", -1)));
+        assertTrue(configEx.getMessage().contains("routing.custom_model.max_set_size must not be negative"), configEx.getMessage());
+    }
+
+    @Test
+    public void testUnsupportedParameterValue() {
+        // like before sets were supported, a parameter value that is no number, boolean or set is rejected
+        CustomModel textModel = createSpeedCustomModel(avSpeedEnc).setParameters(Map.of("text", "abc"));
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> createWeighting(textModel));
+        assertTrue(ex.getMessage().contains("parameter 'text' must be a finite number, a boolean or a set, but was: abc"), ex.getMessage());
+    }
+
+    @Test
     public void testCheckParameterOverrides() {
         CustomModel base = new CustomModel().setParameter("width", 3.0, 2, 5).setParameter("push", true).setParameter("private_debug", 1.0);
         CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameter("width", 4.0));
@@ -156,6 +388,29 @@ class CustomWeightingTest {
         ex = assertThrows(IllegalArgumentException.class,
                 () -> CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameter("width", 4.0, 2, 5)));
         assertTrue(ex.getMessage().contains("server-side"), ex.getMessage());
+
+        // a boolean can be overridden by a boolean only
+        CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameter("push", false));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterOverrides(base, new CustomModel().setParameter("width", true)));
+        assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
+
+        // a set can be overridden by a set only
+        CustomModel setBase = new CustomModel().setParameter("ways", List.of()).setParameter("push", true);
+        CustomModelParser.checkParameterOverrides(setBase, new CustomModel().setParameter("ways", List.of(1, 2)));
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterOverrides(setBase, new CustomModel().setParameter("ways", 1.0)));
+        assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterOverrides(setBase, new CustomModel().setParameter("ways", true)));
+        assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
+        ex = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.checkParameterOverrides(setBase, new CustomModel().setParameter("push", List.of(1))));
+        assertTrue(ex.getMessage().contains("same type"), ex.getMessage());
+        // the message shows a large set by its size
+        ex = assertThrows(IllegalArgumentException.class, () -> CustomModelParser.checkParameterOverrides(base,
+                new CustomModel().setParameter("width", IntStream.range(0, 1000).boxed().toList())));
+        assertTrue(ex.getMessage().contains("but was: set(size=1000, sha256="), ex.getMessage());
     }
 
     @Test

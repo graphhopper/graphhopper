@@ -209,6 +209,10 @@ graphhopper:
   # Control how many active landmarks are picked per default, this can improve query performance
   # routing.lm.active_landmarks: 4
 
+  # The maximum total number of members of the set parameters in the custom model of a request. Default is 10000.
+  # It must not be negative and 0 allows only empty sets. The sets of the server-side custom models are not limited.
+  # routing.custom_model.max_set_size: 10000
+
   # You can limit the max distance between two consecutive waypoints of flexible routing requests to be less or equal
   # the given distance in meter. Default is set to 1000km.
   routing.non_ch.max_waypoint_distance: 1000000

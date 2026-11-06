@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
@@ -65,6 +66,7 @@ class FindMinMaxTest {
         assertTrue(ex.getMessage().contains("could increase"), ex.getMessage());
 
         // a boolean parameter cannot be changed
+        FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("flag", true), lookup);
         ex = assertThrows(IllegalArgumentException.class,
                 () -> FindMinMax.checkLMConstraints(baseModel, new CustomModel().setParameter("flag", false), lookup));
         assertTrue(ex.getMessage().contains("cannot change the parameter 'flag'"), ex.getMessage());
@@ -75,6 +77,40 @@ class FindMinMaxTest {
         ex = assertThrows(IllegalArgumentException.class,
                 () -> FindMinMax.checkLMConstraints(turnModel, new CustomModel().setParameter("penalty", 5), lookup));
         assertTrue(ex.getMessage().contains("turn_penalty"), ex.getMessage());
+    }
+
+    private static CustomModel createSetModel(List<Integer> ways) {
+        CustomModel setModel = new CustomModel().setParameter("ways", ways);
+        setModel.addToPriority(If("p_ways.contains(osm_way_id)", MULTIPLY, "0"));
+        return setModel;
+    }
+
+    @Test
+    public void testUnchangedOrSmallerSet() {
+        // an unchanged set is fine, also an empty one and regardless of order and duplicates
+        FindMinMax.checkLMConstraints(createSetModel(List.of()), new CustomModel().setParameter("ways", List.of()), lookup);
+        FindMinMax.checkLMConstraints(createSetModel(List.of(1, 2)), new CustomModel().setParameter("ways", List.of(2, 1, 1)), lookup);
+
+        // removing members decreases weights below those of the landmark preparation
+        for (List<Integer> smaller : List.of(List.<Integer>of(), List.of(1))) {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> FindMinMax.checkLMConstraints(createSetModel(List.of(1, 2)), new CustomModel().setParameter("ways", smaller), lookup));
+            assertTrue(ex.getMessage().contains("cannot change the parameter 'ways' from [1, 2] to " + smaller), ex.getMessage());
+        }
+        // a large set is shown by its size
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> FindMinMax.checkLMConstraints(
+                createSetModel(IntStream.range(0, 1000).boxed().toList()), new CustomModel().setParameter("ways", List.of(1)), lookup));
+        assertTrue(ex.getMessage().contains("from set(size=1000, sha256="), ex.getMessage());
+    }
+
+    @Test
+    public void testLargerSet() {
+        // adding members only increases weights, but is not supported yet
+        for (List<Integer> base : List.of(List.<Integer>of(), List.of(1))) {
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                    () -> FindMinMax.checkLMConstraints(createSetModel(base), new CustomModel().setParameter("ways", List.of(1, 123)), lookup));
+            assertTrue(ex.getMessage().contains("cannot change the parameter 'ways' from " + base + " to [1, 123]. Use lm.disable=true"), ex.getMessage());
+        }
     }
 
     @Test

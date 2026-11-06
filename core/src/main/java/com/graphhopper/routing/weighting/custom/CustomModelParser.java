@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
@@ -139,8 +140,9 @@ public class CustomModelParser {
             if (entry.getValue().value() instanceof Number number) {
                 if (!Double.isFinite(number.doubleValue()))
                     throw new IllegalArgumentException("parameter '" + name + "' must be a finite number, but was: " + number);
-            } else if (!(entry.getValue().value() instanceof Boolean)) {
-                throw new IllegalArgumentException("parameter '" + name + "' must be a finite number or a boolean, but was: " + entry.getValue().value());
+            } else if (entry.getValue().type() == null) {
+                throw new IllegalArgumentException("parameter '" + name + "' must be a finite "
+                        + "number, a boolean or a set, but was: " + entry.getValue().value());
             }
         }
     }
@@ -160,15 +162,29 @@ public class CustomModelParser {
             if (base == null)
                 throw new IllegalArgumentException("parameter '" + name + "' is not defined in the server-side custom model. Only the values of "
                         + baseModel.getParameters().keySet().stream().filter(n -> !n.startsWith("private_")).toList() + " can be overridden");
-            if (base.value() instanceof Boolean ? !(value instanceof Boolean) : !(value instanceof Number))
+            if (base.type() != entry.getValue().type())
                 throw new IllegalArgumentException("parameter '" + name + "' must have the same type as in the server-side custom model ("
-                        + base.value() + "), but was: " + value);
+                        + base + "), but was: " + entry.getValue());
             if (value instanceof Number number) {
                 if (number.doubleValue() < base.min() || number.doubleValue() > base.max())
                     throw new IllegalArgumentException("parameter '" + name + "': value " + number
                             + " must be within its range [" + base.min() + ", " + base.max() + "]");
             }
         }
+    }
+
+    /**
+     * Throws {@link IllegalArgumentException} if the sets of the query model
+     * have more than {@code maxSetSize} members in total
+     */
+    public static void checkSetSize(CustomModel queryModel, int maxSetSize) {
+        int size = 0;
+        for (CustomModel.Parameter param : queryModel.getParameters().values())
+            if (param.value() instanceof List<?> list)
+                size += list.size();
+        if (size > maxSetSize)
+            throw new IllegalArgumentException("the sets of a custom model in a request must not "
+                    + "have more than " + maxSetSize + " members in total, but had: " + size);
     }
 
     /**
@@ -568,13 +584,21 @@ public class CustomModelParser {
             if (isParameter(arg, parameters)) {
                 // read the value in init so that models differing only in the values share this class
                 String name = arg.substring(PARAM_PREFIX.length());
-                if (parameters.get(name).value() instanceof Boolean) {
-                    classSourceCode.append("protected boolean " + arg + ";\n");
-                    initSourceCode.append("this." + arg + " = ((Boolean) ((CustomModel.Parameter) customModel.getParameters().get(\"" + name + "\")).value()).booleanValue();\n");
-                } else {
-                    classSourceCode.append("protected double " + arg + ";\n");
-                    initSourceCode.append("this." + arg + " = ((Number) ((CustomModel.Parameter) customModel.getParameters().get(\"" + name + "\")).value()).doubleValue();\n");
-                }
+                String value = "((CustomModel.Parameter) customModel.getParameters().get(\"" + name
+                        + "\")).value()";
+                CustomModel.Parameter.Type type = parameters.get(name).type();
+                String fieldType = switch (type) {
+                    case BOOLEAN -> "boolean";
+                    case DOUBLE -> "double";
+                    case INT_SET -> IntHashSet.class.getName();
+                };
+                String init = switch (type) {
+                    case BOOLEAN -> "((Boolean) " + value + ").booleanValue()";
+                    case DOUBLE -> "((Number) " + value + ").doubleValue()";
+                    case INT_SET -> "createIntSet((java.util.List) " + value + ")";
+                };
+                classSourceCode.append("protected " + fieldType + " " + arg + ";\n");
+                initSourceCode.append("this." + arg + " = " + init + ";\n");
             } else if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
                 classSourceCode.append("protected " + getInterface(enc) + " " + arg + "_enc;\n");

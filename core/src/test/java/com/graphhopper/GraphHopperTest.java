@@ -1710,6 +1710,56 @@ public class GraphHopperTest {
     }
 
     @Test
+    public void testLMConstraintsWithSetParameter() {
+        Profile lmProfile = TestProfiles.accessAndSpeed("lm", "car");
+        lmProfile.getCustomModel().setDistanceInfluence(100d).setParameter("closed_ways", List.of()).
+                addToPriority(If("p_closed_ways.contains(osm_way_id)", MULTIPLY, "0"));
+        Profile flexProfile = new Profile("flex").setCustomModel(new CustomModel(lmProfile.getCustomModel()));
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setEncodedValuesString("car_access, car_average_speed, osm_way_id").
+                setProfiles(lmProfile, flexProfile);
+        hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("lm"));
+        hopper.setMinNetworkSize(0);
+        hopper.importOrLoad();
+
+        GHResponse response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setProfile("lm").setPathDetails(List.of("osm_way_id")));
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        double distance = response.getBest().getDistance();
+        List<PathDetail> wayIds = response.getBest().getPathDetails().get("osm_way_id");
+        int closedWay = ((Number) wayIds.get(wayIds.size() / 2).getValue()).intValue();
+
+        // an unchanged set works with LM
+        response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).setProfile("lm").
+                setCustomModel(new CustomModel().setParameter("closed_ways", List.of())));
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        assertEquals(distance, response.getBest().getDistance(), 1);
+
+        // a changed set is refused with LM, as removing members could make the LM weights too large
+        CustomModel closing = new CustomModel().setParameter("closed_ways", List.of(closedWay));
+        response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).setProfile("lm").
+                setCustomModel(closing));
+        assertTrue(response.hasErrors());
+        assertTrue(response.getErrors().get(0).getMessage().contains("cannot change the parameter 'closed_ways'"),
+                response.getErrors().toString());
+
+        // but works without LM and finds the same route as a profile that has no LM
+        response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).setProfile("lm").
+                setCustomModel(closing).putHint("lm.disable", true).setPathDetails(List.of("osm_way_id")));
+        assertFalse(response.hasErrors(), response.getErrors().toString());
+        assertTrue(response.getBest().getDistance() > distance + 1, response.getBest().getDistance() + " vs. " + distance);
+        response.getBest().getPathDetails().get("osm_way_id").forEach(detail ->
+                assertNotEquals(closedWay, ((Number) detail.getValue()).intValue()));
+        GHResponse flexResponse = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).setProfile("flex").
+                setCustomModel(closing));
+        assertFalse(flexResponse.hasErrors(), flexResponse.getErrors().toString());
+        assertEquals(flexResponse.getBest().getDistance(), response.getBest().getDistance(), 1.e-6);
+        assertEquals(flexResponse.getBest().getRouteWeight(), response.getBest().getRouteWeight(), 1.e-6);
+    }
+
+    @Test
     public void testCreateWeightingHintsMerging() {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).

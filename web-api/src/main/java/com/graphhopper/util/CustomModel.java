@@ -26,6 +26,9 @@ import com.graphhopper.jackson.CustomModelAreasDeserializer;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -138,19 +141,37 @@ public class CustomModel {
     }
 
     /**
-     * A named number or boolean usable in the expressions of the statements, referenced with the p_ prefix.
+     * A named number, boolean or set of integers usable in the expressions of the statements,
+     * referenced with the p_ prefix.
      *
-     * @param value a Double or Boolean
+     * @param value a Double, Boolean or (for a set) a sorted List of distinct Integers
      * @param min   lower limit of a number parameter; a non-default range can only be specified in a server-side custom model
      * @param max   upper limit, see min
      */
     public record Parameter(Object value, double min, double max) {
+        static final int MAX_PRINTED_SET_SIZE = 20;
+
+        /**
+         * Determines the field type of the compiled class
+         */
+        public enum Type {BOOLEAN, DOUBLE, INT_SET}
+
         public Parameter(Object value) {
             this(value, 0, Double.POSITIVE_INFINITY);
         }
 
         public boolean hasDefaultRange() {
             return min == 0 && max == Double.POSITIVE_INFINITY;
+        }
+
+        /**
+         * @return the type of the value or null if the value is not supported
+         */
+        public Type type() {
+            return value instanceof Boolean ? Type.BOOLEAN
+                    : value instanceof List ? Type.INT_SET
+                    : value instanceof Number ? Type.DOUBLE
+                    : null;
         }
 
         @JsonValue
@@ -163,10 +184,35 @@ public class CustomModel {
             return map;
         }
 
+        /**
+         * Returns a string representation of the parameter. The range is excluded, see
+         * CustomModel.toString. A large set is shortened for log and error messages, containing a
+         * digest of its (sorted) members.
+         */
         @Override
         public String toString() {
+            // A large set is shortened for log and error messages, the digest of its (sorted)
+            // members still changes the profile version for every changed member
+            if (value instanceof List<?> list && list.size() > MAX_PRINTED_SET_SIZE)
+                return "set(size=" + list.size() + ", sha256=" + digest(list) + ")";
+
             // the range is excluded, see CustomModel.toString
             return String.valueOf(value);
+        }
+
+        /**
+         * @return the first 64 bits of the SHA-256 of the members as 4 bytes each.
+         * Unlike List.hashCode this avoids simple collisions like [1, 100] and [2, 69]
+         */
+        private static String digest(List<?> list) {
+            ByteBuffer buffer = ByteBuffer.allocate(4 * list.size());
+            for (Object member : list) buffer.putInt((Integer) member);
+            try {
+                byte[] sha256 = MessageDigest.getInstance("SHA-256").digest(buffer.array());
+                return HexFormat.of().formatHex(sha256, 0, 8);
+            } catch (NoSuchAlgorithmException ex) {
+                throw new IllegalStateException(ex);
+            }
         }
     }
 
@@ -182,7 +228,8 @@ public class CustomModel {
     }
 
     /**
-     * @param value a number or boolean, or the object form with value, min and max like in JSON
+     * @param value a number, boolean, list of whole numbers (a set) or the object form with value,
+     *              min and max like in JSON
      */
     public CustomModel setParameter(String name, Object value) {
         if (value instanceof Map<?, ?> object) {
@@ -195,6 +242,18 @@ public class CustomModel {
             setParameter(name, number.doubleValue(),
                     rangeLimit(name, "min", object.get("min"), 0),
                     rangeLimit(name, "max", object.get("max"), Double.POSITIVE_INFINITY));
+        } else if (value instanceof List<?> list) {
+            // sorted and without duplicates so that toString (part of the profile version) and
+            // equals ignore the order
+            Set<Integer> set = new TreeSet<>();
+            for (Object o : list) {
+                if (!(o instanceof Number number) || number.doubleValue() != number.intValue())
+                    throw new IllegalArgumentException("parameter '" + name
+                            + "': a set must contain whole numbers from " + Integer.MIN_VALUE
+                            + " to " + Integer.MAX_VALUE + ", but contained: " + o);
+                set.add(number.intValue());
+            }
+            parameters.put(name, new Parameter(List.copyOf(set)));
         } else {
             // store numbers as Double so that toString does not change when a range is added (5 -> 5.0)
             parameters.put(name, new Parameter(value instanceof Number number ? number.doubleValue() : value));
@@ -271,9 +330,9 @@ public class CustomModel {
      * are, as they determine the field types.
      */
     public String createClassKey() {
-        Map<String, String> types = new TreeMap<>();
+        Map<String, Parameter.Type> types = new TreeMap<>();
         for (Map.Entry<String, Parameter> entry : parameters.entrySet())
-            types.put(entry.getKey(), entry.getValue().value() instanceof Boolean ? "boolean" : "double");
+            types.put(entry.getKey(), entry.getValue().type());
         return createContentString() + "|parameterTypes=" + types;
     }
 

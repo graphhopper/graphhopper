@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
@@ -26,6 +27,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -90,6 +92,12 @@ public class CustomWeightingHelper {
         if (p.isRectangle() && polyBBOX.contains(edgeBBox))
             return true;
         return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()); // TODO PERF: cache bbox and edge wayGeometry for multiple area
+    }
+
+    protected static IntHashSet createIntSet(List<Integer> values) {
+        IntHashSet set = new IntHashSet(values.size());
+        for (int value : values) set.add(value);
+        return set;
     }
 
     public static double calcChangeAngle(EdgeIntAccess edgeIntAccess, DecimalEncodedValue orientationEnc,

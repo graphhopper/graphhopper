@@ -67,12 +67,13 @@ public class RouteResourceCustomModelTest {
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
+                putObject("routing.custom_model.max_set_size", 2).
                 putObject("graph.encoded_values", "car_access, car_average_speed, road_access, max_speed, " +
                         "bike_access, bike_priority, bike_average_speed, bike_road_access, bike_network, " +
                         "foot_access, foot_priority, foot_average_speed, foot_road_access, " +
                         "max_height, max_weight, max_width, hazmat, toll, surface, track_type, hgv, " +
                         "average_slope, max_slope, bus_access, road_class, get_off_bike, roundabout, " +
-                        "country, orientation, mtb_rating, hike_rating, road_environment,ferry_speed").
+                        "country, orientation, mtb_rating, hike_rating, road_environment,ferry_speed, osm_way_id").
                 setProfiles(List.of(
                         TestProfiles.constantSpeed("roads", 120),
                         new Profile("car").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
@@ -82,6 +83,13 @@ public class RouteResourceCustomModelTest {
                                         addToTurnPenalty(If("change_angle <= -25 && change_angle > -80", ADD, "100")).
                                         addToTurnPenalty(ElseIf("change_angle <= -80 && change_angle >= -180", ADD, "100"))).
                                 setTurnCostsConfig(new TurnCostsConfig(List.of("motor_vehicle"))),
+                        new Profile("car_closed_ways").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").getCustomModel().
+                                setDistanceInfluence(70d).setParameter("closed_ways", List.of())
+                                .addToPriority(If("p_closed_ways.contains(osm_way_id)", MULTIPLY, "0"))),
+                        // the server-side sets are larger than routing.custom_model.max_set_size
+                        new Profile("car_server_sets").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").getCustomModel().
+                                setDistanceInfluence(70d).setParameter("closed_ways", List.of(1, 2, 3)).setParameter("more_ways", List.of(4, 5, 6))
+                                .addToPriority(If("p_closed_ways.contains(osm_way_id) || p_more_ways.contains(osm_way_id)", MULTIPLY, "0"))),
                         new Profile("car_with_area").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").
                                 getCustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
                         TestProfiles.accessSpeedAndPriority("bike"),
@@ -121,6 +129,53 @@ public class RouteResourceCustomModelTest {
                 "vehicle_max_speed", Map.of("value", 25.0, "min", 5.0, "max", 35.0)), cargoBike.parameters);
         InfoResource.Info.ProfileData car = info.profiles.stream().filter(p -> p.name.equals("car")).findFirst().orElseThrow();
         assertNull(car.parameters);
+        InfoResource.Info.ProfileData closedWays = info.profiles.stream().filter(p -> p.name.equals("car_closed_ways")).findFirst().orElseThrow();
+        assertEquals(Map.of("closed_ways", Map.of("value", List.of())), closedWays.parameters);
+    }
+
+    @Test
+    public void testSetParameter() {
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car_closed_ways\", \"ch.disable\": true, " +
+                "\"details\": [\"osm_way_id\"], \"custom_model\": {\"parameters\": {\"closed_ways\": []}}}";
+        JsonNode path = getPath(body);
+        assertEquals(661, path.get("distance").asDouble(), 10);
+        JsonNode wayIds = path.get("details").get("osm_way_id");
+        long closedWay = wayIds.get(wayIds.size() / 2).get(2).asLong();
+
+        // closing a way of the route leads to a detour without it
+        JsonNode detour = getPath(body.replace("[]", "[" + closedWay + "]"));
+        assertTrue(detour.get("distance").asDouble() > 700, detour.toString());
+        detour.get("details").get("osm_way_id").forEach(detail -> assertNotEquals(closedWay, detail.get(2).asLong()));
+
+        // limited via routing.custom_model.max_set_size
+        assertMessageStartsWith(query(body.replace("[]", "[1, 2, 3]"), 400), "the sets of a custom model in a request must not have more than 2 members in total, but had: 3");
+        assertMessageStartsWith(query(body.replace("[]", "5"), 400), "parameter 'closed_ways' must have the same type");
+        assertMessageStartsWith(query(body.replace("[]", "[1.5]"), 400), "parameter 'closed_ways': a set must contain whole numbers");
+        // like for the other parameter errors while reading the JSON, but a JSON error without such a message is unchanged
+        assertMessageStartsWith(query(body.replace("[]", "{\"value\": 1, \"min\": \"a\"}"), 400), "parameter 'closed_ways': 'min' must be a number");
+        assertMessageStartsWith(query(body.replace("[[11.58199, 50.0141], [11.5865, 50.0095]]", "\"abc\""), 400), "Unable to process JSON");
+    }
+
+    @Test
+    public void testSetParameterLimit() {
+        // routing.custom_model.max_set_size is 2: exactly at the limit is fine
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car_closed_ways\", \"ch.disable\": true, " +
+                "\"custom_model\": {\"parameters\": {\"closed_ways\": [1, 2]}}}";
+        assertEquals(661, getPath(body).get("distance").asDouble(), 10);
+        // duplicates are removed before counting
+        assertEquals(661, getPath(body.replace("[1, 2]", "[1, 2, 2]")).get("distance").asDouble(), 10);
+
+        // the server-side sets are not limited, also when the request overrides another set
+        String serverSets = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car_server_sets\", \"ch.disable\": true}";
+        assertEquals(661, getPath(serverSets).get("distance").asDouble(), 10);
+        String bothSets = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car_server_sets\", \"ch.disable\": true, " +
+                "\"custom_model\": {\"parameters\": {\"more_ways\": [7]}}}";
+        assertEquals(661, getPath(bothSets).get("distance").asDouble(), 10);
+
+        // the sets of a request are counted together
+        assertEquals(661, getPath(bothSets.replace("{\"more_ways\": [7]}", "{\"closed_ways\": [1], \"more_ways\": [7]}")).get("distance").asDouble(), 10);
+        assertMessageStartsWith(query(bothSets.replace("{\"more_ways\": [7]}", "{\"closed_ways\": [1, 2], \"more_ways\": [7]}"), 400),
+                "the sets of a custom model in a request must not have more than 2 members in total, but had: 3");
     }
 
     @Test
