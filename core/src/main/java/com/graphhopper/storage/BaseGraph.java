@@ -497,6 +497,15 @@ public class BaseGraph implements Graph, Closeable {
             wayGeometry.ensureCapacity(geoRef + encoded.length);
             wayGeometry.setBytes(geoRef, encoded.bytes, encoded.length);
             store.setGeoRef(edgePointer, geoRef);
+            if (existingGeoRef > 0) {
+                // copies of this edge (see copyEdge) share the geometry and are identified by it, so they move too
+                EdgeIterator iter = createEdgeExplorer().setBaseNode(store.getNodeA(edgePointer));
+                while (iter.next()) {
+                    long copyPointer = ((EdgeIteratorStateImpl) iter).edgePointer;
+                    if (store.getGeoRef(copyPointer) == existingGeoRef)
+                        store.setGeoRef(copyPointer, geoRef);
+                }
+            }
         } else {
             store.setGeoRef(edgePointer, 0L);
         }
