@@ -66,7 +66,8 @@ public class BikeCustomModelTest {
                 addWayTagParser(new BikePriorityParser(em)).
                 addWayTagParser(new MountainBikePriorityParser(em)).
                 addWayTagParser(new RacingBikePriorityParser(em)).
-                addWayTagParser(OSMRoadAccessParser.forBike(bikeRA));
+                addWayTagParser(OSMRoadAccessParser.forBike(bikeRA)).
+                addWayTagParser(new OSMRoadClassParser(em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)));
 
         parsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(em.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig, "bicycle")).
                 addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(em.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig, "mtb"));
@@ -393,4 +394,87 @@ public class BikeCustomModelTest {
         assertEquals(20, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
     }
 
+    @Test
+    public void testStepsAvoidance() {
+        BikePriorityParser parser = new BikePriorityParser(em);
+        ReaderWay stepsWay = new ReaderWay(0L);
+        stepsWay.setTag("highway", "steps");
+
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        EdgeIteratorState stepsEdge = graph.edge(0, 1);
+        EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
+
+        parser.handleWayTags(stepsEdge.getEdge(), edgeIntAccess, stepsWay, em.createRelationFlags());
+
+        double stepsPriority = stepsEdge.get(parser.getPriorityEnc());
+        assertEquals(0.1, stepsPriority, 0.001);
+    }
+
+    @Test
+    public void testStepsWithExplicitBikeYes_getsBetterPriority() {
+        BikePriorityParser parser = new BikePriorityParser(em);
+        ReaderWay stepsWay = new ReaderWay(0L);
+        stepsWay.setTag("highway", "steps");
+        stepsWay.setTag("bicycle", "yes");
+
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        EdgeIteratorState edge = graph.edge(0, 1);
+        EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
+
+        parser.handleWayTags(edge.getEdge(), edgeIntAccess, stepsWay, em.createRelationFlags());
+
+        double priority = edge.get(parser.getPriorityEnc());
+        assertEquals(0.5, priority, 0.001);
+    }
+
+    @Test
+    public void testOtherPushingSections_areNotAsHarshAsSteps() {
+        BikePriorityParser parser = new BikePriorityParser(em);
+        ReaderWay footwayWay = new ReaderWay(0L);
+        footwayWay.setTag("highway", "footway");
+
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        EdgeIteratorState edge = graph.edge(0, 1);
+        EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
+
+        parser.handleWayTags(edge.getEdge(), edgeIntAccess, footwayWay, em.createRelationFlags());
+
+        double priority = edge.get(parser.getPriorityEnc());
+        assertEquals(0.9, priority, 0.001);
+    }
+
+    @Test
+    public void testStepsWithBikeDesignated_getsBetterPriority() {
+        BikePriorityParser parser = new BikePriorityParser(em);
+        ReaderWay stepsWay = new ReaderWay(0L);
+        stepsWay.setTag("highway", "steps");
+        stepsWay.setTag("bicycle", "designated");
+
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        EdgeIteratorState edge = graph.edge(0, 1);
+        EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
+
+        parser.handleWayTags(edge.getEdge(), edgeIntAccess, stepsWay, em.createRelationFlags());
+
+        double priority = edge.get(parser.getPriorityEnc());
+        assertEquals(0.5, priority, 0.001);
+    }
+
+    @Test
+    public void testStepsWithBikeYesAndFootYes_getsDowngraded() {
+        BikePriorityParser parser = new BikePriorityParser(em);
+        ReaderWay stepsWay = new ReaderWay(0L);
+        stepsWay.setTag("highway", "steps");
+        stepsWay.setTag("bicycle", "yes");
+        stepsWay.setTag("foot", "yes");
+
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        EdgeIteratorState edge = graph.edge(0, 1);
+        EdgeIntAccess edgeIntAccess = graph.getEdgeAccess();
+
+        parser.handleWayTags(edge.getEdge(), edgeIntAccess, stepsWay, em.createRelationFlags());
+
+        double priority = edge.get(parser.getPriorityEnc());
+        assertEquals(0.4, priority, 0.001);
+    }
 }
