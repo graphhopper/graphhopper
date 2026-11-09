@@ -300,7 +300,7 @@ public class KVStorageTest {
     public void testFlush() {
         Helper.removeDir(new File(location));
 
-        KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM), true);
+        KVStorage index = new KVStorage(new GHDirectory(location, DAType.RAM), true).create(1000);
         long pointer = index.add(createMap("", "test"));
         index.flush();
         index.close();
