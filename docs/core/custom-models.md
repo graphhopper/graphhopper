@@ -733,7 +733,7 @@ smaller or more narrow range, or if you can avoid them entirely, then these requ
 
 ### `parameters`
 
-The `parameters` section defines named numbers and booleans that can be used in conditions and value
+The `parameters` section defines named numbers, booleans and sets that can be used in conditions and value
 expressions. Similar to `areas` referenced via `in_<area_id>`, a parameter `xy` is referenced with the
 prefix `p_` as `p_xy` - this makes the origin visible in the expression and avoids collisions with
 encoded values:
@@ -764,11 +764,21 @@ model is validated at both ends of every range, so e.g. a parameter used to incr
 requires a finite `max`. A value expression can use at most one parameter and only once, so that
 checking the range endpoints is sufficient. Conditions can combine multiple parameters.
 
+A set is a JSON array of whole numbers and can only be used in conditions via `contains`, e.g. to
+exclude certain roads per request with `"parameters": { "closed_ways": [] }` and the statement
+`{ "if": "p_closed_ways.contains(osm_way_id)", "multiply_by": "0" }` (add `osm_way_id` to `graph.encoded_values`).
+A request then only specifies `{"parameters": {"closed_ways": [23323061, 5023188]}}`. The sets of a request can
+have at most 10000 members in total, configurable via `routing.custom_model.max_set_size`.
+Any integer encoded value works with `contains`, e.g. `p_allowed_ratings.contains(mtb_rating)` or a custom id.
+It reads the value like `==` does, e.g. `p_allowed_lanes.contains(lanes)` with `"allowed_lanes": [2, 3]` matches
+the same edges as `lanes == 2 || lanes == 3`. So for an encoded value that stores two directions the value of the
+travel direction is used and the `backward_` prefix gives the value of the reverse direction.
+
 Note that for a profile prepared with landmarks (hybrid mode) a request can change a parameter value
 only if this cannot decrease any edge weight, as the landmark preparation is based on the server-side
 values: the value of a statement must not increase (e.g. a decreased `p_vehicle_max_speed`) and a parameter
 in a condition is only supported for blocking statements, where the condition must apply to more
-edges (e.g. a decreased `p_max_mtb_rating` of the bike custom model excludes more roads). Booleans
+edges (e.g. a decreased `p_max_mtb_rating` of the bike custom model excludes more roads). Booleans, sets
 and parameters used in `turn_penalty` or with an encoded value can never change. Everything else is
 rejected and to avoid this use `lm.disable=true`. So pick the server-side value at the permissive end of the range
 (e.g. the smallest truck weight), as requests can only restrict further. Changing parameter values

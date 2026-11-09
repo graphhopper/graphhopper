@@ -1,5 +1,6 @@
 ### 12.0 [not yet released]
 
+- custom models: a parameter can be a set of integers, e.g. OSM way ids, usable in conditions like `p_closed_ways.contains(osm_way_id)`; a request can replace the set without recompiling the custom model class. The sets of a request are limited via `routing.custom_model.max_set_size` (default 10000). An IllegalArgumentException while reading the JSON of a request, e.g. for an invalid parameter, now returns its message instead of "Unable to process JSON"
 - foot.json: a mapped sidewalk increases the priority of otherwise avoided roads like primary by 10%, add `sidewalk` to graph.encoded_values; foot_priority now also reads sidewalk:both and sidewalk:left+right for no/none/separate, as foot_road_access does
 - max_speed_calculator: a country-wide fallback above 50km/h is no longer used for urban roads, e.g. 55mph for US-NY where the wiki has no urban entry. Such roads keep max_speed=Infinity, use max_speed_estimated to detect this. max_speed_estimated is now stored per direction (requires reimport)
 - mtb: base speed on paved roads is 20km/h instead of 18 (matches the flat speed of a 140W cyclist on an mtb)
