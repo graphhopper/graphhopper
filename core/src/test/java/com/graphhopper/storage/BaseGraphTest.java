@@ -495,7 +495,9 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         // node 2 is isolated
         assertEquals(0, GHUtility.count(graph.createEdgeExplorer().setBaseNode(2)));
 
-        GraphHopper.sortGraphAlongHilbertCurve(graph);
+        GraphHopper.GraphSortMappings mappings = GraphHopper.sortGraphAlongHilbertCurve(graph);
+        assertEquals(IntArrayList.from(0, 2, 1, 3), mappings.newNodesByOldNodes());
+        assertEquals(IntArrayList.from(1, 2, 0), mappings.newEdgesByOldEdges());
 
         assertEquals(4, graph.getNodes());
         assertEquals(3, graph.getEdges());
