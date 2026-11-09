@@ -18,6 +18,7 @@
 package com.graphhopper.storage;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.search.KVStorage.KValue;
@@ -476,5 +477,43 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
             edge.setWayGeometry(list);
         });
         assertTrue(e.getMessage().contains("Too many pillar nodes"));
+    }
+
+    @Test
+    public void testSortGraphWithIsolatedNode() {
+        BaseGraph graph = createGHStorage();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 49.0, 9.0);
+        na.setNode(1, 49.2, 9.2);
+        na.setNode(2, 49.1, 9.1);
+        na.setNode(3, 49.3, 9.3);
+        graph.edge(0, 1).setDistance(10);
+        graph.edge(1, 3).setDistance(20);
+        graph.edge(3, 0).setDistance(30);
+        assertEquals(4, graph.getNodes());
+        assertEquals(3, graph.getEdges());
+        // node 2 is isolated
+        assertEquals(0, GHUtility.count(graph.createEdgeExplorer().setBaseNode(2)));
+
+        GraphHopper.sortGraphAlongHilbertCurve(graph);
+
+        assertEquals(4, graph.getNodes());
+        assertEquals(3, graph.getEdges());
+        assertEquals(49.0, na.getLat(0), 1e-6);
+        assertEquals(49.1, na.getLat(1), 1e-6);
+        assertEquals(49.2, na.getLat(2), 1e-6);
+        assertEquals(49.3, na.getLat(3), 1e-6);
+        // the isolated node is now node 1
+        assertEquals(0, GHUtility.count(graph.createEdgeExplorer().setBaseNode(1)));
+        assertEdge(graph, 0, 3, 0, 30_000);
+        assertEdge(graph, 1, 0, 2, 10_000);
+        assertEdge(graph, 2, 2, 3, 20_000);
+    }
+
+    private static void assertEdge(BaseGraph graph, int edge, int baseNode, int adjNode, long distance) {
+        EdgeIteratorState state = graph.getEdgeIteratorState(edge, Integer.MIN_VALUE);
+        assertEquals(baseNode, state.getBaseNode());
+        assertEquals(adjNode, state.getAdjNode());
+        assertEquals(distance, state.getDistance_mm());
     }
 }
