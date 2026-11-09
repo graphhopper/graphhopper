@@ -926,7 +926,7 @@ public class GraphHopper {
             new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)).execute(baseGraph.getBaseGraph());
 
         if (sortGraph)
-            sortGraphAlongHilbertCurve(baseGraph);
+            sortGraphAlongHilbertCurve(baseGraph, fileBacked);
     }
 
     private void calculateSoftblocks() {
@@ -1068,7 +1068,7 @@ public class GraphHopper {
     public record GraphSortMappings(IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges) {
     }
 
-    public static GraphSortMappings sortGraphAlongHilbertCurve(BaseGraph graph) {
+    public static GraphSortMappings sortGraphAlongHilbertCurve(BaseGraph graph, boolean fileBacked) {
         logger.info("sorting graph along Hilbert curve.... (memory:" + getMemInfo() + ")");
         StopWatch sw = StopWatch.started();
         NodeAccess na = graph.getNodeAccess();
@@ -1093,18 +1093,18 @@ public class GraphHopper {
         IntArrayList newEdgesByOldEdges = ArrayUtil.invert(edgeOrder);
         IntArrayList newNodesByOldNodes = IntArrayList.from(ArrayUtil.invert(nodeOrder));
         logger.info("calculating sort order took: " + sw.stop().getTimeString() + ", memory:" + getMemInfo());
-        sortGraphForGivenOrdering(graph, newNodesByOldNodes, newEdgesByOldEdges);
+        sortGraphForGivenOrdering(graph, newNodesByOldNodes, newEdgesByOldEdges, fileBacked);
         return new GraphSortMappings(newNodesByOldNodes, newEdgesByOldEdges);
     }
 
-    public static void sortGraphForGivenOrdering(BaseGraph baseGraph, IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges) {
+    public static void sortGraphForGivenOrdering(BaseGraph baseGraph, IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges, boolean fileBacked) {
         if (!ArrayUtil.isPermutation(newEdgesByOldEdges))
             throw new IllegalStateException("New edges: not a permutation");
         if (!ArrayUtil.isPermutation(newNodesByOldNodes))
             throw new IllegalStateException("New nodes: not a permutation");
         logger.info("sort graph for fixed ordering...");
         StopWatch sw = new StopWatch().start();
-        baseGraph.sortEdges(newEdgesByOldEdges::get);
+        baseGraph.sortEdges(newEdgesByOldEdges::get, fileBacked);
         logger.info("sorting {} edges took: {}", Helper.nf(newEdgesByOldEdges.size()), sw.stop().getTimeString());
         sw = new StopWatch().start();
         baseGraph.relabelNodes(newNodesByOldNodes::get);
