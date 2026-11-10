@@ -534,6 +534,7 @@ public class GraphHopper {
         osmReaderConfig.setElevationSmoothingRamerMax(ghConfig.getInt("graph.elevation.edge_smoothing.ramer.max_elevation", osmReaderConfig.getElevationSmoothingRamerMax()));
         osmReaderConfig.setLongEdgeSamplingDistance(ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", osmReaderConfig.getLongEdgeSamplingDistance()));
         osmReaderConfig.setElevationMaxWayPointDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", osmReaderConfig.getElevationMaxWayPointDistance()));
+        osmReaderConfig.setTowerSmoothingRadius(ghConfig.getDouble("graph.elevation.tower_smoothing_radius", osmReaderConfig.getTowerSmoothingRadius()));
         routerConfig.setElevationWayPointMaxDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", routerConfig.getElevationWayPointMaxDistance()));
         ElevationProvider elevationProvider = createElevationProvider(ghConfig);
         setElevationProvider(elevationProvider);
@@ -919,6 +920,12 @@ public class GraphHopper {
 
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
+
+        if (hasElevation() && osmReaderConfig.getTowerSmoothingRadius() > 0)
+            new TowerNodeElevationSmoothing(baseGraph.getBaseGraph(),
+                    encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class),
+                    encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class),
+                    osmReaderConfig.getTowerSmoothingRadius(), osmReaderConfig.getWorkerThreads()).execute();
 
         calculateSlope();
 
@@ -1419,7 +1426,7 @@ public class GraphHopper {
             new EdgeElevationInterpolator(baseGraph.getBaseGraph(), roadEnvEnc, RoadEnvironment.BRIDGE).execute();
             float bridge = sw.stop().getSeconds();
             // The SkadiProvider contains bathymetric data. For ferries this can result in bigger elevation changes
-            // See #2098 for mor information
+            // See #2098 for more information
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(baseGraph.getBaseGraph(), roadEnvEnc, RoadEnvironment.FERRY).execute();
             logger.info("Tower correction " + (int) towerCorrection + "s, bridge interpolation " + (int) bridge + "s, tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds() + "s");

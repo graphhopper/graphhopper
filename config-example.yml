@@ -151,6 +151,11 @@ graphhopper:
   # graph.elevation.edge_smoothing: moving_average
   # window size in meter along a way used for averaging a node's elevation
   # graph.elevation.edge_smoothing.moving_average.window_size: 150
+  # The edge smoothing does not touch the tower nodes (junctions). Their noise creates wrong slopes on short edges,
+  # e.g. 0.9m on a 12m edge are 7.5%. The following smooths every tower node after the import with the mean of the elevation
+  # along the road within the given radius in meter (following the straightest edge at junctions). Disabled by default (0).
+  # A tower node moves only as far as no edge gets steeper than before by more than 0.5% (max_slope and average_slope).
+  # graph.elevation.tower_smoothing_radius: 30
 
   # To increase elevation profile resolution, use the following two parameters to tune the extra resolution you need
   # against the additional storage space used for edge geometries. You should enable bilinear interpolation when using
