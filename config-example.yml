@@ -170,6 +170,24 @@ graphhopper:
   # max_speed_calculator.enabled: true
 
 
+  #### Values from point files ####
+
+  # Sets an encoded value for the closest edge of every point of a file, directly after the import. The file has one
+  # JSON object per line, e.g.
+  #   {"lat": 55.70960, "lon": 9.61768, "value": 2.65, "name": "Højstrupvej", "heading": 96}
+  # Only lat, lon and value are required. With name only edges with a similar name are used (fails if not found) and with heading (in degrees) only
+  # edges in that direction. The encoded value has to exist.
+  # pick: min or max means how several points on one edge are combined (if overwrite=false is also used for existing OSM data).
+  # Values are rounded towards the picked side, e.g. 2.65 becomes 2.6 for "pick: min".
+  # import.point_values:
+  #   - file: data/max_height.ndjson
+  #     encoded_value: max_height
+  #     pick: min
+  #     overwrite: false
+  #     max_distance: 10
+  #     heading_tolerance: 30
+
+
   #### Urban density (built-up areas) ####
 
   # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'urban_density')
