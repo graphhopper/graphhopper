@@ -1,5 +1,7 @@
 ### 12.0 [not yet released]
 
+- the KVStorage (path details like access_conditional) now only gets the :conditional tags of access keys (access, vehicle, motor_vehicle, motorcar, motorcycle, hgv, psv, bus, hov, bicycle, foot, optionally :forward/:backward), no longer every :conditional tag like oneway:conditional or parking:*:conditional (requires reimport)
+
 - foot.json: a mapped sidewalk increases the priority of otherwise avoided roads like primary by 10%, add `sidewalk` to graph.encoded_values; foot_priority now also reads sidewalk:both and sidewalk:left+right for no/none/separate, as foot_road_access does
 - max_speed_calculator: a country-wide fallback above 50km/h is no longer used for urban roads, e.g. 55mph for US-NY where the wiki has no urban entry. Such roads keep max_speed=Infinity, use max_speed_estimated to detect this. max_speed_estimated is now stored per direction (requires reimport)
 - mtb: base speed on paved roads is 20km/h instead of 18 (matches the flat speed of a 140W cyclist on an mtb)
