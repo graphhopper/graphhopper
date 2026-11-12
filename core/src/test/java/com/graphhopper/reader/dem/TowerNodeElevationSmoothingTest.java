@@ -34,33 +34,50 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TowerNodeElevationSmoothingTest {
+    // Dresden Hertha-Lindner-Str.: a straight road along a parallel with tower nodes every 12 m and a 0.9 m dip at
+    // node 4, continued by longer edges on both sides so that the window is complete
+    private static final double[] ELE = {109.8, 109.9, 110, 110, 109.64, 110.54, 110.86, 111.2, 111.5};
+    private static final double[] LON = {12.99914, 12.99957, 13.0, 13.000171, 13.000342, 13.000513, 13.000684, 13.00114, 13.0016};
+    private final EnumEncodedValue<RoadClass> rc = RoadClass.create();
+    private final EnumEncodedValue<RoadEnvironment> env = RoadEnvironment.create();
+    private final EncodingManager em = new EncodingManager.Builder().add(rc).add(env).build();
+
+    private BaseGraph createGraph() {
+        return new BaseGraph.Builder(em).set3D(true).create();
+    }
+
+    /**
+     * @param connect false to set the nodes of the road only
+     */
+    private BaseGraph createDresdenRoad(boolean connect) {
+        BaseGraph graph = createGraph();
+        for (int i = 0; i < ELE.length; i++)
+            graph.getNodeAccess().setNode(i, 51.0, LON[i], ELE[i]);
+        for (int i = 1; connect && i < ELE.length; i++)
+            graph.edge(i - 1, i).setDistance(12);
+        return graph;
+    }
+
+    private void smooth(BaseGraph graph) {
+        new TowerNodeElevationSmoothing(graph, rc, env, 30, 2).execute();
+    }
 
     @Test
     public void smoothAlongRoadOnly() {
-        // an encoded value is needed for copyEdge below
-        EncodingManager em = new EncodingManager.Builder().add(RoadClass.create()).build();
-        BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
+        BaseGraph graph = createDresdenRoad(true);
         NodeAccess na = graph.getNodeAccess();
-        // straight road along a parallel with tower nodes every 12 m (Dresden Hertha-Lindner-Str. profile: a 0.9 m
-        // dip next to the road), continued by longer edges on both sides so that the window is complete
-        double[] ele = {109.8, 109.9, 110, 110, 109.64, 110.54, 110.86, 111.2, 111.5};
-        double[] lon = {12.99914, 12.99957, 13.0, 13.000171, 13.000342, 13.000513, 13.000684, 13.00114, 13.0016};
-        for (int i = 0; i < ele.length; i++)
-            na.setNode(i, 51.0, lon[i], ele[i]);
-        for (int i = 1; i < ele.length; i++)
-            graph.edge(i - 1, i).setDistance(12);
         // steep driveway into a sunken courtyard at node 5, perpendicular to the road: must not influence the road
-        na.setNode(9, 51.00018, lon[5], 104);
+        na.setNode(9, 51.00018, LON[5], 104);
         graph.edge(5, 9).setDistance(20);
         // a dead end road with a pillar node
-        na.setNode(10, 50.9996, lon[3], 112);
+        na.setNode(10, 50.9996, LON[3], 112);
         graph.edge(3, 10).setDistance(45).setWayGeometry(new PointList(1, true) {{
-            add(50.99995, lon[3], 111.5);
+            add(50.99995, LON[3], 111.5);
         }});
         // a copy (like for a via-way turn restriction) shares the geometry: it must be shifted only once
         EdgeIteratorState copy = graph.copyEdge(9, true);
 
-        new TowerNodeElevationSmoothing(graph, null, null, 30, 2).execute();
+        smooth(graph);
 
         // the dip is gone: the step between the neighbors is small now
         assertTrue(Math.abs(na.getEle(5) - na.getEle(4)) < 0.3, na.getEle(4) + " -> " + na.getEle(5));
@@ -79,8 +96,8 @@ public class TowerNodeElevationSmoothingTest {
         assertTrue(Math.abs(shift3) > 0.05, "node 3 should be shifted: " + shift3);
         PointList pillars = graph.getEdgeIteratorState(9, Integer.MIN_VALUE).fetchWayGeometry(FetchMode.PILLAR_ONLY);
         assertEquals(1, pillars.size());
-        double walked = DistanceCalcEarth.DIST_EARTH.calcDist(51.0, lon[3], 50.99995, lon[3]);
-        double length = DistanceCalcEarth.DIST_EARTH.calcDist(51.0, lon[3], 50.9996, lon[3]);
+        double walked = DistanceCalcEarth.DIST_EARTH.calcDist(51.0, LON[3], 50.99995, LON[3]);
+        double length = DistanceCalcEarth.DIST_EARTH.calcDist(51.0, LON[3], 50.9996, LON[3]);
         // tolerance: pillar elevations are stored with a precision of 5cm
         assertEquals(shift3 * (1 - walked / length), pillars.getEle(0) - 111.5, 0.03);
         assertEquals(pillars, copy.fetchWayGeometry(FetchMode.PILLAR_ONLY));
@@ -89,10 +106,7 @@ public class TowerNodeElevationSmoothingTest {
 
     @Test
     public void stepsEndTheRoad() {
-        EnumEncodedValue<RoadClass> rc = RoadClass.create();
-        EnumEncodedValue<RoadEnvironment> env = RoadEnvironment.create();
-        EncodingManager em = new EncodingManager.Builder().add(rc).add(env).build();
-        BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
+        BaseGraph graph = createGraph();
         NodeAccess na = graph.getNodeAccess();
         // Dresden Neustädter Markt at the Augustusbrücke: a footway crosses the road (even a bit straighter than the
         // road) and goes down steps on both sides. The road must win, the steps must not pull the junction down.
@@ -110,17 +124,17 @@ public class TowerNodeElevationSmoothingTest {
         na.setNode(7, lat + 24 * mLat, lon, 109.9);
         na.setNode(8, lat - 7 * mLat, lon, 111.9);
         na.setNode(9, lat - 22 * mLat, lon, 109.4);
-        road(graph, rc, 0, 1, RoadClass.UNCLASSIFIED);
-        road(graph, rc, 1, 2, RoadClass.UNCLASSIFIED);
-        road(graph, rc, 2, 3, RoadClass.UNCLASSIFIED).set(env, RoadEnvironment.BRIDGE);
-        road(graph, rc, 0, 4, RoadClass.UNCLASSIFIED);
-        road(graph, rc, 4, 5, RoadClass.UNCLASSIFIED);
-        road(graph, rc, 0, 6, RoadClass.FOOTWAY);
-        road(graph, rc, 6, 7, RoadClass.STEPS);
-        road(graph, rc, 0, 8, RoadClass.FOOTWAY);
-        road(graph, rc, 8, 9, RoadClass.STEPS);
+        road(graph, 0, 1, RoadClass.UNCLASSIFIED);
+        road(graph, 1, 2, RoadClass.UNCLASSIFIED);
+        road(graph, 2, 3, RoadClass.UNCLASSIFIED).set(env, RoadEnvironment.BRIDGE);
+        road(graph, 0, 4, RoadClass.UNCLASSIFIED);
+        road(graph, 4, 5, RoadClass.UNCLASSIFIED);
+        road(graph, 0, 6, RoadClass.FOOTWAY);
+        road(graph, 6, 7, RoadClass.STEPS);
+        road(graph, 0, 8, RoadClass.FOOTWAY);
+        road(graph, 8, 9, RoadClass.STEPS);
 
-        new TowerNodeElevationSmoothing(graph, rc, env, 30, 2).execute();
+        smooth(graph);
 
         // smoothed along the road: about 112.6 instead of 110.9 along the footway and steps
         assertEquals(112.6, na.getEle(0), 0.15);
@@ -131,7 +145,7 @@ public class TowerNodeElevationSmoothingTest {
 
     @Test
     public void changeIsLimited() {
-        BaseGraph graph = new BaseGraph.Builder(new EncodingManager.Builder().build()).set3D(true).create();
+        BaseGraph graph = createGraph();
         NodeAccess na = graph.getNodeAccess();
         // straight road with tower nodes every 12 m and a 10 m spike at node 4: the mean would lower it by about 9 m
         for (int i = 0; i < 9; i++)
@@ -139,7 +153,7 @@ public class TowerNodeElevationSmoothingTest {
         for (int i = 1; i < 9; i++)
             graph.edge(i - 1, i).setDistance(12);
 
-        new TowerNodeElevationSmoothing(graph, null, null, 30, 2).execute();
+        smooth(graph);
 
         assertEquals(110 - TowerNodeElevationSmoothing.MAX_CHANGE, na.getEle(4), 0.01);
     }
@@ -147,8 +161,8 @@ public class TowerNodeElevationSmoothingTest {
     @Test
     public void parallelIsDeterministic() {
         BaseGraph original = grid(), single = grid(), parallel = grid();
-        new TowerNodeElevationSmoothing(single, null, null, 30, 1).execute();
-        TowerNodeElevationSmoothing smoothing = new TowerNodeElevationSmoothing(parallel, null, null, 30, 4);
+        new TowerNodeElevationSmoothing(single, rc, env, 30, 1).execute();
+        TowerNodeElevationSmoothing smoothing = new TowerNodeElevationSmoothing(parallel, rc, env, 30, 4);
         smoothing.chunkSize = 7;
         smoothing.execute();
 
@@ -168,8 +182,8 @@ public class TowerNodeElevationSmoothingTest {
     /**
      * A 20x20 grid of roads 12 m apart with noisy elevations on a slope, every third edge with a pillar node.
      */
-    private static BaseGraph grid() {
-        BaseGraph graph = new BaseGraph.Builder(new EncodingManager.Builder().build()).set3D(true).create();
+    private BaseGraph grid() {
+        BaseGraph graph = createGraph();
         NodeAccess na = graph.getNodeAccess();
         Random rand = new Random(42);
         int n = 20;
@@ -197,7 +211,7 @@ public class TowerNodeElevationSmoothingTest {
         }
     }
 
-    private static EdgeIteratorState road(BaseGraph graph, EnumEncodedValue<RoadClass> rc, int from, int to, RoadClass roadClass) {
+    private EdgeIteratorState road(BaseGraph graph, int from, int to, RoadClass roadClass) {
         NodeAccess na = graph.getNodeAccess();
         return graph.edge(from, to).set(rc, roadClass).setDistance(DistanceCalcEarth.DIST_EARTH.calcDist(
                 na.getLat(from), na.getLon(from), na.getLat(to), na.getLon(to)));
@@ -205,22 +219,15 @@ public class TowerNodeElevationSmoothingTest {
 
     @Test
     public void shortEdgeNextToKeptNode() {
-        EncodingManager em = new EncodingManager.Builder().add(RoadClass.create()).build();
-        BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
+        BaseGraph graph = createDresdenRoad(true);
         NodeAccess na = graph.getNodeAccess();
-        double[] ele = {109.8, 109.9, 110, 110, 109.64, 110.54, 110.86, 111.2, 111.5};
-        double[] lon = {12.99914, 12.99957, 13.0, 13.000171, 13.000342, 13.000513, 13.000684, 13.00114, 13.0016};
-        for (int i = 0; i < ele.length; i++)
-            na.setNode(i, 51.0, lon[i], ele[i]);
-        for (int i = 1; i < ele.length; i++)
-            graph.edge(i - 1, i).setDistance(12);
         // 30 m flat dead end at the dip node 4 with a pillar in the middle. Its end node 9 is not smoothed
         double mLat = 1 / 111_320.0;
-        na.setNode(9, 51.0 - 30 * mLat, lon[4], 109.64);
+        na.setNode(9, 51.0 - 30 * mLat, LON[4], 109.64);
         graph.edge(4, 9).setDistance(30).setWayGeometry(new PointList(1, true) {{
-            add(51.0 - 15 * mLat, lon[4], 109.64);
+            add(51.0 - 15 * mLat, LON[4], 109.64);
         }});
-        new TowerNodeElevationSmoothing(graph, null, null, 30, 2).execute();
+        smooth(graph);
         double shift4 = na.getEle(4) - 109.64;
         double pillar = graph.getEdgeIteratorState(8, Integer.MIN_VALUE).fetchWayGeometry(FetchMode.PILLAR_ONLY).getEle(0) - 109.64;
         // the dead end keeps its elevation and the edge was flat, so node 4 can only move until the edge has the allowed
@@ -235,19 +242,14 @@ public class TowerNodeElevationSmoothingTest {
 
     @Test
     public void barrierIsLookedThrough() {
-        EncodingManager em = new EncodingManager.Builder().add(RoadClass.create()).build();
-        BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
+        BaseGraph graph = createDresdenRoad(false);
         NodeAccess na = graph.getNodeAccess();
-        double[] ele = {109.8, 109.9, 110, 110, 109.64, 110.54, 110.86, 111.2, 111.5};
-        double[] lon = {12.99914, 12.99957, 13.0, 13.000171, 13.000342, 13.000513, 13.000684, 13.00114, 13.0016};
-        for (int i = 0; i < ele.length; i++)
-            na.setNode(i, 51.0, lon[i], ele[i]);
         // a barrier at the dip node 4 like OSMReader creates it: a copy of the node and a zero-length edge
-        na.setNode(9, 51.0, lon[4], ele[4]);
-        for (int i = 1; i < ele.length; i++)
+        na.setNode(9, 51.0, LON[4], ELE[4]);
+        for (int i = 1; i < ELE.length; i++)
             graph.edge(i == 5 ? 9 : i - 1, i).setDistance(12);
         graph.edge(4, 9).setDistance(0.001);
-        new TowerNodeElevationSmoothing(graph, null, null, 30, 2).execute();
+        smooth(graph);
         // both barrier nodes are smoothed like without the barrier and have the same elevation
         assertTrue(na.getEle(4) - 109.64 > 0.3, "" + na.getEle(4));
         assertEquals(na.getEle(4), na.getEle(9), 1e-6);
@@ -257,14 +259,12 @@ public class TowerNodeElevationSmoothingTest {
 
     @Test
     public void radiusMustNotBeSmallerThanStep() {
-        BaseGraph graph = new BaseGraph.Builder(new EncodingManager.Builder().add(RoadClass.create()).build()).set3D(true).create();
-        assertThrows(IllegalArgumentException.class, () -> new TowerNodeElevationSmoothing(graph, null, null, 5, 1));
+        assertThrows(IllegalArgumentException.class, () -> new TowerNodeElevationSmoothing(createGraph(), rc, env, 5, 1));
     }
 
     @Test
     public void crossingOfSteepPathDoesNotMakeTheRoadSteeper() {
-        EncodingManager em = new EncodingManager.Builder().add(RoadClass.create()).build();
-        BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
+        BaseGraph graph = createGraph();
         NodeAccess na = graph.getNodeAccess();
         // Zurich 47.404233,8.562065: a footway goes steeply down the hill (convex profile) and crosses a road along the
         // hill at node 0. The footway is a bit straighter, so node 0 is smoothed along it and its mean is 1.2 m lower,
@@ -289,7 +289,7 @@ public class TowerNodeElevationSmoothingTest {
         graph.edge(0, 7).setDistance(7.7);
         graph.edge(7, 8).setDistance(70);
         graph.edge(0, 9).setDistance(50);
-        new TowerNodeElevationSmoothing(graph, null, null, 30, 2).execute();
+        smooth(graph);
         // the 7.7 m road edge had 0.38 m (5 %) and must not get steeper than allowed (without the limit it gets 1.3 m)
         assertTrue(Math.abs(na.getEle(7) - na.getEle(0)) <= 0.38 + TowerNodeElevationSmoothing.MAX_STEEPER * 7.7 + 1e-3, na.getEle(0) + " " + na.getEle(7));
     }
@@ -297,7 +297,7 @@ public class TowerNodeElevationSmoothingTest {
     @Test
     public void noEdgeGetsSteeperThanAllowed() {
         BaseGraph original = grid(), smoothed = grid();
-        new TowerNodeElevationSmoothing(smoothed, null, null, 30, 2).execute();
+        smooth(smoothed);
         double sumBefore = 0, sumAfter = 0;
         for (int edge = 0; edge < original.getEdges(); edge++) {
             double[] before = slopes(original.getEdgeIteratorState(edge, Integer.MIN_VALUE).fetchWayGeometry(FetchMode.ALL));
@@ -333,18 +333,13 @@ public class TowerNodeElevationSmoothingTest {
         // Dresden Hertha-Lindner-Str.: the node 4 of the road is 0.9 m too low because of the courtyard next to it,
         // which is reached by a short ramp at this node. Lifting the node makes the ramp steeper.
         for (double courtyard : new double[]{107.84, 109.04}) {
-            EnumEncodedValue<RoadClass> rc = RoadClass.create();
-            BaseGraph graph = new BaseGraph.Builder(new EncodingManager.Builder().add(rc).build()).set3D(true).create();
+            BaseGraph graph = createDresdenRoad(true);
             NodeAccess na = graph.getNodeAccess();
-            double[] ele = {109.8, 109.9, 110, 110, 109.64, 110.54, 110.86, 111.2, 111.5};
-            double[] lon = {12.99914, 12.99957, 13.0, 13.000171, 13.000342, 13.000513, 13.000684, 13.00114, 13.0016};
-            for (int i = 0; i < ele.length; i++)
-                na.setNode(i, 51.0, lon[i], ele[i]);
-            for (int i = 1; i < ele.length; i++)
-                road(graph, rc, i - 1, i, RoadClass.TERTIARY);
-            na.setNode(9, 51.0 - 6 / 111_320.0, lon[4], courtyard);
-            road(graph, rc, 4, 9, RoadClass.SERVICE);
-            new TowerNodeElevationSmoothing(graph, rc, null, 30, 2).execute();
+            for (int edge = 0; edge < graph.getEdges(); edge++)
+                graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).set(rc, RoadClass.TERTIARY);
+            na.setNode(9, 51.0 - 6 / 111_320.0, LON[4], courtyard);
+            road(graph, 4, 9, RoadClass.SERVICE);
+            smooth(graph);
             double step = Math.abs(na.getEle(5) - na.getEle(4));
             if (courtyard < 108)
                 // a ramp of 30 %: the node follows the road and the dip is gone (before 0.9 m on 12 m)

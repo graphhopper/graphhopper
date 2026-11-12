@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
@@ -41,8 +40,8 @@ import java.util.stream.IntStream;
  * nodes, so this class smooths the tower nodes after the import:
  * <ul>
  * <li>The road through a node is the pair of edges with the smallest heading change (below {@link #MAX_TURN}), so
- * side roads, ramps and driveways on a different level do not influence the node. If this pair has no window on
- * both sides, the next straightest pair is used.</li>
+ * side roads, ramps and driveways on a different level do not influence the node. Edges where the road ends before
+ * the first sample are ignored for this.</li>
  * <li>The wanted elevation is the mean of the own elevation and the elevation sampled every {@link #STEP} meters
  * along the road within the radius in both directions. At junctions the road continues with the straightest edge.
  * This is repeated {@link #ROUNDS} times on the result.</li>
@@ -63,7 +62,7 @@ import java.util.stream.IntStream;
  * <li>A barrier is a zero-length edge between two tower nodes at the same location. It gets the headings of the
  * edges behind it, so that the road continues through it and both nodes get the same elevation.</li>
  * </ul>
- * All passes run on several threads.
+ * All passes over the edges and tower nodes run on several threads.
  */
 public class TowerNodeElevationSmoothing {
     private static final Logger LOGGER = LoggerFactory.getLogger(TowerNodeElevationSmoothing.class);
@@ -94,8 +93,6 @@ public class TowerNodeElevationSmoothing {
     private static final byte INTERPOLATED = Byte.MIN_VALUE + 1;
     // zero length (barrier), only while calculating the headings
     private static final byte ZERO = Byte.MIN_VALUE + 2;
-    // target marker of a tower node that keeps its elevation
-    private static final short KEPT = Short.MIN_VALUE;
 
     private final BaseGraph graph;
     private final NodeAccess nodeAccess;
@@ -108,16 +105,12 @@ public class TowerNodeElevationSmoothing {
     // heading of the first segment per edge key, i.e. pointing away from the base node of the edge state, as
     // decoding the geometry is expensive
     private byte[] headings;
-    // the allowed range of 'change of the adjacent node minus change of the base node' per edge in storage
-    // direction: [limits[2 * edge], limits[2 * edge + 1]]. Like all changes in millimeters as short to save memory.
+    // per edge key: how far the adjacent node can rise relative to the base node. Like all changes in millimeters
+    // as short to save memory.
     private short[] limits;
     // the current change per tower node
     private short[] delta;
 
-    /**
-     * @param roadClass       to end the road at steps and for the rank of an edge, can be null
-     * @param roadEnvironment to end the road at bridges, tunnels and ferries, can be null
-     */
     public TowerNodeElevationSmoothing(BaseGraph graph, EnumEncodedValue<RoadClass> roadClass,
                                        EnumEncodedValue<RoadEnvironment> roadEnvironment, double radius, int threads) {
         if (radius < STEP)
@@ -148,20 +141,16 @@ public class TowerNodeElevationSmoothing {
         float smoothTime = sw.stop().getSeconds();
 
         sw = new StopWatch().start();
-        AtomicInteger changed = new AtomicInteger();
-        forEachChunk(graph.getNodes(), chunkSize, (from, to) -> {
-            int count = 0;
-            for (int node = from; node < to; node++) {
-                if (delta[node] == 0) continue;
-                nodeAccess.setNode(node, nodeAccess.getLat(node), nodeAccess.getLon(node), nodeAccess.getEle(node) + delta[node] / 1000.0);
-                count++;
-            }
-            changed.addAndGet(count);
-        });
+        int changed = 0;
+        for (int node = 0; node < graph.getNodes(); node++) {
+            if (delta[node] == 0) continue;
+            nodeAccess.setNode(node, nodeAccess.getLat(node), nodeAccess.getLon(node), nodeAccess.getEle(node) + delta[node] / 1000.0);
+            changed++;
+        }
         int shifted = updateEdges();
         delta = null;
         LOGGER.info("TowerNodeElevationSmoothing: changed {} of {} tower nodes within {} m, took {}s, shifted pillars of {} edges, took {}s, threads: {}",
-                changed.get(), graph.getNodes(), radius, (int) smoothTime, shifted, (int) sw.stop().getSeconds(), threads);
+                changed, graph.getNodes(), radius, (int) smoothTime, shifted, (int) sw.stop().getSeconds(), threads);
     }
 
     /**
@@ -174,17 +163,16 @@ public class TowerNodeElevationSmoothing {
             for (int edge = from; edge < to; edge++) {
                 EdgeIteratorState state = graph.getEdgeIteratorState(edge, Integer.MIN_VALUE);
                 PointList pl = state.fetchWayGeometry(FetchMode.ALL);
-                RoadEnvironment env = roadEnvironment == null ? null : state.get(roadEnvironment);
+                RoadEnvironment env = state.get(roadEnvironment);
                 if (env == RoadEnvironment.BRIDGE || env == RoadEnvironment.TUNNEL || env == RoadEnvironment.FERRY) {
                     headings[2 * edge] = headings[2 * edge + 1] = INTERPOLATED;
-                } else if (roadClass != null && state.get(roadClass) == RoadClass.STEPS) {
+                } else if (state.get(roadClass) == RoadClass.STEPS) {
                     headings[2 * edge] = headings[2 * edge + 1] = SKIP;
                 } else {
                     headings[2 * edge] = toByte(headingTowards(pl, false));
                     headings[2 * edge + 1] = toByte(headingTowards(pl, true));
                 }
-                // a barrier keeps [0, 0]: both nodes move together
-                if (!isBarrier(state)) calcLimits(edge, pl);
+                calcLimits(edge, pl);
             }
         });
         // a barrier is a zero-length edge between two tower nodes at the same location: it gets the heading of the
@@ -237,15 +225,15 @@ public class TowerNodeElevationSmoothing {
         }
         double steepest = Math.max(Math.abs(min), Math.abs(max));
         double steeperMax = Math.max(0, MAX_STEEPER - (shortest == Double.MAX_VALUE ? 0 : PILLAR_ROUNDING / shortest));
-        double tiltLow = Math.max(-steepest - steeperMax - min, -Math.abs(avg) - MAX_STEEPER - avg);
-        double tiltHigh = Math.min(steepest + steeperMax - max, Math.abs(avg) + MAX_STEEPER - avg);
+        double up = Math.min(steepest + steeperMax - max, Math.abs(avg) + MAX_STEEPER - avg);
+        double down = Math.min(steepest + steeperMax + min, Math.abs(avg) + MAX_STEEPER + avg);
         // truncated and not rounded, so that the edge stays within its range
-        limits[2 * edge] = (short) Math.max(-Short.MAX_VALUE, 1000 * tiltLow * length);
-        limits[2 * edge + 1] = (short) Math.min(Short.MAX_VALUE, 1000 * tiltHigh * length);
+        limits[2 * edge] = (short) Math.min(Short.MAX_VALUE, 1000 * up * length);
+        limits[2 * edge + 1] = (short) Math.min(Short.MAX_VALUE, 1000 * down * length);
     }
 
     /**
-     * Sets the wanted change of every tower node, KEPT if it is not smoothed.
+     * Sets the wanted change of every tower node. For a node that is not smoothed this is its current change.
      */
     private void calcTargets(short[] target) {
         forEachChunk(graph.getNodes(), chunkSize, (from, to) -> {
@@ -267,7 +255,7 @@ public class TowerNodeElevationSmoothing {
                     if (Double.isNaN(smooth(explorer, Math.max(node, twin), own, keys, fwdEle, bwdEle)))
                         newEle = Double.NaN;
                 }
-                target[node] = Double.isNaN(newEle) ? KEPT : (short) Math.round(1000 * Math.max(-MAX_CHANGE, Math.min(MAX_CHANGE, newEle - original)));
+                target[node] = Double.isNaN(newEle) ? delta[node] : (short) Math.round(1000 * Math.max(-MAX_CHANGE, Math.min(MAX_CHANGE, newEle - original)));
             }
         });
     }
@@ -298,7 +286,7 @@ public class TowerNodeElevationSmoothing {
             // how far the node can move down and up
             int[] room = new int[2];
             for (int node = from; node < to; node++) {
-                if (target[node] == KEPT || target[node] == prev[node]) continue;
+                if (target[node] == prev[node]) continue;
                 room[0] = room[1] = Integer.MAX_VALUE;
                 // both nodes of a barrier use the edges of both, so they stay equal
                 int twin = limitRoom(explorer, node, target, prev, room);
@@ -331,13 +319,10 @@ public class TowerNodeElevationSmoothing {
             // a steep side edge: the node follows its road
             if (rank(iter) < top && Math.abs(nodeAccess.getEle(other) - ele) >= STEEP_SIDE_EDGE * iter.getDistance())
                 continue;
-            // the change of this node minus the change of the other node must stay within [min, max]
-            boolean reverse = iter.getEdgeKey() % 2 == 1;
-            int min = reverse ? limits[2 * iter.getEdge()] : -limits[2 * iter.getEdge() + 1];
-            int max = reverse ? limits[2 * iter.getEdge() + 1] : -limits[2 * iter.getEdge()];
-            int diff = prev[node] - prev[other], otherWant = target[other] == KEPT ? 0 : target[other] - prev[other];
-            room[0] = Math.min(room[0], Math.max(0, diff - min) / (otherWant > 0 ? 2 : 1));
-            room[1] = Math.min(room[1], Math.max(0, max - diff) / (otherWant < 0 ? 2 : 1));
+            // down: the other node can rise relative to this node by limits[key]. Up: the reverse edge key
+            int diff = prev[node] - prev[other], otherWant = target[other] - prev[other];
+            room[0] = Math.min(room[0], Math.max(0, limits[iter.getEdgeKey()] + diff) / (otherWant > 0 ? 2 : 1));
+            room[1] = Math.min(room[1], Math.max(0, limits[GHUtility.reverseEdgeKey(iter.getEdgeKey())] - diff) / (otherWant < 0 ? 2 : 1));
         }
         return twin;
     }
@@ -347,7 +332,6 @@ public class TowerNodeElevationSmoothing {
      * roads (driveways, parking aisles), then steps.
      */
     private int rank(EdgeIteratorState edge) {
-        if (roadClass == null) return 0;
         return switch (edge.get(roadClass)) {
             case MOTORWAY, TRUNK, PRIMARY, SECONDARY, TERTIARY, UNCLASSIFIED, RESIDENTIAL, LIVING_STREET, ROAD -> 2;
             case STEPS -> 0;
@@ -444,80 +428,83 @@ public class TowerNodeElevationSmoothing {
             if (h == INTERPOLATED) return Double.NaN;
             if (h != SKIP) keys.add(iter.getEdgeKey());
         }
-        // try the pairs of edges from the smallest heading change on (for equal changes in the order of their index)
-        // until one has a window on both sides
-        int size = keys.size(), lastPair = -1;
-        double lastTurn = -1;
         while (true) {
-            int bestPair = -1;
+            // the pair of edges with the smallest heading change, for equal changes the first one
+            int fwd = -1, bwd = -1;
             double bestTurn = MAX_TURN;
-            for (int i = 0; i < size; i++) {
-                for (int j = i + 1; j < size; j++) {
+            for (int i = 0; i < keys.size(); i++) {
+                for (int j = i + 1; j < keys.size(); j++) {
                     double turn = turn(heading(keys.get(i)), heading(keys.get(j)));
-                    int pair = i * size + j;
-                    if (turn < bestTurn && (turn > lastTurn || turn == lastTurn && pair > lastPair)) {
+                    if (turn < bestTurn) {
                         bestTurn = turn;
-                        bestPair = pair;
+                        fwd = i;
+                        bwd = j;
                     }
                 }
             }
-            if (bestPair < 0) return Double.NaN;
-            // pick same samples from each side (bestPair / size == i and bestPair % size == j)
-            int n = Math.min(walk(explorer, keys.get(bestPair / size), fwdEle, 0, 0, STEP),
-                    walk(explorer, keys.get(bestPair % size), bwdEle, 0, 0, STEP));
-            if (n > 0) {
+            if (fwd < 0) return Double.NaN;
+            int nFwd = walk(explorer, keys.get(fwd), fwdEle), nBwd = walk(explorer, keys.get(bwd), bwdEle);
+            if (nFwd > 0 && nBwd > 0) {
+                // the same number of samples from both sides
+                int n = Math.min(nFwd, nBwd);
                 double sum = own;
                 for (int i = 0; i < n; i++)
                     sum += fwdEle[i] + bwdEle[i];
                 return sum / (1 + 2 * n);
             }
-            lastTurn = bestTurn;
-            lastPair = bestPair;
+            // the road ends before the first sample: try the next pair without this edge (bwd first, it is behind fwd)
+            if (nBwd == 0) keys.remove(bwd);
+            if (nFwd == 0) keys.remove(fwd);
         }
     }
 
     /**
      * Samples the current elevation (i.e. tilted by the changes of the tower nodes) along the edge every STEP meters
-     * until the radius and continues at the adjacent node with the straightest edge.
+     * and continues at the adjacent node with the straightest edge, until the road ends or the array is full.
      *
      * @return the number of samples in the array
      */
-    private int walk(EdgeExplorer explorer, int edgeKey, double[] samples, int count, double walked, double nextSample) {
-        EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeKey);
-        // cheap for an edge without pillar nodes: then only the tower nodes are read
-        PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
-        double deltaBase = delta[edge.getBaseNode()] / 1000.0, deltaAdj = delta[edge.getAdjNode()] / 1000.0, length = 0;
-        if (deltaBase != deltaAdj)
-            for (int i = 1; i < pl.size(); i++)
-                length += dist(pl, i);
-        double start = walked, prevEle = pl.getEle(0) + deltaBase;
-        for (int i = 1; i < pl.size(); i++) {
-            double seg = dist(pl, i);
-            double ele = pl.getEle(i) + deltaBase + (length <= 0 ? 0 : (deltaAdj - deltaBase) * (walked + seg - start) / length);
-            while (nextSample <= walked + seg) {
-                if (count == samples.length) return count;
-                double f = seg == 0 ? 0 : (nextSample - walked) / seg;
-                samples[count++] = prevEle + f * (ele - prevEle);
-                nextSample += STEP;
+    private int walk(EdgeExplorer explorer, int edgeKey, double[] samples) {
+        int count = 0;
+        double walked = 0, nextSample = STEP;
+        while (edgeKey >= 0) {
+            EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeKey);
+            // cheap for an edge without pillar nodes: then only the tower nodes are read
+            PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+            double deltaBase = delta[edge.getBaseNode()] / 1000.0, deltaAdj = delta[edge.getAdjNode()] / 1000.0, length = 0;
+            if (deltaBase != deltaAdj)
+                for (int i = 1; i < pl.size(); i++)
+                    length += dist(pl, i);
+            double start = walked, prevEle = pl.getEle(0) + deltaBase;
+            for (int i = 1; i < pl.size(); i++) {
+                double seg = dist(pl, i);
+                double ele = pl.getEle(i) + deltaBase + (length <= 0 ? 0 : (deltaAdj - deltaBase) * (walked + seg - start) / length);
+                while (nextSample <= walked + seg) {
+                    if (count == samples.length) return count;
+                    double f = seg == 0 ? 0 : (nextSample - walked) / seg;
+                    samples[count++] = prevEle + f * (ele - prevEle);
+                    nextSample += STEP;
+                }
+                walked += seg;
+                prevEle = ele;
             }
-            walked += seg;
-            prevEle = ele;
-        }
-        if (count == samples.length) return count;
-        // the road continues beyond the adjacent node: the edge with the smallest heading change to the reverse edge
-        double back = heading(GHUtility.reverseEdgeKey(edgeKey));
-        int best = -1;
-        double bestTurn = MAX_TURN;
-        EdgeIterator iter = explorer.setBaseNode(edge.getAdjNode());
-        while (iter.next()) {
-            if (iter.getEdge() == edge.getEdge() || headings[iter.getEdgeKey()] <= INTERPOLATED) continue;
-            double turn = turn(back, heading(iter.getEdgeKey()));
-            if (turn < bestTurn) {
-                bestTurn = turn;
-                best = iter.getEdgeKey();
+            if (count == samples.length) return count;
+            // the road continues beyond the adjacent node: the edge with the smallest heading change to the reverse edge
+            double back = heading(GHUtility.reverseEdgeKey(edgeKey));
+            double bestTurn = MAX_TURN;
+            int prevEdge = edge.getEdge();
+            edgeKey = -1;
+            EdgeIterator iter = explorer.setBaseNode(edge.getAdjNode());
+            while (iter.next()) {
+                if (iter.getEdge() == prevEdge || headings[iter.getEdgeKey()] <= INTERPOLATED) continue;
+                double turn = turn(back, heading(iter.getEdgeKey()));
+                if (turn < bestTurn) {
+                    bestTurn = turn;
+                    edgeKey = iter.getEdgeKey();
+                }
             }
         }
-        return best < 0 ? count : walk(explorer, best, samples, count, walked, nextSample);
+        return count;
     }
 
     private void forEachChunk(int size, int chunk, BiConsumer<Integer, Integer> range) {
