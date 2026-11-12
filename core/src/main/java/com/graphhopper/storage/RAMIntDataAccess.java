@@ -20,6 +20,9 @@ package com.graphhopper.storage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -34,6 +37,8 @@ public class RAMIntDataAccess extends AbstractDataAccess {
     private boolean closed = false;
     private final boolean readOnly;
     private int segmentSizeIntsPower;
+    // bulk copy sees the int[] in native byte order, getByte/setByte are little endian
+    private static final boolean NATIVE_LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
 
     public RAMIntDataAccess(String name, String location, int segmentSize, boolean readOnly) {
         super(name, location, segmentSize);
@@ -199,15 +204,39 @@ public class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
-        for (int i = 0; i < length; i++) {
-            values[i] = getByte(bytePos + i);
+        if (!NATIVE_LITTLE_ENDIAN) {
+            for (int i = 0; i < length; i++) {
+                values[i] = getByte(bytePos + i);
+            }
+            return;
+        }
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & (segmentSizeInBytes - 1));
+        int len = Math.min(length, segmentSizeInBytes - index);
+        MemorySegment.copy(MemorySegment.ofArray(segments[bufferIndex]), ValueLayout.JAVA_BYTE, index, values, 0, len);
+        for (int offset = len; offset < length; offset += len) {
+            len = Math.min(length - offset, segmentSizeInBytes);
+            MemorySegment.copy(MemorySegment.ofArray(segments[++bufferIndex]), ValueLayout.JAVA_BYTE, 0, values, offset, len);
         }
     }
 
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
-        for (int i = 0; i < length; i++) {
-            setByte(bytePos + i, values[i]);
+        if (!NATIVE_LITTLE_ENDIAN) {
+            for (int i = 0; i < length; i++) {
+                setByte(bytePos + i, values[i]);
+            }
+            return;
+        }
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & (segmentSizeInBytes - 1));
+        int len = Math.min(length, segmentSizeInBytes - index);
+        MemorySegment.copy(values, 0, MemorySegment.ofArray(segments[bufferIndex]), ValueLayout.JAVA_BYTE, index, len);
+        for (int offset = len; offset < length; offset += len) {
+            len = Math.min(length - offset, segmentSizeInBytes);
+            MemorySegment.copy(values, offset, MemorySegment.ofArray(segments[++bufferIndex]), ValueLayout.JAVA_BYTE, 0, len);
         }
     }
 
