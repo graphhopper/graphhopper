@@ -234,9 +234,8 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & indexDivisor);
         int len = Math.min(length, segmentSizeInBytes - index);
         MemorySegment.copy(values, 0, segments[bufferIndex], BYTE_LAYOUT, index, len);
-        for (int offset = len; offset < length; offset += len) {
-            len = Math.min(length - offset, segmentSizeInBytes);
-            MemorySegment.copy(values, offset, segments[++bufferIndex], BYTE_LAYOUT, 0, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            MemorySegment.copy(values, offset, segments[++bufferIndex], BYTE_LAYOUT, 0, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 
@@ -247,9 +246,8 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & indexDivisor);
         int len = Math.min(length, segmentSizeInBytes - index);
         MemorySegment.copy(segments[bufferIndex], BYTE_LAYOUT, index, values, 0, len);
-        for (int offset = len; offset < length; offset += len) {
-            len = Math.min(length - offset, segmentSizeInBytes);
-            MemorySegment.copy(segments[++bufferIndex], BYTE_LAYOUT, 0, values, offset, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            MemorySegment.copy(segments[++bufferIndex], BYTE_LAYOUT, 0, values, offset, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 

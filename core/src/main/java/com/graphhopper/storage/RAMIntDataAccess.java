@@ -215,9 +215,8 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & (segmentSizeInBytes - 1));
         int len = Math.min(length, segmentSizeInBytes - index);
         MemorySegment.copy(MemorySegment.ofArray(segments[bufferIndex]), ValueLayout.JAVA_BYTE, index, values, 0, len);
-        for (int offset = len; offset < length; offset += len) {
-            len = Math.min(length - offset, segmentSizeInBytes);
-            MemorySegment.copy(MemorySegment.ofArray(segments[++bufferIndex]), ValueLayout.JAVA_BYTE, 0, values, offset, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            MemorySegment.copy(MemorySegment.ofArray(segments[++bufferIndex]), ValueLayout.JAVA_BYTE, 0, values, offset, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 
@@ -234,9 +233,8 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & (segmentSizeInBytes - 1));
         int len = Math.min(length, segmentSizeInBytes - index);
         MemorySegment.copy(values, 0, MemorySegment.ofArray(segments[bufferIndex]), ValueLayout.JAVA_BYTE, index, len);
-        for (int offset = len; offset < length; offset += len) {
-            len = Math.min(length - offset, segmentSizeInBytes);
-            MemorySegment.copy(values, offset, MemorySegment.ofArray(segments[++bufferIndex]), ValueLayout.JAVA_BYTE, 0, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            MemorySegment.copy(values, offset, MemorySegment.ofArray(segments[++bufferIndex]), ValueLayout.JAVA_BYTE, 0, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 

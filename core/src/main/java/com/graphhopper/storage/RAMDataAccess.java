@@ -220,9 +220,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & indexDivisor);
         int len = Math.min(length, segmentSizeInBytes - index);
         System.arraycopy(values, 0, segments[bufferIndex], index, len);
-        for (int offset = len; offset < length; offset += len) {
-            len = Math.min(length - offset, segmentSizeInBytes);
-            System.arraycopy(values, offset, segments[++bufferIndex], 0, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            System.arraycopy(values, offset, segments[++bufferIndex], 0, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 
@@ -233,9 +232,8 @@ public class RAMDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & indexDivisor);
         int len = Math.min(length, segmentSizeInBytes - index);
         System.arraycopy(segments[bufferIndex], index, values, 0, len);
-        for (int offset = len; offset < length; offset += len) {
-            len = Math.min(length - offset, segmentSizeInBytes);
-            System.arraycopy(segments[++bufferIndex], 0, values, offset, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            System.arraycopy(segments[++bufferIndex], 0, values, offset, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 

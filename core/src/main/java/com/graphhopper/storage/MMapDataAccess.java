@@ -365,9 +365,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & indexDivisor);
         int len = Math.min(length, segmentSizeInBytes - index);
         segments.get(bufferIndex).put(index, values, 0, len);
-        for (int offset = len; offset < length; offset += len) {
-            len = Math.min(length - offset, segmentSizeInBytes);
-            segments.get(++bufferIndex).put(0, values, offset, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            segments.get(++bufferIndex).put(0, values, offset, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 
@@ -377,9 +376,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & indexDivisor);
         int len = Math.min(length, segmentSizeInBytes - index);
         segments.get(bufferIndex).get(index, values, 0, len);
-        for (int offset = len; offset < length; offset += len) {
-            len = Math.min(length - offset, segmentSizeInBytes);
-            segments.get(++bufferIndex).get(0, values, offset, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            segments.get(++bufferIndex).get(0, values, offset, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 
