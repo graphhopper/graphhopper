@@ -394,22 +394,19 @@ public class BaseGraph implements Graph, Closeable {
     private void sortWayGeometry(boolean useDisk) {
         // we simply write the sorted geometry to a temporary array
         final String sortedName = "geometry_sorted_tmp";
-        // use a power of two as we also use it as segment size
-        final int bufferLength = 1 << 20;
         final int maxGeoEntryBytes = 5 + MAX_PILLAR_NODES * 3 * MAX_VARINT_BYTES;
+        final int bufferLength = 1 << 20;
         if (bufferLength < maxGeoEntryBytes)
             // we want to be sure that our buffer fits any possible geometry entry
             throw new IllegalStateException("buffer is smaller than max geo entry: " + bufferLength + " vs." + maxGeoEntryBytes);
-        // for our on-heap DataAccess get/setBytes can only handle bytes up to segment size
-        // -> we align the sorted segment size to the buffer length
-        final int sortedSegmentSize = bufferLength;
+        final int segmentSize = wayGeometry.getSegmentSize();
         DataAccess sorted;
         if (useDisk)
-            sorted = new MMapForeignMemoryDataAccess(sortedName, dir.getLocation(), sortedSegmentSize, false);
+            sorted = new MMapForeignMemoryDataAccess(sortedName, dir.getLocation(), segmentSize, false);
         else if (dir.getDefaultType().isOnHeap())
-            sorted = new RAMDataAccess(sortedName, dir.getLocation(), sortedSegmentSize, false);
+            sorted = new RAMDataAccess(sortedName, dir.getLocation(), segmentSize, false);
         else
-            sorted = new ForeignMemoryDataAccess(sortedName, dir.getLocation(), sortedSegmentSize, false);
+            sorted = new ForeignMemoryDataAccess(sortedName, dir.getLocation(), segmentSize, false);
         // the sorted geometry is never larger than the old one
         sorted.create(maxGeoRef);
         BitSet done = new BitSet(getEdges());
@@ -438,11 +435,8 @@ public class BaseGraph implements Graph, Closeable {
             sortedGeoRef += size;
         }
         // copy back to original way geometry
-        // each chunk must not be longer than either segment size (the buffer is already aligned with
-        // the sorted segment size)
-        int chunk = Math.min(wayGeometry.getSegmentSize(), sorted.getSegmentSize());
-        for (long pos = 0; pos < sortedGeoRef; pos += chunk) {
-            int length = (int) Math.min(chunk, sortedGeoRef - pos);
+        for (long pos = 0; pos < sortedGeoRef; pos += bufferLength) {
+            int length = (int) Math.min(bufferLength, sortedGeoRef - pos);
             sorted.getBytes(pos, buffer, length);
             wayGeometry.setBytes(pos, buffer, length);
         }
