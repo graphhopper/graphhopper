@@ -395,10 +395,8 @@ public class BaseGraph implements Graph, Closeable {
         // we simply write the sorted geometry to a temporary array
         final String sortedName = "geometry_sorted_tmp";
         final int maxGeoEntryBytes = 5 + MAX_PILLAR_NODES * 3 * MAX_VARINT_BYTES;
-        final int bufferLength = 1 << 20;
-        if (bufferLength < maxGeoEntryBytes)
-            // we want to be sure that our buffer fits any possible geometry entry
-            throw new IllegalStateException("buffer is smaller than max geo entry: " + bufferLength + " vs." + maxGeoEntryBytes);
+        // we have to make sure that our buffer fits any possible geometry entry
+        final int bufferLength = Math.max(1 << 20, maxGeoEntryBytes);
         final int segmentSize = wayGeometry.getSegmentSize();
         DataAccess sorted;
         if (useDisk)
