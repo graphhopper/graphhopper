@@ -21,6 +21,7 @@
 - country rules were moved into parsers and are now enabled by default
 - speeds generated from highway class now respects country-specific default speed limits, but the max_speed encoded value is now required; see #3249
 - subnetwork search now uses ~35% less memory, which potentially allows higher values of prepare.subnetworks.threads  
+- way geometry is now also sorted geographically, #3433
 
 ### 11.0 [14 Oct 2025]
 

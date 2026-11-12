@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.carrotsearch.hppc.BitSet;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -27,6 +28,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
+import java.io.File;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
@@ -380,12 +382,67 @@ public class BaseGraph implements Graph, Closeable {
         }
     }
 
-    public void sortEdges(IntUnaryOperator getNewEdgeForOldEdge) {
+    public void sortEdges(IntUnaryOperator getNewEdgeForOldEdge, boolean useDisk) {
         if (isFrozen())
             throw new IllegalStateException("Cannot sort edges if graph is already frozen");
         store.sortEdges(getNewEdgeForOldEdge);
         if (supportsTurnCosts())
             turnCostStorage.sortEdges(getNewEdgeForOldEdge);
+        sortWayGeometry(useDisk);
+    }
+
+    private void sortWayGeometry(boolean useDisk) {
+        // we simply write the sorted geometry to a temporary array
+        final String sortedName = "geometry_sorted_tmp";
+        final int maxGeoEntryBytes = 5 + MAX_PILLAR_NODES * 3 * MAX_VARINT_BYTES;
+        // we have to make sure that our buffer fits any possible geometry entry
+        final int bufferLength = Math.max(1 << 20, maxGeoEntryBytes);
+        final int segmentSize = wayGeometry.getSegmentSize();
+        DataAccess sorted;
+        if (useDisk)
+            sorted = new MMapForeignMemoryDataAccess(sortedName, dir.getLocation(), segmentSize, false);
+        else if (dir.getDefaultType().isOnHeap())
+            sorted = new RAMDataAccess(sortedName, dir.getLocation(), segmentSize, false);
+        else
+            sorted = new ForeignMemoryDataAccess(sortedName, dir.getLocation(), segmentSize, false);
+        // the sorted geometry is never larger than the old one
+        sorted.create(maxGeoRef);
+        BitSet done = new BitSet(getEdges());
+        EdgeExplorer explorer = createEdgeExplorer();
+        byte[] buffer = new byte[bufferLength];
+        // geoRef=1 is the first non-empty geometry
+        long sortedGeoRef = 1;
+        for (int edge = 0; edge < getEdges(); edge++) {
+            if (done.get(edge))
+                continue;
+            long edgePointer = store.toEdgePointer(edge);
+            long geoRef = store.getGeoRef(edgePointer);
+            if (geoRef <= 0)
+                continue;
+            int size = readEntryByteSize(geoRef);
+            wayGeometry.getBytes(geoRef, buffer, size);
+            sorted.setBytes(sortedGeoRef, buffer, size);
+            // all copies of this edge get the same georef again
+            final long sortedGeoRefTmp = sortedGeoRef;
+            forEdgeAndCopiesOfEdge(explorer, store.getNodeA(edgePointer), edge, e -> {
+                if (!done.get(e)) {
+                    store.setGeoRef(store.toEdgePointer(e), sortedGeoRefTmp);
+                    done.set(e);
+                }
+            });
+            sortedGeoRef += size;
+        }
+        // copy back to original way geometry
+        for (long pos = 0; pos < sortedGeoRef; pos += bufferLength) {
+            int length = (int) Math.min(bufferLength, sortedGeoRef - pos);
+            sorted.getBytes(pos, buffer, length);
+            wayGeometry.setBytes(pos, buffer, length);
+        }
+        wayGeometry.trimTo(sortedGeoRef);
+        maxGeoRef = sortedGeoRef;
+        sorted.close();
+        if (useDisk)
+            Helper.removeDir(new File(dir.getLocation() + sortedName));
     }
 
     public void relabelNodes(IntUnaryOperator getNewNodeForOldNode) {
