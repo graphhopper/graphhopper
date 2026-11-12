@@ -361,38 +361,23 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
-        assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
-        final int bufferIndex = (int) (bytePos >>> segmentSizePower);
-        final int index = (int) (bytePos & indexDivisor);
-        final int delta = index + length - segmentSizeInBytes;
-        final ByteBuffer bb1 = segments.get(bufferIndex);
-        if (delta > 0) {
-            length -= delta;
-            bb1.put(index, values, 0, length);
-        } else {
-            bb1.put(index, values, 0, length);
-        }
-        if (delta > 0) {
-            final ByteBuffer bb2 = segments.get(bufferIndex + 1);
-            bb2.put(0, values, length, delta);
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        int len = Math.min(length, segmentSizeInBytes - index);
+        segments.get(bufferIndex).put(index, values, 0, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            segments.get(++bufferIndex).put(0, values, offset, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
-        assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        int delta = index + length - segmentSizeInBytes;
-        final ByteBuffer bb1 = segments.get(bufferIndex);
-        if (delta > 0) {
-            length -= delta;
-            bb1.get(index, values, 0, length);
-
-            final ByteBuffer bb2 = segments.get(bufferIndex + 1);
-            bb2.get(0, values, length, delta);
-        } else {
-            bb1.get(index, values, 0, length);
+        int len = Math.min(length, segmentSizeInBytes - index);
+        segments.get(bufferIndex).get(index, values, 0, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            segments.get(++bufferIndex).get(0, values, offset, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 
