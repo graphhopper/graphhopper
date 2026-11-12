@@ -993,6 +993,25 @@ public class OSMReaderTest {
     }
 
     @Test
+    public void testConditionalAccessKeysForKVStorage() {
+        assertTrue(OSMReader.isConditionalAccessKey("access:conditional"));
+        assertTrue(OSMReader.isConditionalAccessKey("vehicle:conditional"));
+        assertTrue(OSMReader.isConditionalAccessKey("motor_vehicle:backward:conditional"));
+        assertTrue(OSMReader.isConditionalAccessKey("hgv:forward:conditional"));
+        assertTrue(OSMReader.isConditionalAccessKey("bicycle:conditional"));
+        assertTrue(OSMReader.isConditionalAccessKey("foot:conditional"));
+
+        assertFalse(OSMReader.isConditionalAccessKey("access"));
+        assertFalse(OSMReader.isConditionalAccessKey("maxspeed:conditional"));
+        assertFalse(OSMReader.isConditionalAccessKey("maxweight:conditional"));
+        assertFalse(OSMReader.isConditionalAccessKey("oneway:conditional"));
+        assertFalse(OSMReader.isConditionalAccessKey("parking:left:fee:conditional"));
+        assertFalse(OSMReader.isConditionalAccessKey("license:access:conditional"));
+        assertFalse(OSMReader.isConditionalAccessKey("supported:access:conditional"));
+        assertFalse(OSMReader.isConditionalAccessKey("derivedmaxspeed:hgv:conditional"));
+    }
+
+    @Test
     public void testStreetNameFallback() throws IOException {
         // Test that street:name is used as a fallback when name and is_sidepath:of:name are not present
         EncodingManager em = EncodingManager.start()

@@ -215,37 +215,25 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
-        assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
         assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        byte[] seg = segments[bufferIndex];
-        int delta = index + length - segmentSizeInBytes;
-        if (delta > 0) {
-            length -= delta;
-            System.arraycopy(values, 0, seg, index, length);
-            seg = segments[bufferIndex + 1];
-            System.arraycopy(values, length, seg, 0, delta);
-        } else {
-            System.arraycopy(values, 0, seg, index, length);
+        int len = Math.min(length, segmentSizeInBytes - index);
+        System.arraycopy(values, 0, segments[bufferIndex], index, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            System.arraycopy(values, offset, segments[++bufferIndex], 0, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
-        assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
         assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        byte[] seg = segments[bufferIndex];
-        int delta = index + length - segmentSizeInBytes;
-        if (delta > 0) {
-            length -= delta;
-            System.arraycopy(seg, index, values, 0, length);
-            seg = segments[bufferIndex + 1];
-            System.arraycopy(seg, 0, values, length, delta);
-        } else {
-            System.arraycopy(seg, index, values, 0, length);
+        int len = Math.min(length, segmentSizeInBytes - index);
+        System.arraycopy(segments[bufferIndex], index, values, 0, len);
+        for (int offset = len; offset < length; offset += segmentSizeInBytes) {
+            System.arraycopy(segments[++bufferIndex], 0, values, offset, Math.min(length - offset, segmentSizeInBytes));
         }
     }
 

@@ -1072,7 +1072,10 @@ public class GraphHopper {
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
     }
 
-    public static void sortGraphAlongHilbertCurve(BaseGraph graph) {
+    public record GraphSortMappings(IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges) {
+    }
+
+    public static GraphSortMappings sortGraphAlongHilbertCurve(BaseGraph graph) {
         logger.info("sorting graph along Hilbert curve.... (memory:" + getMemInfo() + ")");
         StopWatch sw = StopWatch.started();
         NodeAccess na = graph.getNodeAccess();
@@ -1098,6 +1101,7 @@ public class GraphHopper {
         IntArrayList newNodesByOldNodes = IntArrayList.from(ArrayUtil.invert(nodeOrder));
         logger.info("calculating sort order took: " + sw.stop().getTimeString() + ", memory:" + getMemInfo());
         sortGraphForGivenOrdering(graph, newNodesByOldNodes, newEdgesByOldEdges);
+        return new GraphSortMappings(newNodesByOldNodes, newEdgesByOldEdges);
     }
 
     public static void sortGraphForGivenOrdering(BaseGraph baseGraph, IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges) {
