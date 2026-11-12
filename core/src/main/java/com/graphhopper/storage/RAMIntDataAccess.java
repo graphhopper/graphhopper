@@ -199,22 +199,35 @@ public class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+        for (int i = 0; i < length; i++) {
+            values[i] = getByte(bytePos + i);
+        }
     }
 
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+        for (int i = 0; i < length; i++) {
+            setByte(bytePos + i, values[i]);
+        }
     }
 
     @Override
-    public byte getByte(long bytePos) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+    public final byte getByte(long bytePos) {
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        long tmpIndex = bytePos >>> 2;
+        int bufferIndex = (int) (tmpIndex >>> segmentSizeIntsPower);
+        int index = (int) (tmpIndex & indexDivisor);
+        return (byte) (segments[bufferIndex][index] >>> (((int) bytePos & 3) * 8));
     }
 
     @Override
-    public void setByte(long bytePos, byte value) {
-        throw new UnsupportedOperationException(toString() + " does not support byte based acccess. Use RAMDataAccess instead");
+    public final void setByte(long bytePos, byte value) {
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        long tmpIndex = bytePos >>> 2;
+        int bufferIndex = (int) (tmpIndex >>> segmentSizeIntsPower);
+        int index = (int) (tmpIndex & indexDivisor);
+        int shift = ((int) bytePos & 3) * 8;
+        segments[bufferIndex][index] = segments[bufferIndex][index] & ~(0xFF << shift) | (value & 0xFF) << shift;
     }
 
     @Override

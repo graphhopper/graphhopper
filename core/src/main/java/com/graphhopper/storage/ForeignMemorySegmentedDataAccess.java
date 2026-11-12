@@ -229,35 +229,27 @@ public final class ForeignMemorySegmentedDataAccess extends AbstractDataAccess {
 
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
-        assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
         assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        MemorySegment seg = segments[bufferIndex];
-        int delta = index + length - segmentSizeInBytes;
-        if (delta > 0) {
-            int firstLen = length - delta;
-            MemorySegment.copy(values, 0, seg, BYTE_LAYOUT, index, firstLen);
-            MemorySegment.copy(values, firstLen, segments[bufferIndex + 1], BYTE_LAYOUT, 0, delta);
-        } else {
-            MemorySegment.copy(values, 0, seg, BYTE_LAYOUT, index, length);
+        int len = Math.min(length, segmentSizeInBytes - index);
+        MemorySegment.copy(values, 0, segments[bufferIndex], BYTE_LAYOUT, index, len);
+        for (int offset = len; offset < length; offset += len) {
+            len = Math.min(length - offset, segmentSizeInBytes);
+            MemorySegment.copy(values, offset, segments[++bufferIndex], BYTE_LAYOUT, 0, len);
         }
     }
 
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
-        assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
         assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        MemorySegment seg = segments[bufferIndex];
-        int delta = index + length - segmentSizeInBytes;
-        if (delta > 0) {
-            int firstLen = length - delta;
-            MemorySegment.copy(seg, BYTE_LAYOUT, index, values, 0, firstLen);
-            MemorySegment.copy(segments[bufferIndex + 1], BYTE_LAYOUT, 0, values, firstLen, delta);
-        } else {
-            MemorySegment.copy(seg, BYTE_LAYOUT, index, values, 0, length);
+        int len = Math.min(length, segmentSizeInBytes - index);
+        MemorySegment.copy(segments[bufferIndex], BYTE_LAYOUT, index, values, 0, len);
+        for (int offset = len; offset < length; offset += len) {
+            len = Math.min(length - offset, segmentSizeInBytes);
+            MemorySegment.copy(segments[++bufferIndex], BYTE_LAYOUT, 0, values, offset, len);
         }
     }
 

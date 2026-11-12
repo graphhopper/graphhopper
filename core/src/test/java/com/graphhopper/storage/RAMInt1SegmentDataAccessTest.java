@@ -34,6 +34,11 @@ public class RAMInt1SegmentDataAccessTest extends DataAccessTest {
 
     @Override
     @Test
+    public void testSet_GetBytesAcrossMultipleSegments() {
+    }
+
+    @Override
+    @Test
     public void testSet_GetByte() {
     }
 
