@@ -44,7 +44,7 @@ import java.util.stream.IntStream;
  * the first sample are ignored for this.</li>
  * <li>The wanted elevation is the mean of the own elevation and the elevation sampled every {@link #STEP} meters
  * along the road within the radius in both directions. At junctions the road continues with the straightest edge.
- * This is repeated {@link #ROUNDS} times on the result.</li>
+ * Calculating the mean and moving the nodes is repeated {@link #ROUNDS} times on the result.</li>
  * <li>The window is symmetric: if the road ends on one side the other side is cut to the same length, so a dead end
  * keeps its elevation.</li>
  * <li>The change is limited to {@link #MAX_CHANGE}: noise is smaller, while the mean would flatten real summits,
@@ -62,7 +62,7 @@ import java.util.stream.IntStream;
  * <li>A barrier is a zero-length edge between two tower nodes at the same location. It gets the headings of the
  * edges behind it, so that the road continues through it and both nodes get the same elevation.</li>
  * </ul>
- * All passes over the edges and tower nodes run on several threads.
+ * All loops over the edges and tower nodes run on several threads.
  */
 public class TowerNodeElevationSmoothing {
     private static final Logger LOGGER = LoggerFactory.getLogger(TowerNodeElevationSmoothing.class);
@@ -77,10 +77,9 @@ public class TowerNodeElevationSmoothing {
     static final double MAX_STEEPER = 0.005;
     // a side edge with this slope or more does not limit the node of a road of a higher rank
     static final double STEEP_SIDE_EDGE = 0.2;
-    // how often the mean is calculated: 3 rounds remove 2.5 % of the ascend of bike routes in Germany, 6 rounds 2.8 %
-    static final int ROUNDS = 3;
-    // passes per round to move the tower nodes within the limits: later passes move less than 1 % of the first one
-    static final int LIMIT_PASSES = 4;
+    // how often the mean is calculated and the tower nodes are moved towards it: 4 rounds remove 2.5 % of the ascend
+    // and descend of bike routes in Germany, 3 rounds 2.4 %, 5 rounds 2.7 %
+    static final int ROUNDS = 4;
     // pillar elevations are stored in steps of 5 cm. After a tilt they are rounded again, which changes max_slope
     // of edges with short segments, so the allowed tilt is reduced by this (in meters) divided by the segment length
     static final double PILLAR_ROUNDING = 0.03;
@@ -130,11 +129,9 @@ public class TowerNodeElevationSmoothing {
         short[] target = new short[graph.getNodes()], prev = new short[graph.getNodes()];
         for (int round = 0; round < ROUNDS; round++) {
             calcTargets(target);
-            // staged: a pass reads the changes of the previous pass
-            for (int pass = 0; pass < LIMIT_PASSES; pass++) {
-                System.arraycopy(delta, 0, prev, 0, delta.length);
-                moveTowardsTargets(target, prev);
-            }
+            // staged: the nodes are moved in parallel, so they read the changes of the previous round
+            System.arraycopy(delta, 0, prev, 0, delta.length);
+            moveTowardsTargets(target, prev);
         }
         headings = null;
         limits = null;
@@ -154,7 +151,7 @@ public class TowerNodeElevationSmoothing {
     }
 
     /**
-     * One pass over all edges, as decoding the geometry is expensive.
+     * Both in one loop over all edges, as decoding the geometry is expensive.
      */
     private void calcHeadingsAndLimits() {
         headings = new byte[graph.getEdgeKeys()];
@@ -277,8 +274,8 @@ public class TowerNodeElevationSmoothing {
     /**
      * Moves every tower node towards its target as far as the limits of its edges allow. All nodes start without a
      * change, which is within the limits, and a node only uses the room that the change of the other node in the
-     * previous pass left (or half of it, see limitRoom), so every pass stays within the limits and the passes can
-     * run in parallel.
+     * previous round left (or half of it, see limitRoom), so every round stays within the limits and the nodes can
+     * be moved in parallel.
      */
     private void moveTowardsTargets(short[] target, short[] prev) {
         forEachChunk(graph.getNodes(), chunkSize, (from, to) -> {
