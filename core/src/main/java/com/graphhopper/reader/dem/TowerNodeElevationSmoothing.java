@@ -47,6 +47,8 @@ import java.util.stream.IntStream;
  * the tilt limit a mean makes many edges steeper.</li>
  * <li>The tower nodes get the new elevation and the pillar nodes are shifted linearly between both tower nodes,
  * i.e. an edge is only tilted.</li>
+ * <li>Optional and off by default, see {@link #smoothPillars}: the pillar nodes move towards the same mean along the
+ * road. The edge smoothing before cannot do this as its window ends at the tower nodes.</li>
  * </ol>
  * Special cases: the road ends at steps, bridges, tunnels and ferries, and the tower nodes of the latter three keep
  * their (interpolated) elevation. A barrier, i.e. a zero-length edge, is looked through and both of its nodes move
@@ -90,6 +92,9 @@ public class TowerNodeElevationSmoothing {
     private final int threads;
     // number of nodes or edges per task, package-private for tests
     int chunkSize = 100_000;
+    // Off for now: on bike routes in Germany it removes 4.1 % instead of 2.6 % of the ascend and descend, but compared
+    // with finer elevation data this is mostly real terrain and the routes hardly change. Takes 17s for Germany.
+    boolean smoothPillars = false;
     // heading of the first segment per edge key, i.e. pointing away from the base node of the edge state, as
     // decoding the geometry is expensive
     private byte[] headings;
@@ -122,7 +127,6 @@ public class TowerNodeElevationSmoothing {
             System.arraycopy(delta, 0, prev, 0, delta.length);
             moveTowardsTargets(targetDelta, prev);
         }
-        headings = null;
         limits = null;
         float smoothTime = sw.stop().getSeconds();
 
@@ -133,10 +137,16 @@ public class TowerNodeElevationSmoothing {
             nodeAccess.setNode(node, nodeAccess.getLat(node), nodeAccess.getLon(node), nodeAccess.getEle(node) + delta[node] / 1000.0);
             changed++;
         }
-        int shifted = updateEdges();
+        int shifted = updateEdges(false);
+        // the stored elevations are the current ones now
+        Arrays.fill(delta, (short) 0);
+        float shiftTime = sw.stop().getSeconds();
+        sw = new StopWatch().start();
+        if (smoothPillars) updateEdges(true);
+        headings = null;
         delta = null;
-        LOGGER.info("TowerNodeElevationSmoothing: changed {} of {} tower nodes within {} m, took {}s, shifted pillars of {} edges, took {}s, threads: {}",
-                changed, graph.getNodes(), radius, (int) smoothTime, shifted, (int) sw.stop().getSeconds(), threads);
+        LOGGER.info("TowerNodeElevationSmoothing: changed {} of {} tower nodes within {} m, took {}s, shifted pillars of {} edges, took {}s, smoothed pillars: {}, took {}s, threads: {}",
+                changed, graph.getNodes(), radius, (int) smoothTime, shifted, (int) shiftTime, smoothPillars, (int) sw.stop().getSeconds(), threads);
     }
 
     /**
@@ -335,14 +345,15 @@ public class TowerNodeElevationSmoothing {
 
     /**
      * Updates the edges at changed tower nodes (which must be already set): tilts the pillar nodes and calculates
-     * the distance again, as it includes the elevation. The edges are processed in batches: the new geometries are
+     * the distance again, as it includes the elevation. Or it smooths the pillar nodes of all edges of a road. The
+     * edges are processed in batches: the new geometries are
      * calculated in parallel, the distances are set there too, and then the geometries are written on one thread,
      * because writing a longer geometry (which is very rare) allocates storage and storage is not write thread safe.
      * The copies of an edge for turn restrictions share its geometry, so only the edge with the smallest id updates it.
      *
-     * @return the number of edges with shifted pillar nodes
+     * @return the number of edges with changed pillar nodes
      */
-    private int updateEdges() {
+    private int updateEdges(boolean pillarPass) {
         int batchSize = 2 * chunkSize, taskSize = Math.max(1, chunkSize / 50);
         PointList[] pillars = new PointList[batchSize];
         int shifted = 0;
@@ -352,16 +363,22 @@ public class TowerNodeElevationSmoothing {
             forEachChunk(size, taskSize, (from, to) -> {
                 EdgeExplorer explorer = graph.createEdgeExplorer();
                 IntArrayList copies = new IntArrayList();
+                double[] fwdEle = new double[(int) (radius / STEP)], bwdEle = new double[fwdEle.length];
                 for (int i = from; i < to; i++) {
                     EdgeIteratorState state = graph.getEdgeIteratorState(start + i, Integer.MIN_VALUE);
                     double deltaBase = delta[state.getBaseNode()] / 1000.0, deltaAdj = delta[state.getAdjNode()] / 1000.0;
+                    if (pillarPass ? headings[state.getEdgeKey()] <= INTERPOLATED : deltaBase == 0 && deltaAdj == 0)
+                        continue;
                     // skip edge copies but the original should loop over them at the end to update the distance
-                    if (deltaBase == 0 && deltaAdj == 0 || findCopies(explorer, state, copies) != state.getEdge())
+                    if (findCopies(explorer, state, copies) != state.getEdge())
                         continue;
                     PointList pl = state.fetchWayGeometry(FetchMode.ALL);
                     if (pl.size() > 2) {
-                        tilt(pl, deltaBase, deltaAdj);
+                        if (pillarPass) smoothPillars(explorer, state.getEdgeKey(), pl, fwdEle, bwdEle);
+                        else tilt(pl, deltaBase, deltaAdj);
                         pillars[i] = pl.shallowCopy(1, pl.size() - 1, false);
+                    } else if (pillarPass) {
+                        continue;
                     }
                     // like OSMReader, for the edge and its copies
                     double distance = Math.min(BaseGraph.MAX_DIST_METERS, Math.max(0.001, DistanceCalcEarth.DIST_EARTH.calcDistance(pl)));
@@ -405,6 +422,58 @@ public class TowerNodeElevationSmoothing {
         }
     }
 
+    /**
+     * Moves the pillar nodes towards the mean along the road like the tower nodes before, i.e. the road continues
+     * beyond the tower nodes (which stay). The change is scaled down until no slope that SlopeCalculator sees is
+     * steeper than the steepest slope of the edge before, so max_slope cannot increase and average_slope stays.
+     * Note that the pillar nodes of a batch of edges see the smoothed pillar nodes of the batches before, so the result
+     * depends on the chunk size (but not on the number of threads).
+     */
+    private void smoothPillars(EdgeExplorer explorer, int edgeKey, PointList pl, double[] fwdEle, double[] bwdEle) {
+        int size = pl.size();
+        double length = 0, offset = 0;
+        for (int i = 1; i < size; i++)
+            length += dist(pl, i);
+        double[] change = new double[size], slope = new double[size], slopeChange = new double[size], segment = new double[size];
+        for (int i = 1; i < size - 1; i++) {
+            offset += dist(pl, i);
+            int nFwd = walk(explorer, edgeKey, offset, fwdEle), nBwd = walk(explorer, GHUtility.reverseEdgeKey(edgeKey), length - offset, bwdEle);
+            change[i] = Math.max(-MAX_CHANGE, Math.min(MAX_CHANGE, mean(pl.getEle(i), fwdEle, bwdEle, Math.min(nFwd, nBwd)) - pl.getEle(i)));
+        }
+        // the slopes like in calcLimits and how they change
+        double steepest = Math.abs(pl.getEle(size - 1) - pl.getEle(0)) / DistanceCalcEarth.calcDistance(pl, false), prevDist = 0;
+        for (int i = 1; i < size; i++) {
+            double dist = DistanceCalcEarth.DIST_EARTH.calcDist(pl.getLat(i - 1), pl.getLon(i - 1), pl.getLat(i), pl.getLon(i));
+            if (i > 1 && prevDist > SlopeCalculator.MIN_LENGTH) {
+                segment[i] = dist + prevDist / 2;
+                slope[i] = (pl.getEle(i) - (pl.getEle(i - 1) + pl.getEle(i - 2)) / 2) / segment[i];
+                slopeChange[i] = (change[i] - (change[i - 1] + change[i - 2]) / 2) / segment[i];
+                steepest = Math.max(steepest, Math.abs(slope[i]));
+            }
+            prevDist = dist;
+        }
+        double factor = 1;
+        for (int i = 2; i < size; i++) {
+            if (segment[i] == 0) continue;
+            // a slope can get as steep as the steepest one (minus the rounding of the pillar nodes) or stays as it is
+            double max = Math.max(Math.abs(slope[i]), steepest - PILLAR_ROUNDING / segment[i]), after = slope[i] + slopeChange[i];
+            if (Math.abs(after) > max)
+                factor = Math.min(factor, (Math.signum(after) * max - slope[i]) / slopeChange[i]);
+        }
+        for (int i = 1; i < size - 1; i++)
+            pl.set(i, pl.getLat(i), pl.getLon(i), pl.getEle(i) + factor * change[i]);
+    }
+
+    /**
+     * @return the mean of the elevation itself and of the first n samples in both directions
+     */
+    private static double mean(double own, double[] fwdEle, double[] bwdEle, int n) {
+        double sum = own;
+        for (int i = 0; i < n; i++)
+            sum += fwdEle[i] + bwdEle[i];
+        return sum / (1 + 2 * n);
+    }
+
     private static boolean isBarrier(EdgeIteratorState edge) {
         // OSMReader stores at least 1 mm
         return edge.getDistance() <= 0.001;
@@ -437,15 +506,10 @@ public class TowerNodeElevationSmoothing {
                 }
             }
             if (fwd < 0) return Double.NaN;
-            int nFwd = walk(explorer, keys.get(fwd), fwdEle), nBwd = walk(explorer, keys.get(bwd), bwdEle);
-            if (nFwd > 0 && nBwd > 0) {
-                // the same number of samples from both sides
-                int n = Math.min(nFwd, nBwd);
-                double sum = own;
-                for (int i = 0; i < n; i++)
-                    sum += fwdEle[i] + bwdEle[i];
-                return sum / (1 + 2 * n);
-            }
+            int nFwd = walk(explorer, keys.get(fwd), 0, fwdEle), nBwd = walk(explorer, keys.get(bwd), 0, bwdEle);
+            // the same number of samples from both sides
+            if (nFwd > 0 && nBwd > 0)
+                return mean(own, fwdEle, bwdEle, Math.min(nFwd, nBwd));
             // the road ends before the first sample: try the next pair without this edge (bwd first, it is behind fwd)
             if (nBwd == 0) keys.remove(bwd);
             if (nFwd == 0) keys.remove(fwd);
@@ -456,11 +520,12 @@ public class TowerNodeElevationSmoothing {
      * Samples the current elevation (i.e. tilted by the changes of the tower nodes) along the edge every STEP meters
      * and continues at the adjacent node with the straightest edge, until the road ends or the array is full.
      *
+     * @param offset the distance from the base node where the walk starts, 0 for a tower node
      * @return the number of samples in the array
      */
-    private int walk(EdgeExplorer explorer, int edgeKey, double[] samples) {
+    private int walk(EdgeExplorer explorer, int edgeKey, double offset, double[] samples) {
         int count = 0;
-        double walked = 0, nextSample = STEP;
+        double walked = -offset, nextSample = STEP;
         while (edgeKey >= 0) {
             EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeKey);
             // cheap for an edge without pillar nodes: then only the tower nodes are read
