@@ -43,6 +43,7 @@ public class GHRequest {
     private List<Double> headings = new ArrayList<>();
     private List<String> pointHints = new ArrayList<>();
     private List<String> curbsides = new ArrayList<>();
+    private List<Integer> announcedViaPoints;
     private List<String> snapPreventions;
     private List<String> pathDetails = new ArrayList<>();
     private String algo = "";
@@ -206,6 +207,18 @@ public class GHRequest {
 
     public List<String> getCurbsides() {
         return curbsides;
+    }
+
+    /**
+     * @param announcedViaPoints the indices of the via points that get instructions, null means all. Start and end are accepted and ignored.
+     */
+    public GHRequest setAnnouncedViaPoints(List<Integer> announcedViaPoints) {
+        this.announcedViaPoints = announcedViaPoints;
+        return this;
+    }
+
+    public List<Integer> getAnnouncedViaPoints() {
+        return announcedViaPoints;
     }
 
     public boolean hasSnapPreventions() {

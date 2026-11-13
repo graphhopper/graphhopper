@@ -7,6 +7,7 @@ import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import jakarta.ws.rs.client.Entity;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -77,6 +78,45 @@ public class NavigateResourceTest {
                 "annotations=congestion%2Cdistance&language=en&roundabout_exits=false&voice_instructions=true&banner_instructions=true&voice_units=metric").
                 request().get(JsonNode.class);
         assertFalse(json.toString().contains("\"type\":\"exit roundabout\""));
+    }
+
+    @Test
+    public void testAnnouncedViaPoints() {
+        String url = "/navigate/directions/v5/gh/driving/1.537174,42.507145;1.538,42.509;1.539116,42.511368?" +
+                "geometries=polyline6&overview=full&steps=true&voice_instructions=true&banner_instructions=true";
+        JsonNode json = clientTarget(app, url).request().get(JsonNode.class);
+        assertEquals(2, json.get("routes").get(0).get("legs").size());
+        assertEquals(3, json.get("waypoints").size());
+        double distance = json.get("routes").get(0).get("distance").asDouble();
+
+        json = clientTarget(app, url + "&waypoints=0;2").request().get(JsonNode.class);
+        JsonNode route = json.get("routes").get(0);
+        assertEquals(1, route.get("legs").size());
+        assertEquals(2, json.get("waypoints").size());
+        assertEquals(distance, route.get("distance").asDouble(), 1);
+        JsonNode steps = route.get("legs").get(0).get("steps");
+        int arrives = 0;
+        for (JsonNode step : steps)
+            if (step.get("maneuver").get("type").asText().equals("arrive")) arrives++;
+        assertEquals(1, arrives);
+        assertEquals("depart", steps.get(0).get("maneuver").get("type").asText());
+
+        String body = "{\"points\": [[1.537174,42.507145],[1.538,42.509],[1.539116,42.511368]], \"profile\": \"my_car\", " +
+                "\"type\": \"mapbox\", \"ch.disable\": true, \"announced_via_points\": []}";
+        json = clientTarget(app, "/navigate").request().post(Entity.json(body), JsonNode.class);
+        assertEquals(1, json.get("routes").get(0).get("legs").size());
+        assertEquals(2, json.get("waypoints").size());
+
+        // mixed: first via silent, second announced
+        url = "/navigate/directions/v5/gh/driving/1.537174,42.507145;1.538,42.509;1.5385,42.510;1.539116,42.511368?" +
+                "geometries=polyline6&overview=full&steps=true&voice_instructions=true&banner_instructions=true&waypoints=0;2;3";
+        json = clientTarget(app, url).request().get(JsonNode.class);
+        assertEquals(2, json.get("routes").get(0).get("legs").size());
+        assertEquals(3, json.get("waypoints").size());
+
+        assertEquals(List.of(0, 3, 5), NavigateResource.getWaypoints("0;3;5"));
+        assertNull(NavigateResource.getWaypoints(""));
+        assertThrows(IllegalArgumentException.class, () -> NavigateResource.getWaypoints("0;;5"));
     }
 
     @Test

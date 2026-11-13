@@ -4,22 +4,17 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.isochrone.algorithm.Triangulator;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.*;
 import org.slf4j.Logger;
@@ -65,6 +60,14 @@ public class IsochroneResource {
 
     public enum ResponseType {json, geojson}
 
+    /**
+     * Finds the weighting for the search and snaps its start point. Override this to support profiles that are not
+     * part of the config.
+     */
+    protected SearchStart createStart(String profileName, PMap hints, GHPoint point) {
+        return SearchStart.create(graphHopper, profileName, hints, point);
+    }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response doGet(
@@ -90,18 +93,11 @@ public class IsochroneResource {
         profileName = profileResolver.resolveProfile(profileResolverHints);
         removeLegacyParameters(hintsMap);
 
-        Profile profile = graphHopper.getProfile(profileName);
-        if (profile == null)
-            throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
-        LocationIndex locationIndex = graphHopper.getLocationIndex();
-        BaseGraph graph = graphHopper.getBaseGraph();
-        Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
-        BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName));
-        Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, new DefaultSnapFilter(weighting, inSubnetworkEnc));
-        if (!snap.isValid())
-            throw new IllegalArgumentException("Point not found:" + point);
-        QueryGraph queryGraph = QueryGraph.create(graph, snap);
-        TraversalMode traversalMode = profile.hasTurnCosts() ? EDGE_BASED : NODE_BASED;
+        SearchStart start = createStart(profileName, hintsMap, point.get());
+        Weighting weighting = start.weighting();
+        Snap snap = start.snap();
+        QueryGraph queryGraph = QueryGraph.create(graphHopper.getBaseGraph(), snap);
+        TraversalMode traversalMode = weighting.hasTurnCosts() ? EDGE_BASED : NODE_BASED;
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, queryGraph.wrapWeighting(weighting), reverseFlow, traversalMode);
 
         double limit;

@@ -278,7 +278,8 @@ class BaseGraphNodesAndEdges implements EdgeIntAccess {
         // update edge references
         for (int node = 0; node < getNodes(); node++) {
             long pointer = toNodePointer(node);
-            setEdgeRef(pointer, getNewEdgeForOldEdge.applyAsInt(getEdgeRef(pointer)));
+            int edgeRef = getEdgeRef(pointer);
+            setEdgeRef(pointer, edgeRef == -1 ? -1 : getNewEdgeForOldEdge.applyAsInt(edgeRef));
         }
     }
 
