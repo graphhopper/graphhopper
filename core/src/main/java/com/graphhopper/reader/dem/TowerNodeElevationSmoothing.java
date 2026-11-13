@@ -34,35 +34,24 @@ import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
 /**
- * The elevation of a tower node is a single sample of the elevation data. Its noise (and small real features next
- * to the road like a sunken courtyard) directly creates a slope on the adjacent edges, which is large for short
- * edges, e.g. 0.9 m on a 12 m edge are 7.5 %. The edge smoothing (moving average or ramer) only touches pillar
- * nodes, so this class smooths the tower nodes after the import:
- * <ul>
- * <li>The road through a node is the pair of edges with the smallest heading change (below {@link #MAX_TURN}), so
- * side roads, ramps and driveways on a different level do not influence the node. Edges where the road ends before
- * the first sample are ignored for this.</li>
- * <li>The wanted elevation is the mean of the own elevation and the elevation sampled every {@link #STEP} meters
- * along the road within the radius in both directions. At junctions the road continues with the straightest edge.
- * Calculating the mean and moving the nodes is repeated {@link #ROUNDS} times on the result.</li>
- * <li>The window is symmetric: if the road ends on one side the other side is cut to the same length, so a dead end
- * keeps its elevation.</li>
- * <li>The change is limited to {@link #MAX_CHANGE}: noise is smaller, while the mean would flatten real summits,
- * valley floors and kinks of steep paths.</li>
- * <li>The pillar nodes are shifted linearly between both tower nodes, i.e. an edge is only tilted. Then all slopes
- * of the edge change by the same value and the allowed tilt of every edge is known before:
- * max_slope and average_slope must not get steeper than {@link #MAX_STEEPER}. The tower nodes start without a
- * change and move towards the wanted elevation only as far as all their edges allow. Without this limit a mean
- * makes many edges steeper: it moves the slope of a steep edge into its flat neighbors, and short edges get steep
- * if their tower nodes are smoothed along different roads (e.g. at the crossing of a steep path).</li>
- * <li>The only exception is a side edge that is already steeper than {@link #STEEP_SIDE_EDGE}, e.g. the ramp down to
- * a courtyard: it does not hold back the node of a road of a higher class, see {@link #rank}.</li>
- * <li>Steps are a real change of the elevation, so the road ends there. Bridges, tunnels and ferries are
- * interpolated before: the road ends there too and their tower nodes keep their elevation.</li>
- * <li>A barrier is a zero-length edge between two tower nodes at the same location. It gets the headings of the
- * edges behind it, so that the road continues through it and both nodes get the same elevation.</li>
- * </ul>
- * All loops over the edges and tower nodes run on several threads.
+ * Smooths the elevation of the tower nodes after the import, as the edge smoothing (moving average or ramer) only
+ * touches pillar nodes. The noise of a tower node is a large slope on a short edge, e.g. 0.9 m on 12 m are 7.5 %.
+ * <ol>
+ * <li>Calculates for every edge the heading at both ends and how far the edge can be tilted until its max_slope
+ * or average_slope gets steeper by more than {@link #MAX_STEEPER}.</li>
+ * <li>{@link #ROUNDS} times for every tower node: the wanted elevation is the mean of its elevation and of samples
+ * every {@link #STEP} meters along the road within the radius, with the same number of samples in both directions
+ * (so a dead end keeps its elevation). The road is the pair of edges with the smallest heading change (below
+ * {@link #MAX_TURN}) and continues with the straightest edge at junctions. Then the node moves towards the wanted
+ * elevation, but only as far as the tilt of all its edges allows and at most {@link #MAX_CHANGE} in total. Without
+ * the tilt limit a mean makes many edges steeper.</li>
+ * <li>The tower nodes get the new elevation and the pillar nodes are shifted linearly between both tower nodes,
+ * i.e. an edge is only tilted.</li>
+ * </ol>
+ * Special cases: the road ends at steps, bridges, tunnels and ferries, and the tower nodes of the latter three keep
+ * their (interpolated) elevation. A barrier, i.e. a zero-length edge, is looked through and both of its nodes move
+ * together. A side edge steeper than {@link #STEEP_SIDE_EDGE}, e.g. the ramp down to a courtyard, does not limit the
+ * node of a road of a higher class, see {@link #rank}. All loops run on several threads.
  */
 public class TowerNodeElevationSmoothing {
     private static final Logger LOGGER = LoggerFactory.getLogger(TowerNodeElevationSmoothing.class);
@@ -126,12 +115,12 @@ public class TowerNodeElevationSmoothing {
         StopWatch sw = new StopWatch().start();
         calcHeadingsAndLimits();
         delta = new short[graph.getNodes()];
-        short[] target = new short[graph.getNodes()], prev = new short[graph.getNodes()];
+        short[] targetDelta = new short[graph.getNodes()], prev = new short[graph.getNodes()];
         for (int round = 0; round < ROUNDS; round++) {
-            calcTargets(target);
+            calcTargetDeltas(targetDelta); // wanted change
             // staged: the nodes are moved in parallel, so they read the changes of the previous round
             System.arraycopy(delta, 0, prev, 0, delta.length);
-            moveTowardsTargets(target, prev);
+            moveTowardsTargets(targetDelta, prev);
         }
         headings = null;
         limits = null;
@@ -213,6 +202,7 @@ public class TowerNodeElevationSmoothing {
         for (int i = 1; i < pl.size(); i++) {
             double dist = DistanceCalcEarth.DIST_EARTH.calcDist(pl.getLat(i - 1), pl.getLon(i - 1), pl.getLat(i), pl.getLon(i));
             if (i > 1 && prevDist > SlopeCalculator.MIN_LENGTH) {
+                // TODO LATER: use symmetric "averaged" slope calculation via picking both sides (needs change in SlopeCalculator too)
                 double slope = (pl.getEle(i) - (pl.getEle(i - 1) + pl.getEle(i - 2)) / 2) / (dist + prevDist / 2);
                 min = Math.min(min, slope);
                 max = Math.max(max, slope);
@@ -232,27 +222,27 @@ public class TowerNodeElevationSmoothing {
     /**
      * Sets the wanted change of every tower node. For a node that is not smoothed this is its current change.
      */
-    private void calcTargets(short[] target) {
+    private void calcTargetDeltas(short[] targetDelta) {
         forEachChunk(graph.getNodes(), chunkSize, (from, to) -> {
             EdgeExplorer explorer = graph.createEdgeExplorer();
             double[] fwdEle = new double[(int) (radius / STEP)], bwdEle = new double[fwdEle.length];
             IntArrayList keys = new IntArrayList();
             for (int node = from; node < to; node++) {
                 double original = nodeAccess.getEle(node), own = original + delta[node] / 1000.0, newEle;
-                int twin = findTwin(explorer, node);
-                if (twin == -1) {
+                int barrierTwin = findBarrierTwinNode(explorer, node);
+                if (barrierTwin == -1) {
                     newEle = smooth(explorer, node, own, keys, fwdEle, bwdEle);
-                } else if (twin == -2 || findTwin(explorer, twin) != node) {
+                } else if (barrierTwin == -2 || findBarrierTwinNode(explorer, barrierTwin) != node) {
                     // rare chain of barriers
                     newEle = Double.NaN;
                 } else {
                     // both nodes of a barrier are at the same location and must get the same target: the one of the
                     // node with the smaller id, and both keep their elevation if one of them does
-                    newEle = smooth(explorer, Math.min(node, twin), own, keys, fwdEle, bwdEle);
-                    if (Double.isNaN(smooth(explorer, Math.max(node, twin), own, keys, fwdEle, bwdEle)))
+                    newEle = smooth(explorer, Math.min(node, barrierTwin), own, keys, fwdEle, bwdEle);
+                    if (Double.isNaN(smooth(explorer, Math.max(node, barrierTwin), own, keys, fwdEle, bwdEle)))
                         newEle = Double.NaN;
                 }
-                target[node] = Double.isNaN(newEle) ? delta[node] : (short) Math.round(1000 * Math.max(-MAX_CHANGE, Math.min(MAX_CHANGE, newEle - original)));
+                targetDelta[node] = Double.isNaN(newEle) ? delta[node] : (short) Math.round(1000 * Math.max(-MAX_CHANGE, Math.min(MAX_CHANGE, newEle - original)));
             }
         });
     }
@@ -260,47 +250,54 @@ public class TowerNodeElevationSmoothing {
     /**
      * @return the node behind the barrier at this node, -1 if there is none, -2 for more than one barrier
      */
-    private int findTwin(EdgeExplorer explorer, int node) {
-        int twin = -1;
+    private int findBarrierTwinNode(EdgeExplorer explorer, int node) {
+        int barrierTwin = -1;
         EdgeIterator iter = explorer.setBaseNode(node);
         while (iter.next()) {
             if (!isBarrier(iter)) continue;
-            if (twin != -1 || iter.getAdjNode() == node) return -2;
-            twin = iter.getAdjNode();
+            if (barrierTwin != -1 || iter.getAdjNode() == node) return -2;
+            barrierTwin = iter.getAdjNode();
         }
-        return twin;
+        return barrierTwin;
     }
 
     /**
      * Moves every tower node towards its target as far as the limits of its edges allow. All nodes start without a
-     * change, which is within the limits, and a node only uses the room that the change of the other node in the
-     * previous round left (or half of it, see limitRoom), so every round stays within the limits and the nodes can
+     * change, which is within the limits, and a node only uses the range that the change of the other node in the
+     * previous round left (or half of it, see limitRange), so every round stays within the limits and the nodes can
      * be moved in parallel.
      */
-    private void moveTowardsTargets(short[] target, short[] prev) {
+    private void moveTowardsTargets(short[] targetDelta, short[] prev) {
         forEachChunk(graph.getNodes(), chunkSize, (from, to) -> {
             EdgeExplorer explorer = graph.createEdgeExplorer();
-            // how far the node can move down and up
-            int[] room = new int[2];
+            Range allowedRange = new Range(); // allowed in this round
             for (int node = from; node < to; node++) {
-                if (target[node] == prev[node]) continue;
-                room[0] = room[1] = Integer.MAX_VALUE;
+                if (targetDelta[node] == prev[node]) continue;
+                allowedRange.min = -Integer.MAX_VALUE;
+                allowedRange.max = Integer.MAX_VALUE;
                 // both nodes of a barrier use the edges of both, so they stay equal
-                int twin = limitRoom(explorer, node, target, prev, room);
-                if (twin >= 0) limitRoom(explorer, twin, target, prev, room);
-                delta[node] = (short) (prev[node] + Math.max(-room[0], Math.min(room[1], target[node] - prev[node])));
+                int barrierTwin = limitRange(explorer, node, targetDelta, prev, allowedRange);
+                if (barrierTwin >= 0) limitRange(explorer, barrierTwin, targetDelta, prev, allowedRange);
+                delta[node] = (short) (prev[node] + Math.max(allowedRange.min, Math.min(allowedRange.max, targetDelta[node] - prev[node])));
             }
         });
     }
 
     /**
-     * Limits the room of a node for every edge of 'node' (the node itself or the other node of its barrier).
-     * If the other node of an edge wants to move into the opposite direction both can use only half of the room.
+     * How far a tower node can move in one round, in millimeters: down by min (zero or negative), up by max.
+     */
+    private static class Range {
+        int min, max;
+    }
+
+    /**
+     * Limits the allowed range of a node for every edge of 'node' (the node itself or the other node of its barrier).
+     * If the other node of an edge wants to move into the opposite direction both can use only half of the range.
      *
      * @return the node behind a barrier or -1
      */
-    private int limitRoom(EdgeExplorer explorer, int node, short[] target, short[] prev, int[] room) {
-        int twin = -1, top = 0;
+    private int limitRange(EdgeExplorer explorer, int node, short[] targetDelta, short[] prev, Range allowedRange) {
+        int barrierTwin = -1, top = 0;
         EdgeIterator iter = explorer.setBaseNode(node);
         while (iter.next())
             if (!isBarrier(iter)) top = Math.max(top, rank(iter));
@@ -310,18 +307,18 @@ public class TowerNodeElevationSmoothing {
             int other = iter.getAdjNode();
             if (other == node) continue;
             if (isBarrier(iter)) {
-                twin = other;
+                barrierTwin = other;
                 continue;
             }
             // a steep side edge: the node follows its road
             if (rank(iter) < top && Math.abs(nodeAccess.getEle(other) - ele) >= STEEP_SIDE_EDGE * iter.getDistance())
                 continue;
             // down: the other node can rise relative to this node by limits[key]. Up: the reverse edge key
-            int diff = prev[node] - prev[other], otherWant = target[other] - prev[other];
-            room[0] = Math.min(room[0], Math.max(0, limits[iter.getEdgeKey()] + diff) / (otherWant > 0 ? 2 : 1));
-            room[1] = Math.min(room[1], Math.max(0, limits[GHUtility.reverseEdgeKey(iter.getEdgeKey())] - diff) / (otherWant < 0 ? 2 : 1));
+            int diff = prev[node] - prev[other], otherWant = targetDelta[other] - prev[other];
+            allowedRange.min = Math.max(allowedRange.min, -Math.max(0, limits[iter.getEdgeKey()] + diff) / (otherWant > 0 ? 2 : 1));
+            allowedRange.max = Math.min(allowedRange.max, Math.max(0, limits[GHUtility.reverseEdgeKey(iter.getEdgeKey())] - diff) / (otherWant < 0 ? 2 : 1));
         }
-        return twin;
+        return barrierTwin;
     }
 
     /**
