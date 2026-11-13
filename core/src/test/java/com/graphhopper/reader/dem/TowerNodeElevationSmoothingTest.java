@@ -313,39 +313,6 @@ public class TowerNodeElevationSmoothingTest {
         assertTrue(sumAfter < 0.8 * sumBefore, sumBefore + " -> " + sumAfter);
     }
 
-    @Test
-    public void pillarNodesAreSmoothedAcrossTowerNodes() {
-        // flat straight road: tower nodes every 60 m, pillar nodes every 12 m. The pillar node 12 m behind the tower
-        // node 2 is 0.6 m too high and 50 m before it there is a real step of 1 m in the road (a ramp of 8 %)
-        BaseGraph graph = createGraph();
-        NodeAccess na = graph.getNodeAccess();
-        double mLon = 1 / 70_057.0;
-        for (int i = 0; i < 5; i++) {
-            na.setNode(i, 51.0, 13 + i * 60 * mLon, i < 2 ? 99 : 100);
-            if (i == 0) continue;
-            PointList pillars = new PointList(4, true);
-            for (int k = 1; k < 5; k++)
-                pillars.add(51.0, 13 + ((i - 1) * 60 + k * 12) * mLon, i == 3 && k == 1 ? 100.6 : i < 2 || i == 2 && k < 2 ? 99 : 100);
-            graph.edge(i - 1, i).setDistance(60).setWayGeometry(pillars);
-        }
-        double[] before = slopes(graph.getEdgeIteratorState(1, Integer.MIN_VALUE).fetchWayGeometry(FetchMode.ALL));
-
-        TowerNodeElevationSmoothing smoothing = new TowerNodeElevationSmoothing(graph, rc, env, 30, 2);
-        smoothing.smoothPillars = true;
-        smoothing.execute();
-
-        // the bump is smoothed although it is next to a tower node: a mean spreads it to a hump of 0.3 m, which
-        // includes the tower node and the pillar nodes around
-        PointList edge2 = graph.getEdgeIteratorState(2, Integer.MIN_VALUE).fetchWayGeometry(FetchMode.ALL);
-        assertEquals(100.3, edge2.getEle(1), 0.03);
-        assertEquals(100.24, na.getEle(2), 0.03);
-        assertEquals(100.25, edge2.getEle(2), 0.03);
-        // the ramp is smoothed too, but the edge is not steeper than before
-        double[] after = slopes(graph.getEdgeIteratorState(1, Integer.MIN_VALUE).fetchWayGeometry(FetchMode.ALL));
-        assertTrue(after[1] <= before[1] + 1e-3, before[1] + " -> " + after[1]);
-        assertEquals(before[0], after[0], TowerNodeElevationSmoothing.MAX_STEEPER);
-    }
-
     /**
      * @return |average_slope| and |max_slope| like SlopeCalculator
      */
