@@ -255,6 +255,33 @@ class BusModeAccessParserTest {
         access = new ArrayEdgeIntAccess(1);
         parser.handleWayTags(edgeId, access, way, null);
         assertFalse(busAccessEnc.getBool(false, edgeId, access));
+
+        // a locked gate is passable with destination
+        way.setTag("node_tags", List.of(Map.of("barrier", "gate", "locked", "yes", "access", "destination"), Map.of()));
+        access = new ArrayEdgeIntAccess(1);
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+
+        // an unknown value hides the less specific keys
+        way.setTag("node_tags", List.of(Map.of("barrier", "gate", "motor_vehicle", "bus", "access", "private"), Map.of()));
+        access = new ArrayEdgeIntAccess(1);
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
+    }
+
+    @Test
+    public void testValueList() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "track");
+        way.setTag("motor_vehicle", "agricultural;forestry");
+        EdgeIntAccess access = new ArrayEdgeIntAccess(1);
+        parser.handleWayTags(0, access, way, null);
+        assertFalse(busAccessEnc.getBool(false, 0, access));
+
+        way.setTag("motor_vehicle", "destination;delivery");
+        access = new ArrayEdgeIntAccess(1);
+        parser.handleWayTags(0, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, 0, access));
     }
 
     @Test

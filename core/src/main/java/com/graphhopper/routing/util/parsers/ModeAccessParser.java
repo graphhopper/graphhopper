@@ -45,6 +45,7 @@ public class ModeAccessParser implements TagParser {
         List<String> directionalKeys;
         List<String> backwardLaneKeys = List.of();
         boolean legacyOneway;
+        Set<String> lockedValues = ALLOWED;
         boolean impliedFerryAccess;
         VehicleConditions conditions;
 
@@ -64,6 +65,7 @@ public class ModeAccessParser implements TagParser {
                     onewayHighways(Set.of()).
                     directionalKeys(List.of("motor_vehicle", "vehicle")).
                     legacyOneway(true).
+                    lockedValues(AccessResolver.INTENDED).
                     impliedFerryAccess(true);
         }
 
@@ -216,6 +218,15 @@ public class ModeAccessParser implements TagParser {
         }
 
         /**
+         * @param lockedValues the access values that make a barrier with locked=yes passable, default: yes,
+         *                     designated, official, permissive and destination
+         */
+        public Options lockedValues(Set<String> lockedValues) {
+            this.lockedValues = lockedValues;
+            return this;
+        }
+
+        /**
          * @param impliedFerryAccess true if a ferry without access tags is accessible (unless foot or bicycle is
          *                           tagged) and hgv=yes implies access, default: true if motorcar is a restriction key
          */
@@ -250,7 +261,7 @@ public class ModeAccessParser implements TagParser {
         this.roundaboutEnc = roundaboutEnc;
         this.options = options;
         resolver = new AccessResolver(options.restrictionKeys, options.allowed, options.restricted,
-                options.impliedDefaults, options.barrierDefaults, options.conditions);
+                options.impliedDefaults, options.barrierDefaults, options.conditions, options.lockedValues);
         blockingRules = options.blockingRules();
         vehicleForward = options.directionalKeys.stream().map(r -> r + ":forward").toList();
         vehicleBackward = options.directionalKeys.stream().map(r -> r + ":backward").toList();

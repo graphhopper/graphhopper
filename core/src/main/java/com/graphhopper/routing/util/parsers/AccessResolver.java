@@ -30,8 +30,7 @@ import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPe
  * (highway type, barrier type) is used if the key is absent or its value unknown.
  */
 public class AccessResolver {
-    private static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive");
-    // quirk: locked barriers need destination for now
+    public static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive");
     public static final Set<String> ALLOWED = Set.of("yes", "designated", "official", "permissive", "destination");
     public static final Set<String> RESTRICTED = Set.of("no", "restricted", "military", "emergency",
             "private", "permit", "service", "delivery", "customers", "agricultural", "forestry");
@@ -101,21 +100,25 @@ public class AccessResolver {
     private final Function<ReaderWay, Map<String, String>> impliedDefaults;
     private final Map<String, Map<String, String>> barrierDefaults;
     private final VehicleConditions conditions;
+    private final Set<String> lockedValues;
 
     /**
      * @param impliedDefaults the access values implied by the way tags per restriction key, see osmDefaults
      * @param barrierDefaults the access values implied by a barrier node per barrier value and restriction key
      * @param conditions      evaluates key:conditional, null to ignore non-temporal conditionals
+     * @param lockedValues    the access values that make a barrier with locked=yes passable
      */
     public AccessResolver(List<String> restrictionKeys, Set<String> allowed, Set<String> restricted,
                           Function<ReaderWay, Map<String, String>> impliedDefaults,
-                          Map<String, Map<String, String>> barrierDefaults, VehicleConditions conditions) {
+                          Map<String, Map<String, String>> barrierDefaults, VehicleConditions conditions,
+                          Set<String> lockedValues) {
         this.restrictionKeys = restrictionKeys;
         this.allowed = allowed;
         this.restricted = restricted;
         this.impliedDefaults = impliedDefaults;
         this.barrierDefaults = barrierDefaults;
         this.conditions = conditions;
+        this.lockedValues = lockedValues;
     }
 
     /**
@@ -198,7 +201,7 @@ public class AccessResolver {
                 break;
             }
         }
-        return restricted.contains(nodeValue) || "yes".equals(nodeTags.get("locked")) && !INTENDED.contains(nodeValue);
+        return restricted.contains(nodeValue) || "yes".equals(nodeTags.get("locked")) && !lockedValues.contains(nodeValue);
     }
 
     /**
