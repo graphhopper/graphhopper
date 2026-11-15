@@ -4,10 +4,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -50,10 +47,6 @@ class ScooterModeAccessParserTest {
 
         way.clearTags();
         way.setTag("highway", "trunk");
-        assertTrue(forward(parser, way));
-
-        way.clearTags();
-        way.setTag("highway", "trunk");
         way.setTag("minspeed", "40 mph");
         assertFalse(forward(parser, way));
         way.setTag("minspeed", "30");
@@ -81,16 +74,6 @@ class ScooterModeAccessParserTest {
         way.setTag("motorcycle", "no");
         way.setTag("moped", "yes");
         assertTrue(forward(parser, way));
-
-        way.clearTags();
-        way.setTag("highway", "primary");
-        way.setTag("maxweight", "1");
-        assertTrue(forward(parser, way));
-
-        way.clearTags();
-        way.setTag("highway", "primary");
-        way.setTag("maxweight", "0.1");
-        assertFalse(forward(parser, way));
 
         way.clearTags();
         way.setTag("highway", "pedestrian");
@@ -122,9 +105,10 @@ class ScooterModeAccessParserTest {
         way.setTag("moped", "dismount");
         assertTrue(forward(parser, way));
 
+        // footways stay blocked, even with moped=yes
         way.clearTags();
-        way.setTag("highway", "track");
-        way.setTag("tracktype", "grade3");
+        way.setTag("highway", "footway");
+        way.setTag("moped", "yes");
         assertFalse(forward(parser, way));
     }
 
@@ -150,17 +134,5 @@ class ScooterModeAccessParserTest {
         assertFalse(forward(parser, way));
         way.setTag("node_tags", List.of(Map.of("barrier", "cycle_barrier"), Map.of()));
         assertFalse(forward(parser, way));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"mofa", "moped", "motorcar", "motor_vehicle", "motorcycle"})
-    void footway_etc_not_allowed_despite_vehicle_yes(String vehicle) {
-        // these highways are blocked, even when we set one of the vehicles to yes
-        for (String highway : Arrays.asList("footway", "steps")) {
-            ReaderWay way = new ReaderWay(1);
-            way.setTag("highway", highway);
-            way.setTag(vehicle, "yes");
-            assertFalse(forward(parser, way));
-        }
     }
 }

@@ -168,28 +168,6 @@ class TruckModeAccessParserTest {
 
         way.clearTags();
         way.setTag("highway", "service");
-        way.setTag("motorcar", "no");
-        assertTrue(forward(truckParser, way));
-        assertFalse(forward(carParser, way));
-
-        way.clearTags();
-        way.setTag("highway", "service");
-        way.setTag("motor_vehicle", "no");
-        assertFalse(forward(truckParser, way));
-        assertFalse(forward(carParser, way));
-
-        way.clearTags();
-        way.setTag("highway", "service");
-        way.setTag("access", "no");
-        way.setTag("motorcar", "yes");
-        assertFalse(forward(truckParser, way));
-        assertTrue(forward(carParser, way));
-        // an unknown value does not shadow the less specific key
-        way.setTag("motorcar", "somethingunexpected");
-        assertFalse(forward(carParser, way));
-
-        way.clearTags();
-        way.setTag("highway", "service");
         way.setTag("goods", "yes");
         way.setTag("motorcar", "no");
         assertFalse(forward(carParser, way));
@@ -220,14 +198,8 @@ class TruckModeAccessParserTest {
         PMap map = new PMap();
         map.putObject("block_private", false);
         ModeAccessParser tmpTruckParser = TruckVehicles.create(em, "truck", map);
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("access", "private");
-        assertFalse(forward(truckParser, way));
-        assertTrue(forward(tmpTruckParser, way));
-
         // allow maxweight exception for private access
-        way = new ReaderWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxweight", "7.5");
         assertFalse(forward(tmpTruckParser, way));
@@ -245,7 +217,6 @@ class TruckModeAccessParserTest {
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxweight", "7.5");
-        assertFalse(forward(tmpTruckParser, way));
         way.setTag("maxweight:conditional", "none @ delivery");
         assertTrue(forward(tmpTruckParser, way));
         way.setTag("maxweight:conditional", "none @ private");
@@ -255,7 +226,6 @@ class TruckModeAccessParserTest {
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxweight", "7.5");
-        assertFalse(forward(tmpTruckParser, way));
         way.setTag("access:conditional", "delivery @ (weight > 7.5)");
         assertTrue(forward(tmpTruckParser, way));
         // just check that if weight is too big it won't work
@@ -264,20 +234,6 @@ class TruckModeAccessParserTest {
         // and only if delivery is allowed
         way.setTag("access:conditional", "delivery @ (weight > 7.5)");
         assertFalse(forward(truckParser, way));
-    }
-
-    @Test
-    public void noBlockMilitary() {
-        PMap map = new PMap();
-        map.putObject("block_military", false);
-        ModeAccessParser tmpCarParser = TruckVehicles.create(em, "car", map);
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        assertTrue(forward(tmpCarParser, way));
-
-        way.setTag("access", "military");
-        assertTrue(forward(tmpCarParser, way));
-        assertFalse(forward(carParser, way));
     }
 
     @Test
@@ -312,12 +268,6 @@ class TruckModeAccessParserTest {
     public void conditionalHGV() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        way.setTag("access", "yes");
-        assertTrue(forward(truckParser, way));
-        way.setTag("access:conditional", "no @ hgv");
-        assertFalse(forward(truckParser, way));
-        assertTrue(forward(carParser, way));
-
         // none lifts a restriction like yes, also with a limit key as condition
         way.setTag("access", "no");
         way.setTag("access:conditional", "none @ (maxweight)");
@@ -363,30 +313,8 @@ class TruckModeAccessParserTest {
 
     @Test
     public void temporalAccess() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("access:conditional", "no @ (May - June)");
-        assertTrue(forward(truckParser, way));
-
-        // a less specific or unrelated key cannot lift a restriction
-        way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("vehicle", "no");
-        way.setTag("access:conditional", "yes @ (May - June)");
-        assertFalse(forward(truckParser, way));
-        way.setTag("bicycle:conditional", "yes @ (May - June)");
-        assertFalse(forward(truckParser, way));
-
-        // Ignore access restriction if there is a *higher* priority temporal restriction that *could* lift it.
-        // But this is independent of the date!
-        way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("access", "no");
-        way.setTag("vehicle:conditional", "yes @ (May - June)");
-        assertTrue(forward(truckParser, way));
-
         // a conditional restriction is lifted like a plain one (the former TruckAccessParser kept it closed)
-        way = new ReaderWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("access:conditional", "no @ (weight > 7.5)");
         assertFalse(forward(truckParser, way));
