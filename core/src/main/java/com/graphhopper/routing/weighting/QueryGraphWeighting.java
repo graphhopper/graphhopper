@@ -18,37 +18,56 @@
 
 package com.graphhopper.routing.weighting;
 
-import com.carrotsearch.hppc.IntArrayList;
+
 import com.carrotsearch.hppc.IntDoubleMap;
+import com.carrotsearch.hppc.IntIntMap;
+import com.carrotsearch.hppc.IntIntScatterMap;
 import com.carrotsearch.hppc.IntLongMap;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIterator;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.EdgeExplorer;
+
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
+import java.util.List;
 /**
  * Whenever a {@link QueryGraph} is used for shortest path calculations including turn costs we need to wrap the
  * {@link Weighting} we want to use with this class. Otherwise turn costs at virtual nodes and/or including virtual
  * edges will not be calculated correctly.
  */
 public class QueryGraphWeighting implements Weighting {
-    private final BaseGraph graph;
+
     private final Weighting weighting;
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
-    private final IntArrayList closestEdges;
+    private final IntIntMap originalEdgesByVirtualEdge;
     private final IntDoubleMap virtualWeightsByEdgeKey;
     private final IntLongMap virtualTimesByEdgeKey;
 
-    public QueryGraphWeighting(BaseGraph graph, Weighting weighting, IntArrayList closestEdges, IntDoubleMap virtualWeightsByEdgeKey, IntLongMap virtualTimesByEdgeKey) {
-        this.graph = graph;
+    public QueryGraphWeighting(
+            BaseGraph graph,
+            Weighting weighting,
+            List<VirtualEdgeIteratorState> virtualEdges,
+            IntDoubleMap virtualWeightsByEdgeKey,
+            IntLongMap virtualTimesByEdgeKey
+    ) {
         this.weighting = weighting;
         this.firstVirtualNodeId = graph.getNodes();
         this.firstVirtualEdgeId = graph.getEdges();
-        this.closestEdges = closestEdges;
+
+        this.originalEdgesByVirtualEdge =
+                new IntIntScatterMap(virtualEdges.size());
+
+        for (VirtualEdgeIteratorState edge : virtualEdges) {
+            originalEdgesByVirtualEdge.put(
+                    edge.getEdge(),
+                    GHUtility.getEdgeFromEdgeKey(edge.getOriginalEdgeKey())
+            );
+        }
+
         this.virtualWeightsByEdgeKey = virtualWeightsByEdgeKey;
         this.virtualTimesByEdgeKey = virtualTimesByEdgeKey;
     }
@@ -73,62 +92,48 @@ public class QueryGraphWeighting implements Weighting {
 
     @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
+        if (!EdgeIterator.Edge.isValid(inEdge) ||
+                !EdgeIterator.Edge.isValid(outEdge)) {
             return 0;
         }
+
         if (isVirtualNode(viaNode)) {
             if (isUTurn(inEdge, outEdge)) {
-                // do not allow u-turns at virtual nodes, otherwise the route depends on whether or not there are
-                // virtual via nodes, see #1672. note since we are turning between virtual edges here we need to compare
-                // the *virtual* edge ids (the orig edge would always be the same for all virtual edges at a virtual
-                // node), see #1593
                 return Double.POSITIVE_INFINITY;
-            } else {
-                return 0;
             }
+
+            if (isVirtualEdge(inEdge) && isVirtualEdge(outEdge)
+                    && getOriginalEdge(inEdge) != getOriginalEdge(outEdge)) {
+                return Double.POSITIVE_INFINITY;
+            }
+
+            return 0;
         }
-        return getMinWeightAndOriginalEdges(inEdge, viaNode, outEdge).minTurnWeight;
+
+        return resolveTurn(inEdge, viaNode, outEdge).turnWeight;
     }
 
-    private Result getMinWeightAndOriginalEdges(int inEdge, int viaNode, int outEdge) {
-        // to calculate the actual turn costs or detect u-turns we need to look at the original edge of each virtual
-        // edge, see #1593
+    private Result resolveTurn(
+            int inEdge,
+            int viaNode,
+            int outEdge
+    ) {
         Result result = new Result();
-        if (isVirtualEdge(inEdge) && isVirtualEdge(outEdge)) {
-            EdgeExplorer innerExplorer = graph.createEdgeExplorer();
-            graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), viaNode, getOriginalEdge(inEdge), p -> {
-                graph.forEdgeAndCopiesOfEdge(innerExplorer, viaNode, getOriginalEdge(outEdge), q -> {
-                    double w = weighting.calcTurnWeight(p, viaNode, q);
-                    if (w < result.minTurnWeight) {
-                        result.origInEdge = p;
-                        result.origOutEdge = q;
-                        result.minTurnWeight = w;
-                    }
-                });
-            });
-        } else if (isVirtualEdge(inEdge)) {
-            graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), viaNode, getOriginalEdge(inEdge), e -> {
-                double w = weighting.calcTurnWeight(e, viaNode, outEdge);
-                if (w < result.minTurnWeight) {
-                    result.origInEdge = e;
-                    result.origOutEdge = outEdge;
-                    result.minTurnWeight = w;
-                }
-            });
-        } else if (isVirtualEdge(outEdge)) {
-            graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), viaNode, getOriginalEdge(outEdge), e -> {
-                double w = weighting.calcTurnWeight(inEdge, viaNode, e);
-                if (w < result.minTurnWeight) {
-                    result.origInEdge = inEdge;
-                    result.origOutEdge = e;
-                    result.minTurnWeight = w;
-                }
-            });
-        } else {
-            result.origInEdge = inEdge;
-            result.origOutEdge = outEdge;
-            result.minTurnWeight = weighting.calcTurnWeight(inEdge, viaNode, outEdge);
-        }
+
+        result.origInEdge = isVirtualEdge(inEdge)
+                ? getOriginalEdge(inEdge)
+                : inEdge;
+
+        result.origOutEdge = isVirtualEdge(outEdge)
+                ? getOriginalEdge(outEdge)
+                : outEdge;
+
+        result.turnWeight = weighting.calcTurnWeight(
+                result.origInEdge,
+                viaNode,
+                result.origOutEdge
+        );
+
         return result;
     }
 
@@ -150,14 +155,14 @@ public class QueryGraphWeighting implements Weighting {
     }
 
     @Override
+    // Do not allow switching between different original edges at a virtual node.
     public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
         if (isVirtualNode(viaNode))
             // see calcTurnWeight
             return 0;
         else {
-            // we want the turn time given by the actual weighting for the edges with minimum weight
-            // (the same ones that would be selected when routing)
-            Result result = getMinWeightAndOriginalEdges(inEdge, viaNode, outEdge);
+            // Use the same original edges as calcTurnWeight to calculate the turn time.
+            Result result = resolveTurn(inEdge, viaNode, outEdge);
             return weighting.calcTurnMillis(result.origInEdge, viaNode, result.origOutEdge);
         }
     }
@@ -178,7 +183,13 @@ public class QueryGraphWeighting implements Weighting {
     }
 
     private int getOriginalEdge(int edge) {
-        return closestEdges.get((edge - firstVirtualEdgeId) / 2);
+        if (!originalEdgesByVirtualEdge.containsKey(edge)) {
+            throw new IllegalArgumentException(
+                    "Unknown virtual edge: " + edge
+            );
+        }
+
+        return originalEdgesByVirtualEdge.get(edge);
     }
 
     private boolean isVirtualNode(int node) {
@@ -192,6 +203,6 @@ public class QueryGraphWeighting implements Weighting {
     private static class Result {
         int origInEdge = -1;
         int origOutEdge = -1;
-        double minTurnWeight = Double.POSITIVE_INFINITY;
+        double turnWeight = Double.POSITIVE_INFINITY;
     }
 }

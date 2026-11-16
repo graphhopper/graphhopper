@@ -810,18 +810,58 @@ public class RestrictionSetterTest {
         Snap snap = locationIndex.findClosest(40.02, 5.025, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
         final int x = 8;
-        // due to the virtual node the 1-2-3-0 path is now possible
-        assertPath(queryGraph, 1, 0, nodes(1, 2, x, 3, 0));
-        assertPath(queryGraph, 1, 4, nodes(1, 2, 3, 4));
+        // Snapping onto the via-edge must not lift the turn restriction.
+        assertPath(queryGraph, 1, 0, null);
+        assertPath(queryGraph, 1, 4, nodes(1, 2, x, 3, 4));
         assertPath(queryGraph, 1, x, nodes(1, 2, x));
         assertPath(queryGraph, 5, x, nodes(5, 2, x));
         assertPath(queryGraph, x, 0, nodes(x, 3, 0));
+        assertPath(queryGraph, 1, 4, nodes(1, 2, x, 3, 4));
         assertPath(queryGraph, x, 4, nodes(x, 3, 4));
         // the 6-2-3 and 2-3-7 restrictions are still enforced, despite the virtual node
         assertPath(queryGraph, 6, 3, null);
         assertPath(queryGraph, 2, 7, null);
 
         assertEquals(10, graph.getTurnCostStorage().getTurnCostsCount());
+    }
+
+    @Test
+    void unrelatedSnapOnViaEdgeMustNotLiftRestriction() {
+        //       0
+        //       |
+        // 1-2-x-3-4
+        int e1_2 = edge(1, 2);
+        int e2_3 = edge(2, 3);
+        edge(3, 4);
+        int e0_3 = edge(0, 3);
+
+        updateDistancesFor(graph, 0, 40.03, 5.03);
+        updateDistancesFor(graph, 1, 40.02, 5.01);
+        updateDistancesFor(graph, 2, 40.02, 5.02);
+        updateDistancesFor(graph, 3, 40.02, 5.03);
+        updateDistancesFor(graph, 4, 40.02, 5.04);
+
+        setRestrictions(createViaEdgeRestriction(e1_2, e2_3, e0_3));
+
+        assertPath(1, 0, null);
+        assertPath(1, 4, nodes(1, 2, 3, 4));
+
+        LocationIndex locationIndex =
+                new LocationIndexTree(graph, graph.getDirectory()).prepareIndex();
+
+        Snap snap = locationIndex.findClosest(
+                40.02, 5.025, EdgeFilter.ALL_EDGES);
+
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
+
+        final int x = 5;
+        assertEquals(x, snap.getClosestNode());
+
+        assertPath(queryGraph, 1, x, nodes(1, 2, x));
+        assertPath(queryGraph, x, 0, nodes(x, 3, 0));
+
+        // The unrelated snap must not lift the turn restriction.
+        assertPath(queryGraph, 1, 0, null);
     }
 
     @Test
@@ -868,12 +908,12 @@ public class RestrictionSetterTest {
         assertEquals(x, snapX.getClosestNode());
         assertEquals(y, snapY.getClosestNode());
         assertEquals(z, snapZ.getClosestNode());
-        assertPath(queryGraph, 1, 4, nodes(1, 2, x, 3, 4));
-        assertPath(queryGraph, 2, 4, nodes(2, x, 3, 4));
-        assertPath(queryGraph, 2, 5, nodes(2, x, 3, y, 4, 5));
+        assertPath(queryGraph, 1, 4, null);
+        assertPath(queryGraph, 2, 4, nodes(2, x, 3, y, 4));
+        assertPath(queryGraph, 2, 5, null);
         // interestingly this used to go 4-5 instead of 4-z-5 bc we use dist_earth in osmreader and dist_plane in query overlay
         assertPath(queryGraph, 3, 5, nodes(3, y, 4, z, 5));
-        assertPath(queryGraph, 3, 6, nodes(3, y, 4, z, 5, 6));
+        assertPath(queryGraph, 3, 6, null);
         assertPath(queryGraph, 4, 6, nodes(4, z, 5, 6));
         // turning between the virtual nodes is still possible
         assertPath(queryGraph, x, y, nodes(x, 3, y));

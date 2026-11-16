@@ -37,20 +37,18 @@ import com.graphhopper.util.shapes.BBox;
 import java.util.*;
 
 /**
- * A class which is used to query the underlying graph with real GPS points. It does so by
- * introducing virtual nodes and edges. It is lightweight in order to be created every time a new
- * query comes in, which makes the behaviour thread safe.
- * <p>
- * Calling any <code>create</code> method creates virtual edges between the tower nodes of the existing
- * graph and new virtual tower nodes. Every virtual node has two adjacent nodes and is connected
- * to each adjacent nodes via 2 virtual edges with opposite base node / adjacent node encoding.
- * However, the edge explorer returned by {@link #createEdgeExplorer()} only returns two
- * virtual edges per virtual node (the ones with correct base node).
+ * A class used to query the underlying graph with real GPS points.
+ * Virtual nodes and edges are introduced at snapped positions.
+ * When a snapped edge has artificial copies, all copies are split
+ * at the same virtual nodes. A virtual node can therefore have
+ * multiple incident edges.
+ *<p>
+ * The edge explorer returns edge states oriented from the requested
+ * base node.
  *
  * @author Peter Karich
  */
 public class QueryGraph implements Graph {
-    static final int BASE_SNAP = 0, SNAP_BASE = 1, SNAP_ADJ = 2, ADJ_SNAP = 3;
     private final BaseGraph baseGraph;
     private final int baseNodes;
     private final int baseEdges;
@@ -248,15 +246,27 @@ public class QueryGraph implements Graph {
     }
 
     private List<List<EdgeIteratorState>> buildVirtualEdgesAtVirtualNodes() {
-        final List<List<EdgeIteratorState>> virtualEdgesAtVirtualNodes = new ArrayList<>();
-        for (int i = 0; i < queryOverlay.getVirtualNodes().size(); i++) {
-            List<EdgeIteratorState> virtualEdges = Arrays.<EdgeIteratorState>asList(
-                    queryOverlay.getVirtualEdge(i * 4 + SNAP_BASE),
-                    queryOverlay.getVirtualEdge(i * 4 + SNAP_ADJ)
-            );
-            virtualEdgesAtVirtualNodes.add(virtualEdges);
+        int count = queryOverlay.getVirtualNodes().size();
+        List<Map<Integer, EdgeIteratorState>> edgesByNode = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            edgesByNode.add(new LinkedHashMap<>());
         }
-        return virtualEdgesAtVirtualNodes;
+
+        for (VirtualEdgeIteratorState edge : queryOverlay.getVirtualEdges()) {
+            int baseNode = edge.getBaseNode();
+
+            if (isVirtualNode(baseNode)) {
+                int index = baseNode - baseNodes;
+                edgesByNode.get(index).putIfAbsent(edge.getEdge(), edge);
+            }
+        }
+
+        List<List<EdgeIteratorState>> result = new ArrayList<>(count);
+        for (Map<Integer, EdgeIteratorState> edges : edgesByNode) {
+            result.add(new ArrayList<>(edges.values()));
+        }
+
+        return result;
     }
 
     @Override
@@ -279,7 +289,13 @@ public class QueryGraph implements Graph {
         if (weighting instanceof QueryGraphWeighting)
             return weighting;
         QueryOverlay.WeightsAndTimes result = QueryOverlay.calcAdjustedVirtualWeightsAndTimes(queryOverlay, baseGraph, weighting);
-        return new QueryGraphWeighting(baseGraph, weighting, queryOverlay.getClosestEdges(), result.weights(), result.times());
+        return new QueryGraphWeighting(
+                baseGraph,
+                weighting,
+                queryOverlay.getVirtualEdges(),
+                result.weights(),
+                result.times()
+        );
     }
 
     @Override
