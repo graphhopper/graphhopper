@@ -10,7 +10,7 @@ public class SlopeCalculator {
     private final DecimalEncodedValue maxSlopeEnc;
     private final DecimalEncodedValue averageSlopeEnc;
     // the elevation data fluctuates a lot and so the slope is not that precise for very short edges.
-    private static final double MIN_LENGTH = 2;
+    public static final double MIN_LENGTH = 2;
 
     public SlopeCalculator(DecimalEncodedValue max, DecimalEncodedValue averageEnc) {
         this.maxSlopeEnc = max;
