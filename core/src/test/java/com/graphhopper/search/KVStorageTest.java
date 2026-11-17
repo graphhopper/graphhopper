@@ -236,9 +236,14 @@ public class KVStorageTest {
             bytes[i] = (byte) (i % 255);
             copy[i] = bytes[i];
         }
-        long result = index.add(Map.of("myval", new KValue(bytes)));
+        Map<String, KValue> map = new LinkedHashMap<>();
+        map.put("myval", new KValue(bytes));
+        // get has to skip the largest value to find the next one
+        map.put("after", new KValue("x"));
+        long result = index.add(map);
         bytes = (byte[]) index.get(result, "myval", false);
         assertArrayEquals(copy, bytes);
+        assertEquals("x", index.get(result, "after", false));
 
         final byte[] biggerByteArray = Arrays.copyOf(bytes, 256);
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> index.add(Map.of("myval2", new KValue(biggerByteArray))));
