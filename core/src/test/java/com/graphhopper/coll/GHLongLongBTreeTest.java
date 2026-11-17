@@ -207,7 +207,7 @@ public class GHLongLongBTreeTest {
     public void testLargeValue() {
         GHLongLongBTree instance = new GHLongLongBTree(2, 5, -1);
         for (int key = 0; key < 100; key++) {
-            long val = 1L << 32 - 1;
+            long val = (1L << 32) - 1;
             for (int i = 0; i < 8; i++) {
                 instance.put(key, val);
                 assertEquals(val, instance.get(key), "i:" + i + ", key:" + key + ", val:" + val);
