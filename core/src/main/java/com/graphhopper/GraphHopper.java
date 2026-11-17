@@ -106,6 +106,7 @@ public class GraphHopper {
     private boolean fileBacked = true;
     private final LinkedHashMap<String, String> dataAccessConfig = new LinkedHashMap<>();
     private boolean sortGraph = true;
+    private boolean bridgeTunnelTowerCorrection = true;
     private boolean elevation = false;
     private LockFactory lockFactory = new NativeFSLockFactory();
     private boolean readOnly = false;
@@ -358,6 +359,15 @@ public class GraphHopper {
     }
 
     /**
+     * Disables the elevation correction of the tower nodes at the ends of bridges and tunnels. It runs a
+     * small search around each candidate tower, which is slow with a memory mapped graph and little page cache.
+     */
+    public GraphHopper setBridgeTunnelTowerCorrection(boolean bridgeTunnelTowerCorrection) {
+        this.bridgeTunnelTowerCorrection = bridgeTunnelTowerCorrection;
+        return this;
+    }
+
+    /**
      * The underlying graph used in algorithms.
      *
      * @throws IllegalStateException if graph is not instantiated.
@@ -495,6 +505,7 @@ public class GraphHopper {
         }
 
         sortGraph = ghConfig.getBool("graph.sort", sortGraph);
+        bridgeTunnelTowerCorrection = ghConfig.getBool("graph.elevation.bridge_tunnel_tower_correction", bridgeTunnelTowerCorrection);
         if (ghConfig.getBool("max_speed_calculator.enabled", false))
             maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds());
 
@@ -1421,7 +1432,8 @@ public class GraphHopper {
             EnumEncodedValue<RoadEnvironment> roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
             StopWatch sw = new StopWatch().start();
             // first step: fix the tower-end elevation values using the surrounding road network
-            new BridgeTunnelTowerCorrection(baseGraph.getBaseGraph(), roadEnvEnc).execute();
+            if (bridgeTunnelTowerCorrection)
+                new BridgeTunnelTowerCorrection(baseGraph.getBaseGraph(), roadEnvEnc).execute();
             float towerCorrection = sw.stop().getSeconds();
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(baseGraph.getBaseGraph(), roadEnvEnc, RoadEnvironment.TUNNEL).execute();
@@ -1433,7 +1445,7 @@ public class GraphHopper {
             // See #2098 for more information
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(baseGraph.getBaseGraph(), roadEnvEnc, RoadEnvironment.FERRY).execute();
-            logger.info("Tower correction " + (int) towerCorrection + "s, bridge interpolation " + (int) bridge + "s, tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds() + "s");
+            logger.info("Tower correction " + (bridgeTunnelTowerCorrection ? (int) towerCorrection + "s" : "disabled") + ", bridge interpolation " + (int) bridge + "s, tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds() + "s");
         }
     }
 
