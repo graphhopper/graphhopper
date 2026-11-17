@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -215,6 +216,32 @@ public abstract class DataAccessTest {
         int index = (int) (bytePos & indexDivisor);
         assertEquals(256, bufferIndex);
         assertEquals(11111, index);
+    }
+
+    @Test
+    public void testSet_GetBytesAcrossMultipleSegments() {
+        DataAccess da = createDataAccess(name, 128);
+        da.create(128 * 5);
+        byte[] bytes = new byte[400];
+        for (int i = 0; i < bytes.length; i++)
+            bytes[i] = (byte) (i * 7 + 1);
+        // partial first segment, 2 full segments, partial last segment
+        da.setBytes(100, bytes, bytes.length);
+        byte[] res = new byte[bytes.length];
+        da.getBytes(100, res, res.length);
+        assertArrayEquals(bytes, res);
+        assertEquals(bytes[0], da.getByte(100));
+        assertEquals(bytes[399], da.getByte(499));
+        assertEquals(0, da.getByte(99));
+        assertEquals(0, da.getByte(500));
+
+        // ends exactly at a segment boundary
+        da.setBytes(128, bytes, 256);
+        res = new byte[256];
+        da.getBytes(128, res, res.length);
+        assertArrayEquals(Arrays.copyOf(bytes, 256), res);
+        assertEquals(bytes[284], da.getByte(384));
+        da.close();
     }
 
     @Test

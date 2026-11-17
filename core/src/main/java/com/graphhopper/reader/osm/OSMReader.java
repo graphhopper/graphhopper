@@ -36,6 +36,8 @@ import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.OSMParsers;
+import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.util.parsers.RestrictionSetter;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BaseGraph;
@@ -74,6 +76,11 @@ public class OSMReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMReader.class);
 
     private static final Pattern WAY_NAME_PATTERN = Pattern.compile("; *");
+    // the access keys of all transportation modes: access, vehicle, motor_vehicle, motorcar, ..., bicycle, foot
+    private static final Set<String> CONDITIONAL_ACCESS_KEYS = Arrays.stream(TransportationMode.values())
+            .filter(mode -> mode != TransportationMode.OTHER)
+            .flatMap(mode -> OSMRoadAccessParser.toOSMRestrictions(mode).stream())
+            .collect(Collectors.toUnmodifiableSet());
 
     private final OSMReaderConfig config;
     private final BaseGraph baseGraph;
@@ -469,9 +476,7 @@ public class OSMReader {
 
         if (way.getTags().size() > 1) // at least highway tag
             for (Map.Entry<String, Object> entry : way.getTags().entrySet()) {
-                if (entry.getKey().endsWith(":conditional") && entry.getValue() instanceof String &&
-                        // for now reduce index size a bit and focus on access tags
-                        !entry.getKey().startsWith("maxspeed") && !entry.getKey().startsWith("maxweight")) {
+                if (isConditionalAccessKey(entry.getKey()) && entry.getValue() instanceof String) {
                     // remove spaces as they unnecessarily increase the unique number of values:
                     String value = KVStorage.cutString(((String) entry.getValue()).
                             replace(" ", "").replace("bicycle", "bike"));
@@ -531,6 +536,18 @@ public class OSMReader {
         // such that the distance could actually be calculated, 3) there was a duration tag we could parse, and 4) the
         // derived speed was not unrealistically slow.
         way.setTag("duration_in_seconds", durationInSeconds);
+    }
+
+    /**
+     * Whether a way tag goes into the KVStorage, for the path details access_conditional, bike_conditional etc.:
+     * the :conditional tag of an access key, optionally per direction like motor_vehicle:forward:conditional.
+     */
+    static boolean isConditionalAccessKey(String key) {
+        if (!key.endsWith(":conditional")) return false;
+        String base = key.substring(0, key.length() - ":conditional".length());
+        if (base.endsWith(":forward")) base = base.substring(0, base.length() - ":forward".length());
+        else if (base.endsWith(":backward")) base = base.substring(0, base.length() - ":backward".length());
+        return CONDITIONAL_ACCESS_KEYS.contains(base);
     }
 
     static String fixWayName(String str) {

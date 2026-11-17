@@ -94,6 +94,7 @@ public class Router {
             checkHeadings(request);
             checkPointHints(request);
             checkCurbsides(request);
+            checkAnnouncedViaPoints(request);
             checkNoBlockArea(request);
             checkCustomModel(request);
 
@@ -167,6 +168,19 @@ public class Router {
     private void checkCurbsides(GHRequest request) {
         if (!request.getCurbsides().isEmpty() && request.getCurbsides().size() != request.getPoints().size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
+    }
+
+    private void checkAnnouncedViaPoints(GHRequest request) {
+        List<Integer> viaPoints = request.getAnnouncedViaPoints();
+        if (viaPoints == null)
+            return;
+        int maxIndex = request.getPoints().size() - 1;
+        for (int i = 0; i < viaPoints.size(); i++) {
+            if (viaPoints.get(i) < 0 || viaPoints.get(i) > maxIndex)
+                throw new IllegalArgumentException(ANNOUNCED_VIA_POINTS + " must contain point indices from 0 to " + maxIndex + ", but was: " + viaPoints);
+            if (i > 0 && viaPoints.get(i) <= viaPoints.get(i - 1))
+                throw new IllegalArgumentException(ANNOUNCED_VIA_POINTS + " must be strictly increasing, but was: " + viaPoints);
+        }
     }
 
     private void checkNoBlockArea(GHRequest request) {
@@ -294,7 +308,6 @@ public class Router {
     private PathMerger createPathMerger(GHRequest request, Solver solver, Graph graph) {
         boolean enableInstructions = request.getHints().getBool(Parameters.Routing.INSTRUCTIONS, routerConfig.isInstructionsEnabled());
         boolean includeRoundaboutExitInstruction = request.getHints().getBool(Parameters.Routing.ROUNDABOUT_EXITS, false);
-        boolean enableViaPointInstructions = request.getHints().getBool(Parameters.Routing.VIA_POINT_INSTRUCTIONS, routerConfig.isViaPointInstructionsEnabled());
         boolean calcPoints = request.getHints().getBool(Parameters.Routing.CALC_POINTS, routerConfig.isCalcPoints());
         double wayPointMaxDistance = request.getHints().getDouble(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0.5);
         double elevationWayPointMaxDistance = request.getHints().getDouble(ELEVATION_WAY_POINT_MAX_DISTANCE, routerConfig.getElevationWayPointMaxDistance());
@@ -308,7 +321,7 @@ public class Router {
                 setRamerDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
                 setIncludeRoundaboutExitInstruction(includeRoundaboutExitInstruction).
-                setEnableViaPointInstructions(enableViaPointInstructions).
+                setAnnouncedViaPoints(request.getAnnouncedViaPoints()).
                 setPathDetailsBuilders(pathDetailsBuilderFactory, request.getPathDetails()).
                 setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
 

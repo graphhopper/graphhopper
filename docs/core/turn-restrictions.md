@@ -44,7 +44,7 @@ costs with speed mode you need to specify the time penalty for each u-turn in th
 To disable the 'speed mode' per request you can add `ch.disable=true` and choose the value of `u_turn_costs` freely in the request.
 
 While OSM data only contains turn *restrictions*, the GraphHopper routing engine can also deal with turn *costs*, i.e.
-you can specify custom turn costs for each turn at each junction. See [this experimental branch](https://github.com/graphhopper/graphhopper/tree/turn_costs_calc).
+you can specify custom turn costs for each turn at each junction. See [this pull request](https://github.com/graphhopper/graphhopper/pull/3174).
 
 Conditional turn restriction are supported. For example, the following no left turn restriction concerns only bus:
 

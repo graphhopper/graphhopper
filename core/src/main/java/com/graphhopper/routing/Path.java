@@ -221,17 +221,7 @@ public class Path {
         if (edgeIds.isEmpty())
             return edges;
 
-        forEveryEdge(new EdgeVisitor() {
-            @Override
-            public void next(EdgeIteratorState eb, int index, int prevEdgeId) {
-                edges.add(eb);
-            }
-
-            @Override
-            public void finish() {
-
-            }
-        });
+        forEveryEdge((eb, index, prevEdgeId) -> edges.add(eb));
         return edges;
     }
 
@@ -249,17 +239,7 @@ public class Path {
 
         int tmpNode = getFromNode();
         nodes.add(tmpNode);
-        forEveryEdge(new EdgeVisitor() {
-            @Override
-            public void next(EdgeIteratorState eb, int index, int prevEdgeId) {
-                nodes.add(eb.getAdjNode());
-            }
-
-            @Override
-            public void finish() {
-
-            }
-        });
+        forEveryEdge((eb, index, prevEdgeId) -> nodes.add(eb.getAdjNode()));
         return nodes;
     }
 
@@ -280,18 +260,10 @@ public class Path {
 
         int tmpNode = getFromNode();
         points.add(nodeAccess, tmpNode);
-        forEveryEdge(new EdgeVisitor() {
-            @Override
-            public void next(EdgeIteratorState eb, int index, int prevEdgeId) {
-                PointList pl = eb.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ);
-                for (int j = 0; j < pl.size(); j++) {
-                    points.add(pl, j);
-                }
-            }
-
-            @Override
-            public void finish() {
-
+        forEveryEdge((eb, index, prevEdgeId) -> {
+            PointList pl = eb.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ);
+            for (int j = 0; j < pl.size(); j++) {
+                points.add(pl, j);
             }
         });
         return points;
@@ -308,6 +280,7 @@ public class Path {
     public interface EdgeVisitor {
         void next(EdgeIteratorState edge, int index, int prevEdgeId);
 
-        void finish();
+        default void finish() {
+        }
     }
 }

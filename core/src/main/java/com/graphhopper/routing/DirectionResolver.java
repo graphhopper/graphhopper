@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DirectedEdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -57,7 +59,17 @@ public class DirectionResolver {
     public DirectionResolver(Graph graph, DirectedEdgeFilter isAccessible) {
         this.edgeExplorer = graph.createEdgeExplorer();
         this.nodeAccess = graph.getNodeAccess();
-        this.isAccessible = isAccessible;
+        this.isAccessible = graph instanceof QueryGraph queryGraph
+                ? (edge, reverse) -> isAccessible.accept(getOriginalEdge(queryGraph, edge), reverse)
+                : isAccessible;
+    }
+
+    private static EdgeIteratorState getOriginalEdge(QueryGraph queryGraph, EdgeIteratorState edge) {
+        if (!queryGraph.isVirtualEdge(edge.getEdge()))
+            return edge;
+        // todo: maybe find a cleaner way to obtain the original edge given a VirtualEdgeIterator (not VirtualEdgeIteratorState)
+        EdgeIteratorState virtualEdge = queryGraph.getEdgeIteratorStateForKey(edge.getEdgeKey());
+        return queryGraph.getEdgeIteratorStateForKey(((VirtualEdgeIteratorState) virtualEdge).getOriginalEdgeKey());
     }
 
     /**

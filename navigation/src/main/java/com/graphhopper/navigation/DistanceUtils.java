@@ -19,7 +19,6 @@ package com.graphhopper.navigation;
 
 public class DistanceUtils {
 
-    static float meterToFeet = 3.28084f;
     static float meterToMiles = 0.00062137f;
     static float meterToKilometer = 0.001f;
 

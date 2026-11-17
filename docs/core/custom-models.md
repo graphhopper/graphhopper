@@ -485,19 +485,15 @@ You can not only modify the speed of road segments based on properties, like we 
 can also modify the speed of road segments based on their location. To do this you need to first add an area to the
 `areas` section of the custom model. You can then use the "id" in the conditions of your `if/else/else_if` statements.
 
-In the following example we multiply the speed of all edges in an area called `custom1` with `0.7` and also limit it
-to `50km/h`. Note that each area's id needs to be prefixed with `in_`:
+In the following example we limit the speed of all edges in an area called `custom1` to `20km/h`. 
+Note that each area's id needs to be prefixed with `in_`:
 
 ```json
 {
   "speed": [
     {
       "if": "in_custom1",
-      "multiply_by": "0.7"
-    },
-    {
-      "if": "in_custom1",
-      "limit_to": "50"
+      "limit_to": "20"
     }
   ],
   "areas": {
@@ -522,6 +518,8 @@ to `50km/h`. Note that each area's id needs to be prefixed with `in_`:
   }
 }
 ```
+
+Of course the custom model will only have an effect if the route goes through the defined area.
 
 Areas are given in GeoJson format (FeatureCollection). Currently a member of this collection must be a `Feature` with a
 geometry type `Polygon`. Note that the coordinates array of `Polygon` is an array of arrays that

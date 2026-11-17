@@ -42,6 +42,7 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Helper.createPointList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -372,6 +373,7 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private boolean isAccessible(EdgeIteratorState edge, boolean reverse) {
+        assertFalse(queryGraph.isVirtualEdge(edge.getEdge()), "the filter must only see real edges");
         return reverse ? edge.getReverse(accessEnc) : edge.get(accessEnc);
     }
 

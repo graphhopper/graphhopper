@@ -534,6 +534,7 @@ public class GraphHopper {
         osmReaderConfig.setElevationSmoothingRamerMax(ghConfig.getInt("graph.elevation.edge_smoothing.ramer.max_elevation", osmReaderConfig.getElevationSmoothingRamerMax()));
         osmReaderConfig.setLongEdgeSamplingDistance(ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", osmReaderConfig.getLongEdgeSamplingDistance()));
         osmReaderConfig.setElevationMaxWayPointDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", osmReaderConfig.getElevationMaxWayPointDistance()));
+        osmReaderConfig.setTowerSmoothingRadius(ghConfig.getDouble("graph.elevation.tower_smoothing_radius", osmReaderConfig.getTowerSmoothingRadius()));
         routerConfig.setElevationWayPointMaxDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", routerConfig.getElevationWayPointMaxDistance()));
         ElevationProvider elevationProvider = createElevationProvider(ghConfig);
         setElevationProvider(elevationProvider);
@@ -923,13 +924,19 @@ public class GraphHopper {
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
 
+        if (hasElevation() && osmReaderConfig.getTowerSmoothingRadius() > 0)
+            new TowerNodeElevationSmoothing(baseGraph.getBaseGraph(),
+                    encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class),
+                    encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class),
+                    osmReaderConfig.getTowerSmoothingRadius(), osmReaderConfig.getWorkerThreads()).execute();
+
         calculateSlope();
 
         if (encodingManager.hasEncodedValue(Curvature.KEY))
             new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)).execute(baseGraph.getBaseGraph());
 
         if (sortGraph)
-            sortGraphAlongHilbertCurve(baseGraph);
+            sortGraphAlongHilbertCurve(baseGraph, fileBacked);
     }
 
     private void calculateSoftblocks() {
@@ -1068,7 +1075,10 @@ public class GraphHopper {
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
     }
 
-    public static void sortGraphAlongHilbertCurve(BaseGraph graph) {
+    public record GraphSortMappings(IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges) {
+    }
+
+    public static GraphSortMappings sortGraphAlongHilbertCurve(BaseGraph graph, boolean fileBacked) {
         logger.info("sorting graph along Hilbert curve.... (memory:" + getMemInfo() + ")");
         StopWatch sw = StopWatch.started();
         NodeAccess na = graph.getNodeAccess();
@@ -1093,17 +1103,18 @@ public class GraphHopper {
         IntArrayList newEdgesByOldEdges = ArrayUtil.invert(edgeOrder);
         IntArrayList newNodesByOldNodes = IntArrayList.from(ArrayUtil.invert(nodeOrder));
         logger.info("calculating sort order took: " + sw.stop().getTimeString() + ", memory:" + getMemInfo());
-        sortGraphForGivenOrdering(graph, newNodesByOldNodes, newEdgesByOldEdges);
+        sortGraphForGivenOrdering(graph, newNodesByOldNodes, newEdgesByOldEdges, fileBacked);
+        return new GraphSortMappings(newNodesByOldNodes, newEdgesByOldEdges);
     }
 
-    public static void sortGraphForGivenOrdering(BaseGraph baseGraph, IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges) {
+    public static void sortGraphForGivenOrdering(BaseGraph baseGraph, IntArrayList newNodesByOldNodes, IntArrayList newEdgesByOldEdges, boolean fileBacked) {
         if (!ArrayUtil.isPermutation(newEdgesByOldEdges))
             throw new IllegalStateException("New edges: not a permutation");
         if (!ArrayUtil.isPermutation(newNodesByOldNodes))
             throw new IllegalStateException("New nodes: not a permutation");
         logger.info("sort graph for fixed ordering...");
         StopWatch sw = new StopWatch().start();
-        baseGraph.sortEdges(newEdgesByOldEdges::get);
+        baseGraph.sortEdges(newEdgesByOldEdges::get, fileBacked);
         logger.info("sorting {} edges took: {}", Helper.nf(newEdgesByOldEdges.size()), sw.stop().getTimeString());
         sw = new StopWatch().start();
         baseGraph.relabelNodes(newNodesByOldNodes::get);
@@ -1422,7 +1433,7 @@ public class GraphHopper {
             new EdgeElevationInterpolator(baseGraph.getBaseGraph(), roadEnvEnc, RoadEnvironment.BRIDGE).execute();
             float bridge = sw.stop().getSeconds();
             // The SkadiProvider contains bathymetric data. For ferries this can result in bigger elevation changes
-            // See #2098 for mor information
+            // See #2098 for more information
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(baseGraph.getBaseGraph(), roadEnvEnc, RoadEnvironment.FERRY).execute();
             logger.info("Tower correction " + (int) towerCorrection + "s, bridge interpolation " + (int) bridge + "s, tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds() + "s");

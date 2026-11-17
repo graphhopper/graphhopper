@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.carrotsearch.hppc.BitSet;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -27,6 +28,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
+import java.io.File;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
@@ -55,6 +57,8 @@ public class BaseGraph implements Graph, Closeable {
     private static final int MAX_PILLAR_NODES = 65535;
     // Worst-case bytes per varint-encoded signed int.
     private static final int MAX_VARINT_BYTES = 5;
+    // Pillar elevation is stored in 5cm units (node elevation in mm) as DEM accuracy is far below that.
+    private static final int PILLAR_ELE_FACTOR = 50;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final KVStorage edgeKVStorage;
@@ -378,12 +382,67 @@ public class BaseGraph implements Graph, Closeable {
         }
     }
 
-    public void sortEdges(IntUnaryOperator getNewEdgeForOldEdge) {
+    public void sortEdges(IntUnaryOperator getNewEdgeForOldEdge, boolean useDisk) {
         if (isFrozen())
             throw new IllegalStateException("Cannot sort edges if graph is already frozen");
         store.sortEdges(getNewEdgeForOldEdge);
         if (supportsTurnCosts())
             turnCostStorage.sortEdges(getNewEdgeForOldEdge);
+        sortWayGeometry(useDisk);
+    }
+
+    private void sortWayGeometry(boolean useDisk) {
+        // we simply write the sorted geometry to a temporary array
+        final String sortedName = "geometry_sorted_tmp";
+        final int segmentSize = wayGeometry.getSegmentSize();
+        DataAccess sorted;
+        if (useDisk)
+            sorted = new MMapForeignMemoryDataAccess(sortedName, dir.getLocation(), segmentSize, false);
+        else if (dir.getDefaultType().isOnHeap())
+            sorted = new RAMDataAccess(sortedName, dir.getLocation(), segmentSize, false);
+        else
+            sorted = new ForeignMemoryDataAccess(sortedName, dir.getLocation(), segmentSize, false);
+        // the sorted geometry is never larger than the old one
+        sorted.create(maxGeoRef);
+        BitSet done = new BitSet(getEdges());
+        EdgeExplorer explorer = createEdgeExplorer();
+        final int maxGeoEntryBytes = 5 + MAX_PILLAR_NODES * 3 * MAX_VARINT_BYTES;
+        byte[] buffer = new byte[maxGeoEntryBytes];
+        // geoRef=1 is the first non-empty geometry
+        long sortedGeoRef = 1;
+        for (int edge = 0; edge < getEdges(); edge++) {
+            if (done.get(edge))
+                continue;
+            long edgePointer = store.toEdgePointer(edge);
+            long geoRef = store.getGeoRef(edgePointer);
+            if (geoRef <= 0)
+                continue;
+            int size = readEntryByteSize(geoRef);
+            wayGeometry.getBytes(geoRef, buffer, size);
+            sorted.setBytes(sortedGeoRef, buffer, size);
+            // all copies of this edge get the same georef again
+            final long sortedGeoRefTmp = sortedGeoRef;
+            forEdgeAndCopiesOfEdge(explorer, store.getNodeA(edgePointer), edge, e -> {
+                if (!done.get(e)) {
+                    store.setGeoRef(store.toEdgePointer(e), sortedGeoRefTmp);
+                    done.set(e);
+                }
+            });
+            sortedGeoRef += size;
+        }
+        // copy back to original way geometry
+        final int chunkSize = 1 << 20;
+        buffer = new byte[chunkSize];
+        for (long pos = 0; pos < sortedGeoRef; pos += chunkSize) {
+            int length = (int) Math.min(chunkSize, sortedGeoRef - pos);
+            sorted.getBytes(pos, buffer, length);
+            wayGeometry.setBytes(pos, buffer, length);
+        }
+        wayGeometry.trimTo(sortedGeoRef);
+        maxGeoRef = sortedGeoRef;
+        sorted.close();
+        if (useDisk)
+            Helper.removeDir(new File(dir.getLocation() + sortedName));
     }
 
     public void relabelNodes(IntUnaryOperator getNewNodeForOldNode) {
@@ -495,6 +554,15 @@ public class BaseGraph implements Graph, Closeable {
             wayGeometry.ensureCapacity(geoRef + encoded.length);
             wayGeometry.setBytes(geoRef, encoded.bytes, encoded.length);
             store.setGeoRef(edgePointer, geoRef);
+            if (existingGeoRef > 0) {
+                // copies of this edge (see copyEdge) share the geometry and are identified by it, so they move too
+                EdgeIterator iter = createEdgeExplorer().setBaseNode(store.getNodeA(edgePointer));
+                while (iter.next()) {
+                    long copyPointer = ((EdgeIteratorStateImpl) iter).edgePointer;
+                    if (store.getGeoRef(copyPointer) == existingGeoRef)
+                        store.setGeoRef(copyPointer, geoRef);
+                }
+            }
         } else {
             store.setGeoRef(edgePointer, 0L);
         }
@@ -507,7 +575,7 @@ public class BaseGraph implements Graph, Closeable {
     /**
      * Creates bytes from the geometry for storage. First comes 1 byte for the bytes length L if L < 0xFF.
      * If more bytes are required then L == 0xFF and 4 more bytes are required.
-     * Then come the pillar bytes: for each coordinate the zigzag-varint Δlat, Δlon, (Δele if 3D) is calculated.
+     * Then come the pillar bytes: for each coordinate the zigzag-varint Δlat, Δlon, (Δele in 5cm units if 3D) is calculated.
      * @return The bytes in EncodedBytes may be over-allocated, i.e. use EncodedBytes.length and not EncodedBytes.bytes.length.
      */
     private EncodedBytes createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
@@ -535,7 +603,7 @@ public class BaseGraph implements Graph, Closeable {
             prevLat = lat;
             prevLon = lon;
             if (is3D) {
-                int ele = Helper.eleToUInt(pillarNodes.getEle(i));
+                int ele = toPillarEle(Helper.eleToUInt(pillarNodes.getEle(i)));
                 offset = writeZigZagVarInt(bytes, offset, ele - prevEle);
                 prevEle = ele;
             }
@@ -550,6 +618,10 @@ public class BaseGraph implements Graph, Closeable {
         bytes[0] = (byte) 0xFF;
         bitUtil.fromInt(bytes, pillarBytesLen, 1);
         return new EncodedBytes(bytes, 5 + pillarBytesLen);
+    }
+
+    private static int toPillarEle(int eleUInt) {
+        return (eleUInt + PILLAR_ELE_FACTOR / 2) / PILLAR_ELE_FACTOR;
     }
 
     private static int writeZigZagVarInt(byte[] bytes, int offset, int value) {
@@ -634,7 +706,7 @@ public class BaseGraph implements Graph, Closeable {
             double lon = Helper.intToDegree((int) curLon);
             if (is3D) {
                 curEle += readZigZagVarInt(bytes, pos);
-                pillarNodes.add(lat, lon, Helper.uIntToEle(curEle));
+                pillarNodes.add(lat, lon, Helper.uIntToEle(curEle * PILLAR_ELE_FACTOR));
             } else {
                 pillarNodes.add(lat, lon);
             }

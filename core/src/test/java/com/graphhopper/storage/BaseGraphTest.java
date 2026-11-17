@@ -18,6 +18,7 @@
 package com.graphhopper.storage;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.search.KVStorage.KValue;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -310,6 +312,20 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertEquals(RoadClass.LIVING_STREET, edge4.get(rcEnc));
     }
 
+    @Test
+    public void setWayGeometry_copiesKeepSharingTheGeometry() {
+        BaseGraph graph = createGHStorage();
+        EdgeIteratorState edge = graph.edge(3, 5).setWayGeometry(Helper.createPointList(1, 1));
+        EdgeIteratorState copy = graph.copyEdge(edge.getEdge(), true);
+        // a longer geometry needs a new entry: the copy must move too, otherwise it can no longer be found
+        PointList longer = Helper.createPointList(1, 1, 2, 2, 3, 3);
+        edge.setWayGeometry(longer);
+        assertEquals(longer, copy.fetchWayGeometry(PILLAR_ONLY));
+        IntArrayList copies = new IntArrayList();
+        graph.forEdgeAndCopiesOfEdge(graph.createEdgeExplorer(), 3, edge.getEdge(), copies::add);
+        assertEquals(2, copies.size());
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void copyEdge_multiple(boolean withGeometries) {
@@ -432,6 +448,23 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     }
 
     @Test
+    public void testPillarEleRoundedTo5cm() {
+        BaseGraph graph = createGHStorage(defaultGraphLoc, true);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 49.0, 9.0, 300);
+        na.setNode(1, 49.001, 9.001, 310);
+        EdgeIteratorState edge = graph.edge(0, 1);
+        // set via the reversed state, i.e. stored in reverse order
+        edge.detach(true).setWayGeometry(Helper.createPointList3D(49.0009, 9.0009, 308.98, 49.0001, 9.0001, 301.07));
+        assertEquals(Helper.createPointList3D(49.0, 9.0, 300, 49.0001, 9.0001, 301.05, 49.0009, 9.0009, 309, 49.001, 9.001, 310),
+                edge.fetchWayGeometry(ALL));
+        PointList pillars = edge.detach(true).fetchWayGeometry(PILLAR_ONLY);
+        assertEquals(309.00, pillars.getEle(0), 1e-4);
+        assertEquals(301.05, pillars.getEle(1), 1e-4);
+        graph.close();
+    }
+
+    @Test
     public void testPillarNodesOverflow() {
         BaseGraph graph = createGHStorage();
         int tooManyNodes = 65536;
@@ -445,5 +478,96 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
             edge.setWayGeometry(list);
         });
         assertTrue(e.getMessage().contains("Too many pillar nodes"));
+    }
+
+    @Test
+    public void testSortGraphWithIsolatedNode() {
+        BaseGraph graph = createGHStorage();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 49.0, 9.0);
+        na.setNode(1, 49.2, 9.2);
+        na.setNode(2, 49.1, 9.1);
+        na.setNode(3, 49.3, 9.3);
+        graph.edge(0, 1).setDistance(10);
+        graph.edge(1, 3).setDistance(20);
+        graph.edge(3, 0).setDistance(30);
+        assertEquals(4, graph.getNodes());
+        assertEquals(3, graph.getEdges());
+        // node 2 is isolated
+        assertEquals(0, GHUtility.count(graph.createEdgeExplorer().setBaseNode(2)));
+
+        GraphHopper.GraphSortMappings mappings = GraphHopper.sortGraphAlongHilbertCurve(graph, false);
+        assertEquals(IntArrayList.from(0, 2, 1, 3), mappings.newNodesByOldNodes());
+        assertEquals(IntArrayList.from(1, 2, 0), mappings.newEdgesByOldEdges());
+
+        assertEquals(4, graph.getNodes());
+        assertEquals(3, graph.getEdges());
+        assertEquals(49.0, na.getLat(0), 1e-6);
+        assertEquals(49.1, na.getLat(1), 1e-6);
+        assertEquals(49.2, na.getLat(2), 1e-6);
+        assertEquals(49.3, na.getLat(3), 1e-6);
+        // the isolated node is now node 1
+        assertEquals(0, GHUtility.count(graph.createEdgeExplorer().setBaseNode(1)));
+        assertEdge(graph, 0, 3, 0, 30_000);
+        assertEdge(graph, 1, 0, 2, 10_000);
+        assertEdge(graph, 2, 2, 3, 20_000);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    public void testSortEdgesSortsGeometry(boolean useDisk) {
+        graph = new BaseGraph.Builder(encodingManager).setDir(new GHDirectory(defaultGraphLoc, DAType.RAM)).setFileBacked(useDisk).create();
+        PointList geometryA = Helper.createPointList(49.1, 9.1);
+        PointList geometryB = Helper.createPointList(49.2, 9.2, 49.3, 9.3);
+        graph.edge(0, 1).setWayGeometry(geometryA);
+        EdgeIteratorState edgeB = graph.edge(0, 1).setWayGeometry(Helper.createPointList(49.2, 9.2));
+        assertEquals(11, geoRef(graph, 1));
+        // B's first geometry is replaced by a longer one that does not fit into its slot, which leaves a gap
+        edgeB.setWayGeometry(geometryB);
+        assertEquals(21, geoRef(graph, 1));
+        // edge N has no geometry
+        graph.edge(0, 1);
+        // copy the edges B and N, so the copies do not directly follow their originals
+        graph.copyEdge(1, true);
+        graph.copyEdge(2, true);
+        assertEquals(1, geoRef(graph, 0));
+        assertEquals(21, geoRef(graph, 1));
+        assertEquals(-1, geoRef(graph, 2));
+        assertEquals(21, geoRef(graph, 3));
+        assertEquals(-1, geoRef(graph, 4));
+        assertEquals(37, graph.getMaxGeoRef());
+
+        // reverse the edge order: copy of N, copy of B, N, B, A
+        graph.sortEdges(edge -> 4 - edge, useDisk);
+
+        assertTrue(pillarNodes(0).isEmpty());
+        assertEquals(geometryB, pillarNodes(1));
+        assertTrue(pillarNodes(2).isEmpty());
+        assertEquals(geometryB, pillarNodes(3));
+        assertEquals(geometryA, pillarNodes(4));
+        // The geometry is now sorted in edge order. The copy of B still shares the geometry of its original.
+        // N and its copy still share the same georef, and it is -1, since they have no geometry.
+        assertEquals(-1, geoRef(graph, 0));
+        assertEquals(1, geoRef(graph, 1));
+        assertEquals(-1, geoRef(graph, 2));
+        assertEquals(1, geoRef(graph, 3));
+        assertEquals(17, geoRef(graph, 4));
+        assertEquals(27, graph.getMaxGeoRef());
+        assertFalse(new File(graph.getDirectory().getLocation() + "geometry_sorted_tmp").exists());
+    }
+
+    private PointList pillarNodes(int edge) {
+        return graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).fetchWayGeometry(PILLAR_ONLY);
+    }
+
+    private static long geoRef(BaseGraph graph, int edge) {
+        return graph.getStore().getGeoRef(graph.getStore().toEdgePointer(edge));
+    }
+
+    private static void assertEdge(BaseGraph graph, int edge, int baseNode, int adjNode, long distance) {
+        EdgeIteratorState state = graph.getEdgeIteratorState(edge, Integer.MIN_VALUE);
+        assertEquals(baseNode, state.getBaseNode());
+        assertEquals(adjNode, state.getAdjNode());
+        assertEquals(distance, state.getDistance_mm());
     }
 }

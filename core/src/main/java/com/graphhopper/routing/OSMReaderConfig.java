@@ -18,6 +18,8 @@
 
 package com.graphhopper.routing;
 
+import com.graphhopper.reader.osm.OSMInput;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +34,8 @@ public class OSMReaderConfig {
     private double smoothElevationAverageWindowSize = 150.0;
     private int ramerElevationSmoothingMax = 5;
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
-    private int workerThreads = 2;
+    private double towerSmoothingRadius = 0;
+    private int workerThreads = OSMInput.defaultWorkerThreads();
     private double defaultElevation = 0;
 
     public List<String> getIgnoredHighways() {
@@ -133,6 +136,19 @@ public class OSMReaderConfig {
         this.smoothElevationAverageWindowSize = smoothElevationAverageWindowSize;
     }
 
+    public double getTowerSmoothingRadius() {
+        return towerSmoothingRadius;
+    }
+
+    /**
+     * Sets the radius in meters for smoothing the elevation of the tower nodes along the road after the import,
+     * see TowerNodeElevationSmoothing. 0 disables it (default).
+     */
+    public OSMReaderConfig setTowerSmoothingRadius(double towerSmoothingRadius) {
+        this.towerSmoothingRadius = towerSmoothingRadius;
+        return this;
+    }
+
     public double getLongEdgeSamplingDistance() {
         return longEdgeSamplingDistance;
     }
@@ -150,7 +166,7 @@ public class OSMReaderConfig {
     }
 
     /**
-     * Sets the number of threads used for the OSM import
+     * Sets the number of threads used to decode the OSM PBF file, see {@link OSMInput#defaultWorkerThreads()}
      */
     public OSMReaderConfig setWorkerThreads(int workerThreads) {
         this.workerThreads = workerThreads;

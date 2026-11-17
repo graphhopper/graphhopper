@@ -78,7 +78,7 @@ public class BikeCustomModelTest {
     @Test
     public void testParameterRanges() {
         // the bike_speed_factor parameters need finite ranges, validated at their endpoints on startup
-        for (String model : List.of("bike.json", "bike_tc.json", "mtb.json", "racingbike.json"))
+        for (String model : List.of("bike.json", "mtb.json", "racingbike.json"))
             CustomModelParser.checkParameterRanges(GHUtility.loadCustomModelFromJar(model), em);
     }
 

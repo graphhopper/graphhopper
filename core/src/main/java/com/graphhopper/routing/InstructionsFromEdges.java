@@ -26,6 +26,8 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
+import java.util.List;
+
 import static com.graphhopper.util.Instruction.ROUNDABOUT_EXIT;
 import static com.graphhopper.util.Parameters.Details.*;
 
@@ -138,28 +140,42 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         allExplorer = graph.createEdgeExplorer();
     }
 
-    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
-                                                   EncodedValueLookup evLookup, final Translation tr) {
+    static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
+                                            EncodedValueLookup evLookup, final Translation tr) {
         return calcInstructions(path, graph, weighting, evLookup, tr, false);
     }
 
-    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
-                                                   EncodedValueLookup evLookup, final Translation tr,
-                                                   boolean includeRoundaboutExits) {
+    static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting,
+                                            EncodedValueLookup evLookup, final Translation tr,
+                                            boolean includeRoundaboutExits) {
         return calcInstructions(path, graph, weighting, TransportationMode.CAR, evLookup, tr, includeRoundaboutExits);
     }
 
-    public static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, TransportationMode instructionsBaseMode,
+    static InstructionList calcInstructions(Path path, Graph graph, Weighting weighting, TransportationMode instructionsBaseMode,
+                                            EncodedValueLookup evLookup, final Translation tr,
+                                            boolean includeRoundaboutExits) {
+        return calcInstructions(List.of(path), graph, weighting, instructionsBaseMode, evLookup, tr, includeRoundaboutExits);
+    }
+
+    /**
+     * Calculates the instructions for consecutive paths as if they were one path.
+     */
+    public static InstructionList calcInstructions(List<Path> paths, Graph graph, Weighting weighting, TransportationMode instructionsBaseMode,
                                                    EncodedValueLookup evLookup, final Translation tr,
                                                    boolean includeRoundaboutExits) {
         final InstructionList ways = new InstructionList(tr);
-        if (path.isFound()) {
-            if (path.getEdgeCount() == 0) {
-                ways.add(new FinishInstruction(graph.getNodeAccess(), path.getEndNode()));
-            } else {
-                path.forEveryEdge(new InstructionsFromEdges(graph, weighting, instructionsBaseMode, evLookup, ways, includeRoundaboutExits));
-            }
+        if (paths.stream().anyMatch(p -> !p.isFound()))
+            return ways;
+        // finish() needs at least one edge
+        if (paths.stream().allMatch(p -> p.getEdgeCount() == 0)) {
+            ways.add(new FinishInstruction(graph.getNodeAccess(), paths.get(paths.size() - 1).getEndNode()));
+            return ways;
         }
+        InstructionsFromEdges visitor = new InstructionsFromEdges(graph, weighting, instructionsBaseMode, evLookup, ways, includeRoundaboutExits);
+        // finish only once after the last path
+        for (Path path : paths)
+            path.forEveryEdge(visitor::next);
+        visitor.finish();
         return ways;
     }
 
@@ -399,7 +415,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevDestinationAndRef = destination + destinationRef;
         }
 
-        updatePointsAndInstruction(edge, wayGeo);
+        updatePointsAndInstruction(edge, wayGeo, prevEdgeId);
 
         if (wayGeo.size() <= 2) {
             doublePrevLat = prevLat;
@@ -548,7 +564,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         return Instruction.IGNORE;
     }
 
-    private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl) {
+    private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl, int prevEdgeId) {
         // skip adjNode
         int len = pl.size() - 1;
         for (int i = 0; i < len; i++) {
@@ -556,10 +572,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
         double newDist = edge.getDistance();
         prevInstruction.setDistance(newDist + prevInstruction.getDistance());
-        if (prevEdge != null)
-            prevInstruction.setTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdge.getEdge()) + prevInstruction.getTime());
-        else
-            prevInstruction.setTime(weighting.calcEdgeMillis(edge, false) + prevInstruction.getTime());
+        // prevEdgeId is invalid at the start of every path, which avoids a turn time at a via point that the path time does not include
+        prevInstruction.setTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdgeId) + prevInstruction.getTime());
     }
 
     private boolean isLinkRoad(EdgeIteratorState edge) {

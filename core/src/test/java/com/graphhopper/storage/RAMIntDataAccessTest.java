@@ -25,14 +25,4 @@ public class RAMIntDataAccessTest extends DataAccessTest {
     public DataAccess createDataAccess(String name, int segmentSize) {
         return new RAMIntDataAccess(name, directory, segmentSize, false);
     }
-
-    @Override
-    public void testSet_GetBytes() {
-        // should we implement this?
-    }
-
-    @Override
-    public void testSet_GetByte() {
-        // should we implement this?
-    }
 }

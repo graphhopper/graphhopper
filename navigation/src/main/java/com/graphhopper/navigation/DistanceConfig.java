@@ -17,7 +17,6 @@
  */
 package com.graphhopper.navigation;
 
-import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;

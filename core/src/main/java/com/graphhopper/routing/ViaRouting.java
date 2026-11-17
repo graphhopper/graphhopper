@@ -23,12 +23,10 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -190,21 +188,11 @@ public class ViaRouting {
     private static EdgeRestrictions buildEdgeRestrictions(
             QueryGraph queryGraph, Snap fromSnap, Snap toSnap,
             double fromHeading, double toHeading, int incomingEdge, boolean passThrough,
-            String fromCurbside, String toCurbside, DirectedEdgeFilter edgeFilter) {
+            String fromCurbside, String toCurbside, DirectedEdgeFilter directedEdgeFilter) {
         EdgeRestrictions edgeRestrictions = new EdgeRestrictions();
 
         // curbsides
         if (!fromCurbside.equals(CURBSIDE_ANY) || !toCurbside.equals(CURBSIDE_ANY)) {
-            DirectedEdgeFilter directedEdgeFilter = (edge, reverse) -> {
-                // todo: maybe find a cleaner way to obtain the original edge given a VirtualEdgeIterator (not VirtualEdgeIteratorState)
-                if (queryGraph.isVirtualEdge(edge.getEdge())) {
-                    EdgeIteratorState virtualEdge = queryGraph.getEdgeIteratorStateForKey(edge.getEdgeKey());
-                    EdgeIteratorState origEdge = queryGraph.getEdgeIteratorStateForKey(((VirtualEdgeIteratorState) virtualEdge).getOriginalEdgeKey());
-                    return edgeFilter.accept(origEdge, reverse);
-                } else
-                    return edgeFilter.accept(edge, reverse);
-            };
-
             DirectionResolver directionResolver = new DirectionResolver(queryGraph, directedEdgeFilter);
             DirectionResolverResult fromDirection = directionResolver.resolveDirections(fromSnap.getClosestNode(), fromSnap.getQueryPoint());
             DirectionResolverResult toDirection = directionResolver.resolveDirections(toSnap.getClosestNode(), toSnap.getQueryPoint());
