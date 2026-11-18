@@ -200,6 +200,119 @@ class QueryRoutingCHGraphTest {
     }
 
     @Test
+    public void withVirtualEdgesOnCopiedEdge() {
+        na.setNode(0, 50.00, 10.00);
+        na.setNode(1, 50.00, 10.10);
+
+        EdgeIteratorState original = addEdge(graph, 0, 1);
+        graph.copyEdge(original.getEdge(), true);
+        graph.freeze();
+
+        CHConfig chConfig = CHConfig.edgeBased("x", weighting);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph =
+                RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
+
+        Snap snap = new Snap(50.00, 10.05);
+        snap.setClosestEdge(original);
+        snap.setWayIndex(0);
+        snap.setSnappedPosition(Snap.Position.EDGE);
+        snap.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
+
+        QueryGraph queryGraph =
+                QueryGraph.create(graph, Collections.singletonList(snap));
+
+        QueryRoutingCHGraph queryCHGraph =
+                new QueryRoutingCHGraph(routingCHGraph, queryGraph);
+
+        int virtualNode = snap.getClosestNode();
+
+        RoutingCHEdgeIterator outIter =
+                queryCHGraph.createOutEdgeExplorer().setBaseNode(virtualNode);
+
+        int toStart = 0;
+        int toEnd = 0;
+
+        while (outIter.next()) {
+            int adjNode = outIter.getAdjNode();
+
+            if (adjNode == 0) {
+                toStart++;
+            } else if (adjNode == 1) {
+                toEnd++;
+            } else {
+                fail("Unexpected adjacent node: " + adjNode);
+            }
+        }
+
+        assertEquals(2, toStart);
+        assertEquals(2, toEnd);
+    }
+
+    @Test
+    public void withTwoVirtualNodesOnCopiedEdge() {
+        na.setNode(0, 50.00, 10.00);
+        na.setNode(1, 50.00, 10.10);
+
+        EdgeIteratorState original = addEdge(graph, 0, 1);
+        EdgeIteratorState copied = graph.copyEdge(original.getEdge(), true);
+        graph.freeze();
+
+        CHConfig chConfig = CHConfig.edgeBased("x", weighting);
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
+        RoutingCHGraph routingCHGraph =
+                RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
+
+        Snap first = new Snap(50.00, 10.025);
+        first.setClosestEdge(original);
+        first.setWayIndex(0);
+        first.setSnappedPosition(Snap.Position.EDGE);
+        first.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
+
+        Snap second = new Snap(50.00, 10.075);
+        second.setClosestEdge(copied);
+        second.setWayIndex(0);
+        second.setSnappedPosition(Snap.Position.EDGE);
+        second.calcSnappedPoint(DistancePlaneProjection.DIST_PLANE);
+
+        QueryGraph queryGraph =
+                QueryGraph.create(graph, Arrays.asList(first, second));
+
+        QueryRoutingCHGraph queryCHGraph =
+                new QueryRoutingCHGraph(routingCHGraph, queryGraph);
+
+        assertNotEquals(first.getClosestNode(), second.getClosestNode());
+        int firstNode = first.getClosestNode();
+        int secondNode = second.getClosestNode();
+
+        for (int virtualNode : new int[]{firstNode, secondNode}) {
+            int leftNeighbor = virtualNode == firstNode ? 0 : firstNode;
+            int rightNeighbor = virtualNode == firstNode ? secondNode : 1;
+
+            RoutingCHEdgeIterator iter =
+                    queryCHGraph.createOutEdgeExplorer().setBaseNode(virtualNode);
+
+            int leftConnections = 0;
+            int rightConnections = 0;
+
+            while (iter.next()) {
+                int adjNode = iter.getAdjNode();
+
+                if (adjNode == leftNeighbor) {
+                    leftConnections++;
+                } else if (adjNode == rightNeighbor) {
+                rightConnections++;
+                } else {
+                fail("Unexpected adjacent node: " + adjNode);
+                }
+                }
+
+                assertEquals(2, leftConnections);
+                assertEquals(2, rightConnections);
+            }
+    }
+
+    @Test
     public void withVirtualEdgesAndShortcuts() {
         //  /---\
         // 0-x-1-2
@@ -498,6 +611,14 @@ class QueryRoutingCHGraphTest {
 
         QueryGraph queryGraph = QueryGraph.create(graph, Arrays.asList(snap1, snap2));
         QueryRoutingCHGraph queryCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
+        assertEquals(
+            0,
+            queryGraph.wrapWeighting(weighting).calcTurnWeight(
+                    NO_EDGE,
+                    snap1.getClosestNode(),
+                    NO_EDGE
+            )
+    );
         assertEquals(50, queryCHGraph.getTurnWeight(0, 1, 1));
 
         // take a look at edges 3->1 and 1->4, their original edge ids are 3 and 4 (not 4 and 5)

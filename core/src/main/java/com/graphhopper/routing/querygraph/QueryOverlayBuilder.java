@@ -20,6 +20,7 @@ package com.graphhopper.routing.querygraph;
 
 import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Graph;
@@ -34,6 +35,7 @@ import java.util.*;
 import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
 
 class QueryOverlayBuilder {
+    private final BaseGraph baseGraph;
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
     private final boolean is3D;
@@ -41,19 +43,145 @@ class QueryOverlayBuilder {
 
     private final List<VirtualEdgeIteratorState> virtualEdgesFwdForSnap = new ArrayList<>();
     private final List<VirtualEdgeIteratorState> virtualEdgesBwdForSnap = new ArrayList<>();
+    private int getEdgeGroupId(EdgeIteratorState edge) {
+        int smallestEdgeId = edge.getEdge();
+
+        for (EdgeIteratorState candidate : getEdgeAndCopies(edge)) {
+            smallestEdgeId = Math.min(
+                    smallestEdgeId,
+                    candidate.getEdge()
+            );
+        }
+
+        return smallestEdgeId;
+    }
+
+    private List<EdgeIteratorState> getEdgeAndCopies(EdgeIteratorState edge) {
+        if (baseGraph == null) {
+            return List.of(edge);
+        }
+
+        List<EdgeIteratorState> copies = new ArrayList<>();
+
+        baseGraph.forEdgeAndCopiesOfEdge(
+                baseGraph.createEdgeExplorer(),
+                edge,
+                candidate -> copies.add(candidate.detach(false))
+        );
+
+        return copies;
+    }
+    // Split every copy of the original edge at the same snap points.
+    private void createVirtualEdgesForCopies(
+            EdgeIteratorState closestEdge,
+            List<Snap> snaps,
+            PointList fullPL
+    ) {
+        for (EdgeIteratorState edgeCopy : getEdgeAndCopies(closestEdge)) {
+            if (edgeCopy.getEdge() == closestEdge.getEdge()) {
+                continue;
+            }
+
+            virtualEdgesFwdForSnap.clear();
+            virtualEdgesBwdForSnap.clear();
+
+            GHPoint3D previousPoint = fullPL.get(0);
+            int previousWayIndex = 1;
+            int previousNode = closestEdge.getBaseNode();
+
+            boolean hasVirtualNode = false;
+
+            for (Snap snap : snaps) {
+                int snapNode = snap.getClosestNode();
+
+                if (snapNode < firstVirtualNodeId || snapNode == previousNode) {
+                    continue;
+                }
+
+                createEdges(
+                        edgeCopy.getEdgeKey(),
+                        edgeCopy.getReverseEdgeKey(),
+                        previousPoint,
+                        previousWayIndex,
+                        snap.getSnappedPosition() == Snap.Position.PILLAR,
+                        snap.getSnappedPoint(),
+                        snap.getWayIndex(),
+                        fullPL,
+                        edgeCopy,
+                        previousNode,
+                        snapNode
+                );
+
+                previousPoint = snap.getSnappedPoint();
+                previousWayIndex = snap.getWayIndex() + 1;
+                previousNode = snapNode;
+
+                hasVirtualNode = true;
+            }
+
+            if (!hasVirtualNode) {
+                continue;
+            }
+
+            createEdges(
+                    edgeCopy.getEdgeKey(),
+                    edgeCopy.getReverseEdgeKey(),
+                    previousPoint,
+                    previousWayIndex,
+                    false,
+                    fullPL.get(fullPL.size() - 1),
+                    fullPL.size() - 2,
+                    fullPL,
+                    edgeCopy,
+                    previousNode,
+                    closestEdge.getAdjNode()
+            );
+
+            adjustDistances(
+                    virtualEdgesFwdForSnap,
+                    edgeCopy.getDistance_mm()
+            );
+
+            adjustDistances(
+                    virtualEdgesBwdForSnap,
+                    edgeCopy.getDistance_mm()
+            );
+        }
+    }
 
     public static QueryOverlay build(Graph graph, List<Snap> snaps) {
-        return build(graph.getNodes(), graph.getEdges(), graph.getNodeAccess().is3D(), snaps);
+        return new QueryOverlayBuilder(
+                graph.getNodes(),
+                graph.getEdges(),
+                graph.getNodeAccess().is3D(),
+                graph.getBaseGraph()
+        ).build(snaps);
     }
 
-    public static QueryOverlay build(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D, List<Snap> snaps) {
-        return new QueryOverlayBuilder(firstVirtualNodeId, firstVirtualEdgeId, is3D).build(snaps);
+    public static QueryOverlay build(
+            int firstVirtualNodeId,
+            int firstVirtualEdgeId,
+            boolean is3D,
+            List<Snap> snaps
+    ) {
+        return new QueryOverlayBuilder(
+                firstVirtualNodeId,
+                firstVirtualEdgeId,
+                is3D,
+                null
+        ).build(snaps);
     }
 
-    private QueryOverlayBuilder(int firstVirtualNodeId, int firstVirtualEdgeId, boolean is3D) {
+    private QueryOverlayBuilder(
+            int firstVirtualNodeId,
+            int firstVirtualEdgeId,
+            boolean is3D,
+            BaseGraph baseGraph
+    ) {
         this.firstVirtualNodeId = firstVirtualNodeId;
         this.firstVirtualEdgeId = firstVirtualEdgeId;
         this.is3D = is3D;
+        this.baseGraph = baseGraph;
     }
 
     private QueryOverlay build(List<Snap> resList) {
@@ -110,7 +238,7 @@ class QueryOverlayBuilder {
             }
 
             // find multiple results on same edge
-            int edgeId = closestEdge.getEdge();
+            int edgeId = getEdgeGroupId(closestEdge);
             List<Snap> list = edge2res.get(edgeId);
             if (list == null) {
                 list = new ArrayList<>(5);
@@ -211,6 +339,7 @@ class QueryOverlayBuilder {
 
                 adjustDistances(virtualEdgesFwdForSnap, closestEdge.getDistance_mm());
                 adjustDistances(virtualEdgesBwdForSnap, closestEdge.getDistance_mm());
+                createVirtualEdgesForCopies(closestEdge, results, fullPL);
 
                 return true;
             }
@@ -273,6 +402,10 @@ class QueryOverlayBuilder {
     }
 
     private void buildEdgeChangesAtRealNodes() {
-        EdgeChangeBuilder.build(queryOverlay.getClosestEdges(), queryOverlay.getVirtualEdges(), firstVirtualNodeId, queryOverlay.getEdgeChangesAtRealNodes());
+        EdgeChangeBuilder.build(
+                queryOverlay.getVirtualEdges(),
+                firstVirtualNodeId,
+                queryOverlay.getEdgeChangesAtRealNodes()
+        );
     }
 }

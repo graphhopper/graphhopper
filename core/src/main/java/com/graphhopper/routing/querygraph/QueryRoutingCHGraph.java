@@ -26,12 +26,13 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.List;
 
-import static com.graphhopper.routing.querygraph.QueryGraph.SNAP_ADJ;
-import static com.graphhopper.routing.querygraph.QueryGraph.SNAP_BASE;
+
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 /**
@@ -212,16 +213,36 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     private List<List<RoutingCHEdgeIteratorState>> buildVirtualEdgesAtVirtualNodes() {
-        final int virtualNodes = queryOverlay.getVirtualNodes().size();
-        final List<List<RoutingCHEdgeIteratorState>> virtualEdgesAtVirtualNodes = new ArrayList<>(virtualNodes);
-        for (int i = 0; i < virtualNodes; i++) {
-            List<RoutingCHEdgeIteratorState> virtualEdges = List.of(
-                    buildVirtualCHEdgeState(queryOverlay.getVirtualEdges().get(i * 4 + SNAP_BASE)),
-                    buildVirtualCHEdgeState(queryOverlay.getVirtualEdges().get(i * 4 + SNAP_ADJ))
-            );
-            virtualEdgesAtVirtualNodes.add(virtualEdges);
+        int count = queryOverlay.getVirtualNodes().size();
+
+        List<Map<Integer, RoutingCHEdgeIteratorState>> edgesByNode =
+                new ArrayList<>(count);
+
+        for (int i = 0; i < count; i++) {
+            edgesByNode.add(new LinkedHashMap<>());
         }
-        return virtualEdgesAtVirtualNodes;
+
+        for (VirtualEdgeIteratorState edge : queryOverlay.getVirtualEdges()) {
+            int baseNode = edge.getBaseNode();
+
+            if (isVirtualNode(baseNode)) {
+                int index = baseNode - routingCHGraph.getNodes();
+
+                edgesByNode.get(index).computeIfAbsent(
+                        edge.getEdge(),
+                        ignored -> buildVirtualCHEdgeState(edge)
+                );
+            }
+        }
+
+        List<List<RoutingCHEdgeIteratorState>> result =
+                new ArrayList<>(count);
+
+        for (Map<Integer, RoutingCHEdgeIteratorState> edges : edgesByNode) {
+            result.add(new ArrayList<>(edges.values()));
+        }
+
+        return result;
     }
 
     private VirtualCHEdgeIteratorState buildVirtualCHEdgeState(VirtualEdgeIteratorState virtualEdgeState) {
