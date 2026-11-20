@@ -267,7 +267,7 @@ A fast and production-ready map visualization for the Desktop can be implemented
  * Provides [map matching](./map-matching) i.e. "snap to road".
  * Supports time-dependent public transit routing and reading [GTFS](./reader-gtfs/README.md).
  * Offers turn instructions in more than 45 languages. Contribute or improve [here](./docs/core/translations.md).
- * Displays and takes into account [elevation data](./docs/core/elevation.md).
+ * Displays and takes into account precise [elevation data](./docs/core/elevation.md).
  * Supports [alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424).
  * Supports [turn costs and restrictions](./docs/core/turn-restrictions.md).
  * Offers country-specific routing via country rules.

@@ -394,9 +394,6 @@ public class BaseGraph implements Graph, Closeable {
     private void sortWayGeometry(boolean useDisk) {
         // we simply write the sorted geometry to a temporary array
         final String sortedName = "geometry_sorted_tmp";
-        final int maxGeoEntryBytes = 5 + MAX_PILLAR_NODES * 3 * MAX_VARINT_BYTES;
-        // we have to make sure that our buffer fits any possible geometry entry
-        final int bufferLength = Math.max(1 << 20, maxGeoEntryBytes);
         final int segmentSize = wayGeometry.getSegmentSize();
         DataAccess sorted;
         if (useDisk)
@@ -409,7 +406,8 @@ public class BaseGraph implements Graph, Closeable {
         sorted.create(maxGeoRef);
         BitSet done = new BitSet(getEdges());
         EdgeExplorer explorer = createEdgeExplorer();
-        byte[] buffer = new byte[bufferLength];
+        final int maxGeoEntryBytes = 5 + MAX_PILLAR_NODES * 3 * MAX_VARINT_BYTES;
+        byte[] buffer = new byte[maxGeoEntryBytes];
         // geoRef=1 is the first non-empty geometry
         long sortedGeoRef = 1;
         for (int edge = 0; edge < getEdges(); edge++) {
@@ -433,8 +431,10 @@ public class BaseGraph implements Graph, Closeable {
             sortedGeoRef += size;
         }
         // copy back to original way geometry
-        for (long pos = 0; pos < sortedGeoRef; pos += bufferLength) {
-            int length = (int) Math.min(bufferLength, sortedGeoRef - pos);
+        final int chunkSize = 1 << 20;
+        buffer = new byte[chunkSize];
+        for (long pos = 0; pos < sortedGeoRef; pos += chunkSize) {
+            int length = (int) Math.min(chunkSize, sortedGeoRef - pos);
             sorted.getBytes(pos, buffer, length);
             wayGeometry.setBytes(pos, buffer, length);
         }

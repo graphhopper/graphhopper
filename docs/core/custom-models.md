@@ -100,6 +100,7 @@ boolean value (they are either true or false for a given road segment), like:
 
 - get_off_bike
 - lit
+- motorroad: true for `motorroad=yes`
 - road_class_link
 - roundabout
 - with postfix `_access` contains the access (as boolean) for a specific vehicle

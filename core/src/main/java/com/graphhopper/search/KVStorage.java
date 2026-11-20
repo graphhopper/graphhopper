@@ -449,7 +449,7 @@ public class KVStorage {
 
             // skip to next entry of same edge via skipping the real value
             Class<?> clazz = indexToClass.get(currentKeyIndex);
-            int valueLength = hasDynLength(clazz) ? 1 + vals.getByte(tmpPointer) & 0xFF : getFixLength(clazz);
+            int valueLength = hasDynLength(clazz) ? 1 + (vals.getByte(tmpPointer) & 0xFF) : getFixLength(clazz);
             tmpPointer += valueLength;
         }
 

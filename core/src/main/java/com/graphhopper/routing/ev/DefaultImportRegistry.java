@@ -30,6 +30,16 @@ public class DefaultImportRegistry implements ImportRegistry {
                     (lookup, props) -> new OSMRoundaboutParser(
                             lookup.getBooleanEncodedValue(Roundabout.KEY))
             );
+        else if (Motorroad.KEY.equals(name))
+            return ImportUnit.create(name, props -> Motorroad.create(),
+                    (lookup, props) -> {
+                        BooleanEncodedValue motorroadEnc = lookup.getBooleanEncodedValue(Motorroad.KEY);
+                        return (edgeId, edgeIntAccess, way, relationFlags) -> {
+                            if (way.hasTag("motorroad", "yes"))
+                                motorroadEnc.setBool(false, edgeId, edgeIntAccess, true);
+                        };
+                    }
+            );
         else if (GetOffBike.KEY.equals(name))
             return ImportUnit.create(name, props -> GetOffBike.create(),
                     (lookup, pros) -> new OSMGetOffBikeParser(

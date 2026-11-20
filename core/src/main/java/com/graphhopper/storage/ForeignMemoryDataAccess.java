@@ -233,49 +233,41 @@ public final class ForeignMemoryDataAccess extends AbstractDataAccess {
 
     @Override
     public void setInt(long bytePos, int value) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         INT_VH.set(segment, bytePos, value);
     }
 
     @Override
     public int getInt(long bytePos) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         return (int) INT_VH.get(segment, bytePos);
     }
 
     @Override
     public void setShort(long bytePos, short value) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         SHORT_VH.set(segment, bytePos, value);
     }
 
     @Override
     public short getShort(long bytePos) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         return (short) SHORT_VH.get(segment, bytePos);
     }
 
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         MemorySegment.copy(values, 0, segment, BYTE_LAYOUT, bytePos, length);
     }
 
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         MemorySegment.copy(segment, BYTE_LAYOUT, bytePos, values, 0, length);
     }
 
     @Override
     public void setByte(long bytePos, byte value) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         BYTE_VH.set(segment, bytePos, value);
     }
 
     @Override
     public byte getByte(long bytePos) {
-        assert capacity > 0 : "call create or loadExisting before usage!";
         return (byte) BYTE_VH.get(segment, bytePos);
     }
 

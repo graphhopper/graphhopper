@@ -392,7 +392,7 @@ public abstract class DataAccessTest {
 
         Random rand = new Random(0);
         for (int i = 0; i < 10_000; i++) {
-            val = 1 << rand.nextInt(32) + rand.nextInt();
+            val = (1 << rand.nextInt(32)) + rand.nextInt();
             da.setInt(i, val);
             assertEquals(val, da.getInt(i), "idx " + i);
             da.setInt(i, -val);
