@@ -101,17 +101,19 @@ public class AccessResolver {
     private final Map<String, Map<String, String>> barrierDefaults;
     private final VehicleConditions conditions;
     private final Set<String> lockedValues;
+    private final boolean unknownBarrierValueHides;
 
     /**
      * @param impliedDefaults the access values implied by the way tags per restriction key, see osmDefaults
      * @param barrierDefaults the access values implied by a barrier node per barrier value and restriction key
      * @param conditions      evaluates key:conditional, null to ignore non-temporal conditionals
      * @param lockedValues    the access values that make a barrier with locked=yes passable
+     * @param unknownBarrierValueHides true if an unknown node value hides the less specific keys of a barrier
      */
     public AccessResolver(List<String> restrictionKeys, Set<String> allowed, Set<String> restricted,
                           Function<ReaderWay, Map<String, String>> impliedDefaults,
                           Map<String, Map<String, String>> barrierDefaults, VehicleConditions conditions,
-                          Set<String> lockedValues) {
+                          Set<String> lockedValues, boolean unknownBarrierValueHides) {
         this.restrictionKeys = restrictionKeys;
         this.allowed = allowed;
         this.restricted = restricted;
@@ -119,6 +121,7 @@ public class AccessResolver {
         this.barrierDefaults = barrierDefaults;
         this.conditions = conditions;
         this.lockedValues = lockedValues;
+        this.unknownBarrierValueHides = unknownBarrierValueHides;
     }
 
     /**
@@ -178,8 +181,8 @@ public class AccessResolver {
     }
 
     /**
-     * @return true if the barrier node with the given tags blocks the mode. Unlike for ways an unknown explicit
-     * value hides the less specific explicit values, only the defaults are still considered.
+     * @return true if the barrier node with the given tags blocks the mode. With unknownBarrierValueHides an
+     * unknown explicit value hides the less specific explicit values, only the defaults are still considered.
      */
     public boolean isBarrier(Map<String, Object> nodeTags) {
         String barrierValue = nodeTags.containsKey("barrier") ? (String) nodeTags.get("barrier") : "";
@@ -193,7 +196,7 @@ public class AccessResolver {
                     nodeValue = explicit;
                     break;
                 }
-                unknown = true;
+                unknown = unknownBarrierValueHides;
             }
             String implied = defaults.get(key);
             if (implied != null) {

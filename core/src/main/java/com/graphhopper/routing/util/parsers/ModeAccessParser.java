@@ -46,6 +46,7 @@ public class ModeAccessParser implements TagParser {
         List<String> backwardLaneKeys = List.of();
         boolean legacyOneway;
         Set<String> lockedValues = ALLOWED;
+        boolean unknownBarrierValueHides;
         boolean impliedFerryAccess;
         VehicleConditions conditions;
 
@@ -66,6 +67,7 @@ public class ModeAccessParser implements TagParser {
                     directionalKeys(List.of("motor_vehicle", "vehicle")).
                     legacyOneway(true).
                     lockedValues(AccessResolver.INTENDED).
+                    unknownBarrierValueHides(true).
                     impliedFerryAccess(true);
         }
 
@@ -227,6 +229,15 @@ public class ModeAccessParser implements TagParser {
         }
 
         /**
+         * @param unknownBarrierValueHides true if an unknown node value like motor_vehicle=unknown hides the less specific
+         *                                 keys of a barrier, default: false (skipped like for ways)
+         */
+        public Options unknownBarrierValueHides(boolean unknownBarrierValueHides) {
+            this.unknownBarrierValueHides = unknownBarrierValueHides;
+            return this;
+        }
+
+        /**
          * @param impliedFerryAccess true if a ferry without access tags is accessible (unless foot or bicycle is
          *                           tagged) and hgv=yes implies access, default: true if motorcar is a restriction key
          */
@@ -261,7 +272,8 @@ public class ModeAccessParser implements TagParser {
         this.roundaboutEnc = roundaboutEnc;
         this.options = options;
         resolver = new AccessResolver(options.restrictionKeys, options.allowed, options.restricted,
-                options.impliedDefaults, options.barrierDefaults, options.conditions, options.lockedValues);
+                options.impliedDefaults, options.barrierDefaults, options.conditions, options.lockedValues,
+                options.unknownBarrierValueHides);
         blockingRules = options.blockingRules();
         vehicleForward = options.directionalKeys.stream().map(r -> r + ":forward").toList();
         vehicleBackward = options.directionalKeys.stream().map(r -> r + ":backward").toList();
@@ -358,7 +370,7 @@ public class ModeAccessParser implements TagParser {
         if (ONEWAYS_FW.contains(modeOneway)) return true;
         if ("-1".equals(modeOneway)) return false;
         // 2. mode-specific directional prohibition: <mode>:forward=no
-        if (resolver.isRestricted(way.getFirstValue(vehicleForward))) return false;
+        if (isDirectionRestricted(way, vehicleForward)) return false;
         // 3. generic oneway tag (forward direction is only closed by oneway=-1;
         //    motorway/roundabout imply forward-oneway, which leaves forward open)
         return !way.hasTag("oneway", "-1");
@@ -372,13 +384,27 @@ public class ModeAccessParser implements TagParser {
         if ("-1".equals(modeOneway)) return true;
         if (hasBackwardLane(way)) return true;
         // 2. mode-specific directional prohibition: <mode>:backward=no
-        if (resolver.isRestricted(way.getFirstValue(vehicleBackward))) return false;
+        if (isDirectionRestricted(way, vehicleBackward)) return false;
         // 3. generic oneway tag, then implied oneway from highway type / roundabout.
         //    oneway=no explicitly relaxes the motorway/roundabout implication.
         if (way.hasTag("oneway", ONEWAYS_FW)) return false;
         if (way.hasTag("oneway", "no")) return true;
         if (way.hasTag("highway", options.onewayHighways)) return false;
         return !isRoundabout;
+    }
+
+    /**
+     * The first directional value in key order decides. "no" always closes the direction, another restricted value only
+     * if no more specific key is intended, e.g. bus=yes overrules vehicle:forward=delivery but not vehicle:forward=no
+     */
+    private boolean isDirectionRestricted(ReaderWay way, List<String> directionKeys) {
+        boolean intended = false;
+        for (int i = 0; i < directionKeys.size(); i++) {
+            String value = way.getTag(directionKeys.get(i));
+            if (value != null) return "no".equals(value) || !intended && resolver.isRestricted(value);
+            intended |= way.hasTag(options.directionalKeys.get(i), AccessResolver.INTENDED);
+        }
+        return false;
     }
 
     private boolean hasBackwardLane(ReaderWay way) {
