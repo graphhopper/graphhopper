@@ -117,6 +117,41 @@ class MaxSpeedCalculatorTest {
     }
 
     @Test
+    public void testEstimatedMaxSpeedOnCopiedEdge() {
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("country", Country.DEU);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed:backward", "70");
+        EdgeIteratorState edge = createEdge(way).set(urbanDensity, CITY);
+        EdgeIteratorState copy = graph.copyEdge(edge.getEdge(), true);
+
+        calc.fillMaxSpeed(graph, em);
+
+        assertEquals(50, edge.get(maxSpeedEnc));
+        assertEquals(70, edge.getReverse(maxSpeedEnc));
+        assertEquals(50, copy.get(maxSpeedEnc));
+        assertEquals(70, copy.getReverse(maxSpeedEnc));
+        assertTrue(copy.get(maxSpeedEstEnc));
+        assertFalse(copy.getReverse(maxSpeedEstEnc));
+    }
+
+    @Test
+    public void testDirectionalMaxSpeedOnCopiedEdge() {
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed:backward", "70");
+        EdgeIteratorState edge = createEdge(way).set(urbanDensity, CITY);
+        EdgeIteratorState copy = graph.copyEdge(edge.getEdge(), true);
+
+        calc.fillMaxSpeed(graph, em);
+
+        assertEquals(MAXSPEED_MISSING, copy.get(maxSpeedEnc));
+        assertEquals(70, copy.getReverse(maxSpeedEnc));
+        assertFalse(copy.get(maxSpeedEstEnc));
+        assertFalse(copy.getReverse(maxSpeedEstEnc));
+    }
+
+    @Test
     public void testRuralGermany() {
         ReaderWay way = new ReaderWay(0L);
         way.setTag("country", Country.DEU);
