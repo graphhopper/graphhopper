@@ -52,7 +52,8 @@ public class ModeAccessParser implements TagParser {
 
         /**
          * A motor vehicle like the former CarAccessParser: highway allowlist, tracks only grade1, grade2 or
-         * untagged, pedestrian only if explicitly allowed, no oneway implied by the highway type, customers unknown
+         * untagged, pedestrian only if explicitly allowed, no oneway implied by the highway type, customers unknown.
+         * For the generic car use new Options(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)).
          */
         public static Options motorVehicle(List<String> restrictionKeys) {
             Set<String> restricted = new HashSet<>(RESTRICTED);
