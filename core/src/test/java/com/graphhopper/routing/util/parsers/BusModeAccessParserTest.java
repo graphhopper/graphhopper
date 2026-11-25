@@ -89,6 +89,27 @@ class BusModeAccessParserTest {
         assertFalse(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
 
+        // any restricted value closes the direction, not only no (e.g. hgv:forward=delivery on osm way 4474296)
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("bus:forward", "delivery");
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertTrue(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
+
+        // a more specific bus=yes lifts a restricted direction, but not a direction with no
+        way.clearTags();
+        way.setTag("highway", "unclassified");
+        way.setTag("bus", "yes");
+        way.setTag("motor_vehicle", "no");
+        way.setTag("motor_vehicle:forward", "delivery");
+        way.setTag("motor_vehicle:backward", "no");
+        edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertFalse(busAccessEnc.getBool(true, edgeId, edgeIntAccess));
+
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("vehicle:backward", "no");
@@ -246,6 +267,18 @@ class BusModeAccessParserTest {
         access = new ArrayEdgeIntAccess(1);
         parser.handleWayTags(edgeId, access, way, null);
         assertFalse(busAccessEnc.getBool(false, edgeId, access));
+
+        // an unknown value does not hide access=no
+        way.setTag("node_tags", List.of(Map.of("barrier", "gate", "access", "no", "motor_vehicle", "unknown"), Map.of()));
+        access = new ArrayEdgeIntAccess(1);
+        parser.handleWayTags(edgeId, access, way, null);
+        assertFalse(busAccessEnc.getBool(false, edgeId, access));
+
+        // a locked gate is passable with destination
+        way.setTag("node_tags", List.of(Map.of("barrier", "gate", "locked", "yes", "access", "destination"), Map.of()));
+        access = new ArrayEdgeIntAccess(1);
+        parser.handleWayTags(edgeId, access, way, null);
+        assertTrue(busAccessEnc.getBool(false, edgeId, access));
     }
 
     @Test

@@ -70,7 +70,7 @@ public class OSMRoadAccessParser<T extends Enum> implements TagParser {
             String highwayValue = readerWay.getTag("highway");
             Map<String, String> impliedDefaults = highwayValue == null
                     ? Map.of()
-                    : ModeAccessParser.HIGHWAY_TYPE_DEFAULTS.getOrDefault(highwayValue, Map.of());
+                    : AccessResolver.HIGHWAY_TYPE_DEFAULTS.getOrDefault(highwayValue, Map.of());
             for (String restriction : restrictions) {
                 String implied = impliedDefaults.get(restriction);
                 if (implied != null) {
