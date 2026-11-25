@@ -29,10 +29,10 @@ import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPe
  * with a recognized value decides, where a conditional of the key beats its plain value and an implied default
  * (highway type, barrier type) is used if the key is absent or its value unknown.
  */
-public class AccessResolver {
-    public static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive");
-    public static final Set<String> ALLOWED = Set.of("yes", "designated", "official", "permissive", "destination");
-    public static final Set<String> RESTRICTED = Set.of("no", "restricted", "military", "emergency",
+class AccessResolver {
+    static final Set<String> INTENDED = Set.of("yes", "designated", "official", "permissive");
+    static final Set<String> ALLOWED = Set.of("yes", "designated", "official", "permissive", "destination");
+    static final Set<String> RESTRICTED = Set.of("no", "restricted", "military", "emergency",
             "private", "permit", "service", "delivery", "customers", "agricultural", "forestry");
     private static final Map<String, String> MOTORROAD_DEFAULTS = Map.of("foot", "no", "bicycle", "no");
     static final Map<String, Map<String, String>> HIGHWAY_TYPE_DEFAULTS;
@@ -90,7 +90,7 @@ public class AccessResolver {
      * @param value    the resolved value, empty if no key decided
      * @param keyIndex the index of the deciding restriction key, -1 if none
      */
-    public record Result(String value, int keyIndex) {
+    record Result(String value, int keyIndex) {
         static final Result NONE = new Result("", -1);
     }
 
@@ -110,7 +110,7 @@ public class AccessResolver {
      * @param lockedValues    the access values that make a barrier with locked=yes passable
      * @param unknownBarrierValueHides true if an unknown node value hides the less specific keys of a barrier
      */
-    public AccessResolver(List<String> restrictionKeys, Set<String> allowed, Set<String> restricted,
+    AccessResolver(List<String> restrictionKeys, Set<String> allowed, Set<String> restricted,
                           Function<ReaderWay, Map<String, String>> impliedDefaults,
                           Map<String, Map<String, String>> barrierDefaults, VehicleConditions conditions,
                           Set<String> lockedValues, boolean unknownBarrierValueHides) {
@@ -127,7 +127,7 @@ public class AccessResolver {
     /**
      * The access values implied by the highway type and motorroad=yes
      */
-    public static Map<String, String> osmDefaults(ReaderWay way) {
+    static Map<String, String> osmDefaults(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         Map<String, String> defaults = highwayValue == null ? Map.of() : HIGHWAY_TYPE_DEFAULTS.getOrDefault(highwayValue, Map.of());
         // special case motorroad=yes: it's not a highway=* value but a separate tag that implies foot=no, bicycle=no.
@@ -139,19 +139,19 @@ public class AccessResolver {
         return defaults;
     }
 
-    public List<String> getRestrictionKeys() {
+    List<String> getRestrictionKeys() {
         return restrictionKeys;
     }
 
-    public boolean isAllowed(String value) {
+    boolean isAllowed(String value) {
         return allowed.contains(value);
     }
 
-    public boolean isRestricted(String value) {
+    boolean isRestricted(String value) {
         return restricted.contains(value);
     }
 
-    public Result resolve(ReaderWay way) {
+    Result resolve(ReaderWay way) {
         Map<String, String> defaults = impliedDefaults.apply(way);
         for (int i = 0; i < restrictionKeys.size(); i++) {
             String key = restrictionKeys.get(i);
@@ -176,7 +176,7 @@ public class AccessResolver {
      * @return true if the resolved value closes the way: restricted and not lifted by a permissive temporal
      * conditional of the deciding or a more specific key
      */
-    public boolean isRestricted(ReaderWay way, Result result) {
+    boolean isRestricted(ReaderWay way, Result result) {
         return restricted.contains(result.value) && !hasPermissiveTemporalRestriction(way, result.keyIndex, restrictionKeys, allowed);
     }
 
@@ -184,7 +184,7 @@ public class AccessResolver {
      * @return true if the barrier node with the given tags blocks the mode. With unknownBarrierValueHides an
      * unknown explicit value hides the less specific explicit values, only the defaults are still considered.
      */
-    public boolean isBarrier(Map<String, Object> nodeTags) {
+    boolean isBarrier(Map<String, Object> nodeTags) {
         String barrierValue = nodeTags.containsKey("barrier") ? (String) nodeTags.get("barrier") : "";
         Map<String, String> defaults = barrierDefaults.getOrDefault(barrierValue, Map.of());
         String nodeValue = "";
