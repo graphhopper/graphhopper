@@ -25,8 +25,8 @@ import java.util.function.Function;
 import static com.graphhopper.routing.util.parsers.OSMTemporalAccessParser.hasPermissiveTemporalRestriction;
 
 /**
- * Resolves the access value of a way or barrier node for a mode: the first restriction key (most specific first)
- * with a recognized value decides, where a conditional of the key beats its plain value and an implied default
+ * Finds the deciding access value of a way or barrier node for a mode: the value of the first restriction key (most
+ * specific first) with a recognized value, where a conditional of the key beats its plain value and an implied default
  * (highway type, barrier type) is used if the key is absent or its value unknown.
  */
 class AccessResolver {
@@ -87,7 +87,7 @@ class AccessResolver {
     }
 
     /**
-     * @param value    the resolved value, empty if no key decided
+     * @param value    the deciding value, empty if no key decided
      * @param keyIndex the index of the deciding restriction key, -1 if none
      */
     record Result(String value, int keyIndex) {
@@ -151,7 +151,7 @@ class AccessResolver {
         return restricted.contains(value);
     }
 
-    Result resolve(ReaderWay way) {
+    Result findDecidingValue(ReaderWay way) {
         Map<String, String> defaults = impliedDefaults.apply(way);
         for (int i = 0; i < restrictionKeys.size(); i++) {
             String key = restrictionKeys.get(i);
@@ -173,7 +173,7 @@ class AccessResolver {
     }
 
     /**
-     * @return true if the resolved value closes the way: restricted and not lifted by a permissive temporal
+     * @return true if the deciding value closes the way: restricted and not lifted by a permissive temporal
      * conditional of the deciding or a more specific key
      */
     boolean isRestricted(ReaderWay way, Result result) {

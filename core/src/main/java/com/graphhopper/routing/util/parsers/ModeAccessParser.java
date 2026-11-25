@@ -313,7 +313,7 @@ public class ModeAccessParser implements TagParser {
             if (rule.test(way))
                 return;
 
-        AccessResolver.Result result = resolver.resolve(way);
+        AccessResolver.Result result = resolver.findDecidingValue(way);
         if (resolver.isRestricted(way, result))
             return;
 
