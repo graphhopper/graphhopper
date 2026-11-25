@@ -268,6 +268,9 @@ class TruckModeAccessParserTest {
     public void conditionalHGV() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
+        way.setTag("access:conditional", "no @ hgv");
+        assertFalse(forward(truckParser, way));
+        assertTrue(forward(carParser, way));
         // none lifts a restriction like yes, also with a limit key as condition
         way.setTag("access", "no");
         way.setTag("access:conditional", "none @ (maxweight)");
@@ -320,6 +323,16 @@ class TruckModeAccessParserTest {
         assertFalse(forward(truckParser, way));
         way.setTag("hgv:conditional", "yes @ (Mo-Fr 06:00-20:00)");
         assertTrue(forward(truckParser, way));
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("motor_vehicle", "no");
+        way.setTag("motor_vehicle:conditional", "yes @ (21:00-9:00)");
+        assertTrue(forward(truckParser, way));
+        // the conditional of an unrelated mode is ignored
+        way.removeTag("motor_vehicle:conditional");
+        way.setTag("bicycle:conditional", "yes @ (May - June)");
+        assertFalse(forward(truckParser, way));
     }
 
     @Test
@@ -334,6 +347,10 @@ class TruckModeAccessParserTest {
         assertTrue(forward(carParser, way));
         way.setTag("motor_vehicle", "unknown;strange");
         assertTrue(forward(carParser, way));
+        // an unknown value does not hide a less specific key
+        way.setTag("access", "no");
+        assertFalse(forward(carParser, way));
+        way.removeTag("access");
         way.setTag("motor_vehicle", "no ");
         assertFalse(forward(carParser, way));
         way.setTag("motor_vehicle", " yes;no");
