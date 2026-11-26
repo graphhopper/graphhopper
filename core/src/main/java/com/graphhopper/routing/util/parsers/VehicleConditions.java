@@ -31,6 +31,9 @@ import java.util.Set;
  */
 public class VehicleConditions {
     private static final List<String> LIMIT_KEYS = List.of("maxweight", "maxheight", "maxwidth");
+    private static final List<String> WEIGHT_KEYS = List.of("maxweight", "maxweightrating", "maxgcweight");
+    private static final List<String> HGV_WEIGHT_KEYS = List.of("maxweight:hgv", "maxweightrating:hgv");
+    private final List<String> restrictionKeys;
     private final List<String> liftKeys;
     private final Set<String> allowed;
     private double weight = 2.5, height = 2, width = 1.9, mirrorWidth = 0, length = 4.5;
@@ -43,6 +46,7 @@ public class VehicleConditions {
      */
     public VehicleConditions(List<String> restrictionKeys, Set<String> allowed) {
         this.allowed = allowed;
+        this.restrictionKeys = restrictionKeys;
         liftKeys = new ArrayList<>(restrictionKeys);
         liftKeys.addAll(LIMIT_KEYS);
     }
@@ -130,9 +134,9 @@ public class VehicleConditions {
     }
 
     /**
-     * @return true if a maxheight, maxwidth, maxlength, maxweight or maxaxleload tag is below the vehicle dimensions.
-     * The weight limit is lifted by a conditional with an allowed value, e.g. maxweight:conditional=none @ destination
-     * or access:conditional=yes @ (weight > 7.5)
+     * @return true if a maxheight, maxwidth, maxlength, maxweight(rating) or maxaxleload tag is below the vehicle
+     * dimensions. A weight limit is lifted by its own conditional or an access conditional with an allowed value,
+     * e.g. maxweightrating:hgv:conditional=none @ destination or access:conditional=yes @ (weight > 7.5)
      */
     public boolean exceedsLimits(ReaderWay way) {
         // bridges often tag their own height instead of a limit, https://discuss.graphhopper.com/t/1468
@@ -144,18 +148,21 @@ public class VehicleConditions {
             return true;
         if (meter(way, "maxlength") < length || hgv && meter(way, "maxlength:hgv") < length)
             return true;
-        if ((tons(way, "maxweight") < weight || tons(way, "maxgcweight") < weight) && !limitLifted(way))
+        if (exceedsWeight(way, WEIGHT_KEYS) || hgv && exceedsWeight(way, HGV_WEIGHT_KEYS))
             return true;
         return tons(way, "maxaxleload") < weight / axes;
     }
 
-    private boolean limitLifted(ReaderWay way) {
-        for (String key : liftKeys) {
-            String value = getConditionalValue(way, key);
-            if (value != null && (allowed.contains(value) || "none".equals(value)))
+    private boolean exceedsWeight(ReaderWay way, List<String> weightKeys) {
+        for (String key : weightKeys)
+            if (tons(way, key) < weight && !lifted(way, key) && restrictionKeys.stream().noneMatch(k -> lifted(way, k)))
                 return true;
-        }
         return false;
+    }
+
+    private boolean lifted(ReaderWay way, String key) {
+        String value = getConditionalValue(way, key);
+        return value != null && (allowed.contains(value) || "none".equals(value));
     }
 
     private static double meter(ReaderWay way, String key) {

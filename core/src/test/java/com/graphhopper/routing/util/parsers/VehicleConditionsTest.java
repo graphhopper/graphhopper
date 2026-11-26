@@ -70,6 +70,30 @@ class VehicleConditionsTest {
         way.setTag("maxgcweight", "20");
         assertTrue(truck.exceedsLimits(way));
         way.clearTags();
+
+        // GB 7.5 t zones
+        way.setTag("maxweightrating:hgv", "7.5");
+        assertTrue(truck.exceedsLimits(way));
+        assertFalse(truck.hgv(false).exceedsLimits(way));
+        truck.hgv(true);
+        way.setTag("maxweightrating:hgv:conditional", "none @ delivery");
+        assertTrue(truck.exceedsLimits(way));
+        way.setTag("maxweightrating:hgv:conditional", "none @ destination");
+        assertFalse(truck.exceedsLimits(way));
+        // a lift applies to its own limit only
+        way.setTag("maxweight", "7.5");
+        assertTrue(truck.exceedsLimits(way));
+        way.clearTags();
+        way.setTag("maxweight:hgv", "7.5");
+        assertTrue(truck.exceedsLimits(way));
+        way.setTag("maxweight:hgv:conditional", "none @ destination");
+        assertFalse(truck.exceedsLimits(way));
+        way.clearTags();
+        way.setTag("maxweightrating", "7.5");
+        assertTrue(truck.exceedsLimits(way));
+        way.setTag("hgv:conditional", "yes @ (weight > 7.5)");
+        assertFalse(truck.exceedsLimits(way));
+        way.clearTags();
         way.setTag("maxaxleload", "8.6");
         assertTrue(truck.exceedsLimits(way));
         way.setTag("maxaxleload", "8.6 t");
