@@ -3,7 +3,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -11,7 +10,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -60,7 +58,7 @@ class CarAccessAndRoadAccessTest {
         );
     }
 
-    // ModeAccessParser with allow=delivery: delivery moves from restricted to intended
+    // allow=delivery: delivery moves from restricted to intended
     static Stream<Arguments> allowDelivery() {
         return Stream.of(
                 //        highway        extra tags                                                               access  road_access
@@ -81,8 +79,7 @@ class CarAccessAndRoadAccessTest {
     @MethodSource("defaultConfig")
     void testDefault(String highway, String extraTags, boolean expectedAccess, RoadAccess expectedRoadAccess) {
         Fixture f = new Fixture();
-        TagParser accessParser = new CarAccessParser(f.carAccessEnc, f.roundaboutEnc,
-                new PMap(), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
+        TagParser accessParser = ModeAccessParser.createCar(f.em, new PMap());
         f.check(accessParser, highway, extraTags, expectedAccess, expectedRoadAccess);
     }
 
@@ -90,8 +87,7 @@ class CarAccessAndRoadAccessTest {
     @MethodSource("blockPrivateFalse")
     void testBlockPrivateFalse(String highway, String extraTags, boolean expectedAccess, RoadAccess expectedRoadAccess) {
         Fixture f = new Fixture();
-        TagParser accessParser = new CarAccessParser(f.carAccessEnc, f.roundaboutEnc,
-                new PMap("block_private=false"), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
+        TagParser accessParser = ModeAccessParser.createCar(f.em, new PMap("block_private=false"));
         f.check(accessParser, highway, extraTags, expectedAccess, expectedRoadAccess);
     }
 
@@ -99,8 +95,7 @@ class CarAccessAndRoadAccessTest {
     @MethodSource("allowDelivery")
     void testAllowDelivery(String highway, String extraTags, boolean expectedAccess, RoadAccess expectedRoadAccess) {
         Fixture f = new Fixture();
-        TagParser accessParser = new ModeAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
-                f.carAccessEnc, true, f.roundaboutEnc, Set.of("delivery"), Set.of());
+        TagParser accessParser = ModeAccessParser.createCar(f.em, new PMap("allow=delivery"));
         f.check(accessParser, highway, extraTags, expectedAccess, expectedRoadAccess);
     }
 
@@ -109,8 +104,10 @@ class CarAccessAndRoadAccessTest {
         final BooleanEncodedValue roundaboutEnc = Roundabout.create();
         final EnumEncodedValue<RoadAccess> roadAccessEnc = RoadAccess.create();
 
+        final EncodingManager em;
+
         Fixture() {
-            new EncodingManager.Builder().add(carAccessEnc).add(roundaboutEnc).add(roadAccessEnc).build();
+            em = new EncodingManager.Builder().add(carAccessEnc).add(roundaboutEnc).add(roadAccessEnc).build();
         }
 
         void check(TagParser accessParser, String highway, String extraTags,

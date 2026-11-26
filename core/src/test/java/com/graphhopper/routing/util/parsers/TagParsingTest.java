@@ -57,7 +57,7 @@ class TagParsingTest {
         BooleanEncodedValue roundaboutEnc = manager.getBooleanEncodedValue(Roundabout.KEY);
         List<TagParser> tagParsers = Arrays.asList(
                 new OSMRoundaboutParser(roundaboutEnc),
-                new CarAccessParser(manager, new PMap()),
+                ModeAccessParser.createCar(manager, new PMap()),
                 new FootAccessParser(manager, new PMap()),
                 new BikeAccessParser(manager, new PMap()),
                 new MountainBikeAccessParser(manager, new PMap())

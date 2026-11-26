@@ -80,12 +80,12 @@ public class RouteResourceLeipzigTest {
 
     @ParameterizedTest
     @CsvSource(value = {
-            "75,-1,algorithm=" + DIJKSTRA_BI,
-            "78,-1,algorithm=" + ASTAR_BI,
-            "30863,1,ch.disable=true&algorithm=" + DIJKSTRA,
-            "21185,1,ch.disable=true&algorithm=" + ASTAR,
-            "14806,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
-            "10490,1,ch.disable=true&algorithm=" + ASTAR_BI
+            "90,-1,algorithm=" + DIJKSTRA_BI,
+            "108,-1,algorithm=" + ASTAR_BI,
+            "31020,1,ch.disable=true&algorithm=" + DIJKSTRA,
+            "21247,1,ch.disable=true&algorithm=" + ASTAR,
+            "14836,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
+            "10500,1,ch.disable=true&algorithm=" + ASTAR_BI
     })
     void testTimeout(int expectedVisitedNodes, int timeout, String args) {
         {

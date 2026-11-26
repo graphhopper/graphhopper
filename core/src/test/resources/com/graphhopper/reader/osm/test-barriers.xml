@@ -35,6 +35,7 @@
         <nd ref="20"/>
         <nd ref="30"/>
         <tag k="highway" v="motorway"/>
+        <tag k="oneway" v="no"/>
     </way>
 
     <way id="20" version="1">
@@ -42,6 +43,7 @@
         <nd ref="40"/>
         <nd ref="30"/>
         <tag k="highway" v="motorway"/>
+        <tag k="oneway" v="no"/>
     </way>
 
     <way id="30" version="1">
@@ -49,6 +51,7 @@
         <nd ref="50"/>
         <nd ref="60"/>
         <tag k="highway" v="motorway"/>
+        <tag k="oneway" v="no"/>
     </way>
 
     <way id="40" version="1">
@@ -56,11 +59,13 @@
         <nd ref="70"/>
         <nd ref="80"/>
         <tag k="highway" v="motorway"/>
+        <tag k="oneway" v="no"/>
     </way>
 
     <way id="50" version="1">
         <nd ref="50"/>
         <nd ref="30"/>
         <tag k="highway" v="motorway"/>
+        <tag k="oneway" v="no"/>
     </way>
 </osm>

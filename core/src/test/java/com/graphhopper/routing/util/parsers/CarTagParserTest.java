@@ -29,6 +29,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class CarTagParserTest {
     private final EncodingManager em = createEncodingManager("car");
-    final CarAccessParser parser = createParser(em, new PMap());
+    final ModeAccessParser parser = createParser(em, new PMap());
     final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em);
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
@@ -58,99 +59,111 @@ public class CarTagParserTest {
                 .build();
     }
 
-    CarAccessParser createParser(EncodedValueLookup lookup, PMap properties) {
-        return new CarAccessParser(lookup, properties);
+    ModeAccessParser createParser(EncodedValueLookup lookup, PMap properties) {
+        return ModeAccessParser.createCar(lookup, properties);
+    }
+
+    private boolean isAccessible(ReaderWay way) {
+        EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
+        parser.handleWayTags(0, edgeIntAccess, way, null);
+        return accessEnc.getBool(false, 0, edgeIntAccess) || accessEnc.getBool(true, 0, edgeIntAccess);
+    }
+
+    private boolean isBarrier(ReaderNode node) {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("gh:barrier_edge", true);
+        way.setTag("node_tags", List.of(node.getTags()));
+        return !isAccessible(way);
     }
 
     @Test
     public void testAccess() {
         ReaderWay way = new ReaderWay(1);
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
         way.setTag("highway", "service");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
         way.setTag("access", "no");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "track");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
 
         way.setTag("motorcar", "no");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
-        // for now allow grade1+2+3 for every country, see #253
+        // the tracktype is not considered here, car.json blocks grade4+5
         way.clearTags();
         way.setTag("highway", "track");
-        way.setTag("tracktype", "grade2");
-        assertTrue(parser.getAccess(way).isWay());
         way.setTag("tracktype", "grade4");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertTrue(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "delivery");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "no");
         way.setTag("motor_vehicle", "unknown");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("motor_vehicle", "agricultural");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
         way.setTag("motor_vehicle", "agricultural;forestry");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
         way.setTag("motor_vehicle", "forestry;agricultural");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
         way.setTag("motor_vehicle", "forestry;agricultural;unknown");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
         way.setTag("motor_vehicle", "yes;forestry;agricultural");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "no");
         way.setTag("motorcar", "yes");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("motor_vehicle", "service");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "emergency");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("motor_vehicle", "emergency");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("service", "emergency_access");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "unclassified");
         way.setTag("motor_vehicle", "agricultural;destination;forestry");
-        assertFalse(parser.getAccess(way).canSkip());
+        assertTrue(isAccessible(way));
     }
 
     @Test
@@ -160,23 +173,23 @@ public class CarTagParserTest {
         way.setTag("highway", "service");
         way.setTag("access", "no");
         way.setTag("motor_vehicle", "unknownvalue");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         // but without any restriction it stays allowed
         way.removeTag("access");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
 
         // also for highway=pedestrian, which requires an explicitly allowed value
         way.setTag("highway", "pedestrian");
         way.setTag("motorcar", "unknownvalue");
         way.setTag("motor_vehicle", "yes");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
 
         // and for ferries the implied default still applies
         way.clearTags();
         way.setTag("route", "ferry");
         way.setTag("motorcar", "unknownvalue");
-        assertTrue(parser.getAccess(way).isFerry());
+        assertTrue(isAccessible(way));
     }
 
     @Test
@@ -184,7 +197,7 @@ public class CarTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("access", "military");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
     }
 
     @Test
@@ -193,12 +206,12 @@ public class CarTagParserTest {
         way.setTag("highway", "primary");
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
         way.setTag("oneway", "yes");
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
@@ -206,7 +219,7 @@ public class CarTagParserTest {
         way.setTag("highway", "tertiary");
 
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
@@ -215,7 +228,7 @@ public class CarTagParserTest {
         way.setTag("vehicle:forward", "no");
 
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertFalse(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
@@ -223,7 +236,7 @@ public class CarTagParserTest {
         way.setTag("highway", "tertiary");
         way.setTag("vehicle:backward", "no");
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
@@ -232,7 +245,7 @@ public class CarTagParserTest {
         way.setTag("highway", "tertiary");
         way.setTag("vehicle:backward", "designated");
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
@@ -245,18 +258,18 @@ public class CarTagParserTest {
         way.setTag("access", "private");
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertFalse(accessEnc.getBool(false, edgeId, edgeIntAccess));
 
-        final CarAccessParser parser = createParser(em, new PMap("block_private=false"));
+        final ModeAccessParser parser = createParser(em, new PMap("block_private=false"));
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertTrue(parser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
 
         way.setTag("highway", "primary");
         way.setTag("motor_vehicle", "permit"); // currently handled like "private", see #2712
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertTrue(parser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
     }
 
@@ -428,9 +441,9 @@ public class CarTagParserTest {
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
 
         ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "motorway");
+        way.setTag("highway", "primary");
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
         assertFalse(roundaboutEnc.getBool(false, edgeId, edgeIntAccess));
@@ -441,29 +454,29 @@ public class CarTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "rail");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("railway", "abandoned");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.setTag("highway", "track");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
 
         // this is fully okay as sometimes old rails are on the road
         way.setTag("highway", "primary");
         way.setTag("railway", "historic");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
 
         way.setTag("motorcar", "no");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "tram");
         // but allow tram to be on the same way
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
     }
 
     @Test
@@ -475,7 +488,7 @@ public class CarTagParserTest {
         // Provide the duration value in seconds:
         way.setTag("way_distance_2d", 50000.0);
         way.setTag("duration_in_seconds", 35.0);
-        assertTrue(parser.getAccess(way).isFerry());
+        assertTrue(isAccessible(way));
 
         // test for very short and slow 0.5km/h still realistic ferry
         way = new ReaderWay(1);
@@ -483,38 +496,38 @@ public class CarTagParserTest {
         way.setTag("motorcar", "yes");
         way.setTag("way_distance_2d", 100.0);
         way.setTag("duration_in_seconds", 12.0);
-        assertTrue(parser.getAccess(way).isFerry());
+        assertTrue(isAccessible(way));
 
         // test for missing duration
         way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
         way.setTag("edge_distance", 100.0);
-        assertTrue(parser.getAccess(way).isFerry());
+        assertTrue(isAccessible(way));
 
         way.clearTags();
         way.setTag("route", "ferry");
-        assertTrue(parser.getAccess(way).isFerry());
+        assertTrue(isAccessible(way));
         way.setTag("motorcar", "no");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("route", "ferry");
         way.setTag("foot", "designated");
         way.setTag("motor_vehicle", "designated");
-        assertTrue(parser.getAccess(way).isFerry());
+        assertTrue(isAccessible(way));
 
         way.clearTags();
         way.setTag("route", "ferry");
         way.setTag("access", "no");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
         way.setTag("vehicle", "yes");
-        assertTrue(parser.getAccess(way).isFerry());
+        assertTrue(isAccessible(way));
 
         // issue #1432
         way.clearTags();
@@ -522,13 +535,13 @@ public class CarTagParserTest {
         way.setTag("oneway", "yes");
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
 
         // speed for ferry is moved out of the encoded value, i.e. it is 0
         edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         assertEquals(0, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
 
@@ -538,13 +551,13 @@ public class CarTagParserTest {
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "yes");
         // no barrier!
-        assertFalse(parser.isBarrier(node));
+        assertFalse(isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("bicycle", "yes");
         // no barrier!
-        assertFalse(parser.isBarrier(node));
+        assertFalse(isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
@@ -558,17 +571,17 @@ public class CarTagParserTest {
         node.setTag("access", "no");
         node.setTag("motorcar", "yes");
         // no barrier!
-        assertFalse(parser.isBarrier(node));
+        assertFalse(isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "bollard");
         // barrier!
-        assertTrue(parser.isBarrier(node));
+        assertTrue(isBarrier(node));
 
         // Test if cattle_grid is not blocking
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "cattle_grid");
-        assertFalse(parser.isBarrier(node));
+        assertFalse(isBarrier(node));
     }
 
     @Test
@@ -576,11 +589,11 @@ public class CarTagParserTest {
         // by default allow access through the gate for bike & foot!
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "chain");
-        assertFalse(parser.isBarrier(node));
+        assertFalse(isBarrier(node));
         node.setTag("motor_vehicle", "no");
-        assertTrue(parser.isBarrier(node));
+        assertTrue(isBarrier(node));
         node.setTag("motor_vehicle", "yes");
-        assertFalse(parser.isBarrier(node));
+        assertFalse(isBarrier(node));
     }
 
     @Test
@@ -621,11 +634,11 @@ public class CarTagParserTest {
         way.setTag("sac_scale", "hiking");
 
         BikeAccessParser bikeParser = new BikeAccessParser(em, new PMap());
-        assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
+        assertFalse(isAccessible(way));
         assertNotEquals(WayAccess.CAN_SKIP, bikeParser.getAccess(way));
         EdgeIntAccess edgeIntAccess = ArrayEdgeIntAccess.createFromBytes(em.getBytesForFlags());
         int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
         bikeParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertFalse(accessEnc.getBool(true, edgeId, edgeIntAccess));
         assertFalse(accessEnc.getBool(false, edgeId, edgeIntAccess));
@@ -742,7 +755,7 @@ public class CarTagParserTest {
             ReaderWay way = new ReaderWay(1);
             way.setTag("highway", highway);
             way.setTag(vehicle, "yes");
-            assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
+            assertFalse(isAccessible(way));
         }
     }
 
@@ -781,38 +794,38 @@ public class CarTagParserTest {
     void testPedestrianAccess() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "pedestrian");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("motor_vehicle", "no");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("motor_vehicle", "unknown");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("motor_vehicle", "destination");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("motorcar", "no");
         way.setTag("motor_vehicle", "destination");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertFalse(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("motor_vehicle:conditional", "destination @ ( 8:00 - 10:00 )");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
 
         way.clearTags();
         way.setTag("highway", "pedestrian");
         way.setTag("access", "no");
         way.setTag("motor_vehicle:conditional", "destination @ ( 8:00 - 10:00 )");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(isAccessible(way));
     }
 }
