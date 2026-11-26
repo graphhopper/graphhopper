@@ -17,6 +17,11 @@
  */
 package com.graphhopper.routing.ev;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.graphhopper.util.Helper;
 
 /**
@@ -31,6 +36,8 @@ public enum TrackType {
 
     public static final String KEY = "track_type";
 
+    private static final Map<String, TrackType> LOOKUP = Arrays.stream(values()).collect(Collectors.toUnmodifiableMap(TrackType::toString, Function.identity()));
+
     public static EnumEncodedValue<TrackType> create() {
         return new EnumEncodedValue<>(KEY, TrackType.class);
     }
@@ -43,10 +50,6 @@ public enum TrackType {
     public static TrackType find(String name) {
         if (Helper.isEmpty(name))
             return MISSING;
-        try {
-            return TrackType.valueOf(Helper.toUpperCase(name));
-        } catch (IllegalArgumentException ex) {
-            return GRADE5;
-        }
+        return LOOKUP.getOrDefault(name, GRADE5);
     }
 }
