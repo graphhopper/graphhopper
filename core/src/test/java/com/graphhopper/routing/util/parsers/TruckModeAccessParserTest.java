@@ -427,6 +427,8 @@ class TruckModeAccessParserTest {
         assertTrue(forward(taxiParser, way));
         assertTrue(backward(taxiParser, way));
         assertFalse(backward(carParser, way));
+        way.setTag("lanes:psv:backward", "0");
+        assertFalse(backward(taxiParser, way));
 
         way = new ReaderWay(1);
         way.setTag("highway", "primary");

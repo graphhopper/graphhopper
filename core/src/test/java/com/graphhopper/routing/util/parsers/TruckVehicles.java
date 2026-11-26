@@ -13,6 +13,8 @@ import java.util.*;
 class TruckVehicles {
     static final List<String> VEHICLES = List.of("car", "small_truck", "truck", "taxi", "scooter");
 
+    static final Set<String> MOPED_NO = Set.of("motorway", "motorway_link", "cycleway", "pedestrian");
+
     static EncodingManager createEncodingManager() {
         EncodingManager.Builder builder = new EncodingManager.Builder().add(Roundabout.create());
         for (String vehicle : VEHICLES) builder.add(VehicleAccess.create(vehicle));
@@ -29,7 +31,7 @@ class TruckVehicles {
             case "small_truck" -> List.of("goods", "motorcar", "motor_vehicle", "vehicle", "access");
             case "truck" -> List.of("hgv", "goods", "motor_vehicle", "vehicle", "access");
             case "taxi" -> List.of("taxi", "psv", "motorcar", "motor_vehicle", "vehicle", "access");
-            case "scooter" -> List.of("goods", "moped", "motorcycle", "motor_vehicle", "vehicle", "access");
+            case "scooter" -> List.of("moped", "motorcycle", "motor_vehicle", "vehicle", "access");
             default -> throw new IllegalArgumentException(vehicle);
         };
         ModeAccessParser.Options options = ModeAccessParser.Options.motorVehicle(keys).allow(allow, Set.of());
@@ -47,8 +49,7 @@ class TruckVehicles {
                 barriers.removeAll(List.of("bollard", "sump_buster"));
                 options.values(allowed, options.getRestricted()).highways(highways).
                         barrierDefaults(ModeAccessParser.Options.barriers(barriers)).
-                        blocked(ModeAccessParser.Options.explicitOnly("moped", allowed,
-                                Set.of("motorway", "motorway_link", "cycleway", "pedestrian"), 50));
+                        impliedDefaults(way -> way.hasTag("highway", MOPED_NO) || way.hasTag("motorroad", "yes") ? Map.of("moped", "no") : Map.of());
                 options.createConditions().height(1.9).width(1, 0).length(2).weight(0.3);
             }
         }

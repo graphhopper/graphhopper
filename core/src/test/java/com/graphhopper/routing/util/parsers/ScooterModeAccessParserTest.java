@@ -47,13 +47,6 @@ class ScooterModeAccessParserTest {
 
         way.clearTags();
         way.setTag("highway", "trunk");
-        way.setTag("minspeed", "40 mph");
-        assertFalse(forward(parser, way));
-        way.setTag("minspeed", "30");
-        assertTrue(forward(parser, way));
-
-        way.clearTags();
-        way.setTag("highway", "trunk");
         way.setTag("motorroad", "yes");
         way.setTag("moped", "yes");
         assertTrue(forward(parser, way));
@@ -65,6 +58,10 @@ class ScooterModeAccessParserTest {
         assertFalse(forward(parser, way));
         way.setTag("moped", "yes");
         assertTrue(forward(parser, way));
+        way.setTag("moped", "destination;delivery");
+        assertTrue(forward(parser, way));
+        way.setTag("moped", "private");
+        assertFalse(forward(parser, way));
 
         // Rather unrealistic tagging, but make sure that we prioritize moped
         way.clearTags();
@@ -86,14 +83,22 @@ class ScooterModeAccessParserTest {
         way.setTag("moped", "unknown");
         assertFalse(forward(parser, way));
 
-        // only moped opens it, goods (the first key) does not
+        // the implied moped=no is lifted by a temporal conditional of moped only
         way.clearTags();
         way.setTag("highway", "pedestrian");
-        way.setTag("goods", "yes");
+        way.setTag("motor_vehicle:conditional", "yes @ (06:00-10:00)");
         assertFalse(forward(parser, way));
-        way.setTag("highway", "residential");
-        way.setTag("motor_vehicle", "no");
+        way.setTag("moped:conditional", "yes @ (06:00-10:00)");
         assertTrue(forward(parser, way));
+
+        // goods is not a restriction key
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("goods", "no");
+        assertTrue(forward(parser, way));
+        way.setTag("goods", "yes");
+        way.setTag("motor_vehicle", "no");
+        assertFalse(forward(parser, way));
 
         way.clearTags();
         way.setTag("highway", "cycleway");
@@ -121,6 +126,25 @@ class ScooterModeAccessParserTest {
 
         way.setTag("motor_vehicle", "no");
         assertTrue(forward(parser, way));
+
+        // without access tags open, unless foot or bicycle is tagged
+        way.clearTags();
+        way.setTag("route", "ferry");
+        assertTrue(forward(parser, way));
+        way.setTag("foot", "yes");
+        assertFalse(forward(parser, way));
+        // a ferry for cars or trucks takes scooters too, unless restricted
+        way.setTag("motorcar", "yes");
+        assertTrue(forward(parser, way));
+        assertFalse(forward(TruckVehicles.create(em, "truck", new PMap()), way));
+        way.removeTag("motorcar");
+        way.setTag("hgv", "yes");
+        assertTrue(forward(parser, way));
+        way.setTag("motorcar", "no");
+        assertFalse(forward(parser, way));
+        way.setTag("motorcar", "yes");
+        way.setTag("motor_vehicle", "no");
+        assertFalse(forward(parser, way));
     }
 
     @Test

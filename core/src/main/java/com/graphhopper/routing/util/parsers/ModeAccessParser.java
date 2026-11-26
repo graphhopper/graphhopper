@@ -24,6 +24,7 @@ import static com.graphhopper.routing.util.parsers.AccessResolver.RESTRICTED;
  */
 public class ModeAccessParser implements TagParser {
     private static final Set<String> ONEWAYS_FW = Set.of("yes", "true", "1");
+    private static final List<String> LARGER_VEHICLES = List.of("motorcar", "hgv");
 
     /**
      * Everything that distinguishes one mode from another. The defaults describe a generic mode without
@@ -79,15 +80,6 @@ public class ModeAccessParser implements TagParser {
             return result;
         }
 
-        /**
-         * @return a rule that blocks the given highways, motorroad=yes and a minspeed above maxMinSpeed unless the
-         * given key has one of the allowed values, e.g. moped=yes for a scooter
-         */
-        public static Predicate<ReaderWay> explicitOnly(String key, Set<String> allowed, Set<String> highways, double maxMinSpeed) {
-            return way -> !way.hasTag(key, allowed) && (way.hasTag("highway", highways) || way.hasTag("motorroad", "yes")
-                    || way.hasTag("minspeed") && OSMMaxSpeedParser.parseMaxspeedString(way.getTag("minspeed")) > maxMinSpeed);
-        }
-
         public Options(List<String> restrictionKeys) {
             this.restrictionKeys = restrictionKeys;
             impliedFerryAccess = restrictionKeys.contains("motorcar");
@@ -133,7 +125,7 @@ public class ModeAccessParser implements TagParser {
         }
 
         /**
-         * @param blocked an additional rule that closes the way regardless of its access values, e.g. explicitOnly
+         * @param blocked an additional rule that closes the way regardless of its access values
          */
         public Options blocked(Predicate<ReaderWay> blocked) {
             this.blocked.add(blocked);
@@ -208,7 +200,8 @@ public class ModeAccessParser implements TagParser {
 
         /**
          * @param impliedFerryAccess true if a ferry without access tags is accessible (unless foot or bicycle is
-         *                           tagged) and hgv=yes implies access, default: true if motorcar is a restriction key
+         *                           tagged) and, unless hgv is a restriction key, if motorcar or else hgv is yes,
+         *                           default: true if motorcar is a restriction key
          */
         public Options impliedFerryAccess(boolean impliedFerryAccess) {
             this.impliedFerryAccess = impliedFerryAccess;
@@ -234,6 +227,7 @@ public class ModeAccessParser implements TagParser {
     private final BooleanEncodedValue roundaboutEnc;
     private final AccessResolver resolver;
     private final List<Predicate<ReaderWay>> blockingRules;
+    private final boolean largerVehicleFerryAccess;
     private final Options options;
 
     public ModeAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc, Options options) {
@@ -244,6 +238,7 @@ public class ModeAccessParser implements TagParser {
                 options.impliedDefaults, options.barrierDefaults, options.conditions, options.lockedValues,
                 options.unknownBarrierValueHides);
         blockingRules = options.blockingRules();
+        largerVehicleFerryAccess = options.impliedFerryAccess && !options.restrictionKeys.contains("hgv");
         vehicleForward = options.restrictionKeys.stream().map(r -> r + ":forward").toList();
         vehicleBackward = options.restrictionKeys.stream().map(r -> r + ":backward").toList();
         onewayModeKeys = options.restrictionKeys.stream().map(r -> "oneway:" + r).toList();
@@ -310,8 +305,8 @@ public class ModeAccessParser implements TagParser {
                     // a restricted value here was lifted by a temporal conditional and counts like no value,
                     // implied default is allowed only if foot and bicycle is not specified:
                     || options.impliedFerryAccess && (result.value().isEmpty() || resolver.isRestricted(result.value())) && !way.hasTag("foot") && !way.hasTag("bicycle")
-                    // if hgv is allowed then smaller trucks and cars are allowed too even if not specified
-                    || options.impliedFerryAccess && way.hasTag("hgv", "yes")) {
+                    // if cars or hgv are allowed then smaller vehicles are allowed too even if not specified
+                    || largerVehicleFerryAccess && "yes".equals(way.getFirstValue(LARGER_VEHICLES))) {
                 // ferry is allowed via explicit tag
             } else {
                 return;
@@ -381,9 +376,10 @@ public class ModeAccessParser implements TagParser {
 
     private boolean hasBackwardLane(ReaderWay way) {
         for (String key : options.backwardLaneKeys) {
-            // lanes:psv:backward can contain a positive number
-            if (way.hasTag("oneway:" + key, "no") || way.hasTag(key, "opposite_lane") || way.hasTag("lanes:" + key + ":backward")
-                    || way.hasTag(key + ":lanes:backward") || way.hasTag(key + ":backward", "yes"))
+            // lanes:psv:backward is the number of lanes, psv:lanes:backward has a value per lane
+            if (way.hasTag("oneway:" + key, "no") || way.hasTag(key, "opposite_lane") || way.hasTag(key + ":backward", "yes")
+                    || way.hasTag("lanes:" + key + ":backward") && !way.hasTag("lanes:" + key + ":backward", "0")
+                    || way.hasTag(key + ":lanes:backward"))
                 return true;
         }
         return false;
