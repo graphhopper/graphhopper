@@ -27,10 +27,12 @@ public class OSMValueExtractor {
     }
 
     public static void extractTons(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
-        final String rawValue = way.getFirstValue(keys);
-        double value = stringToTons(rawValue);
-
-        if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
+        // the most restrictive value, e.g. maxweight=40 and maxweightrating:hgv=7.5 is 7.5
+        double value = Double.POSITIVE_INFINITY;
+        for (String key : keys) {
+            double tons = stringToTons(way.getTag(key, ""));
+            if (tons < value) value = tons;
+        }
 
         valueEncoder.setDecimal(false, edgeId, edgeIntAccess, value);
         // too many

@@ -37,6 +37,14 @@ public class OSMMaxWeightParserTest {
         readerWay.setTag("highway", "primary");
         readerWay.setTag("maxweight:hgv", "3.5");
         assertEquals(3.5, getMaxWeight(readerWay), .01);
+
+        // the most restrictive tag wins, not the first
+        readerWay.setTag("maxweight", "40");
+        readerWay.setTag("maxweightrating:hgv", "7.5");
+        readerWay.setTag("maxweight:hgv", "invalid");
+        assertEquals(7.5, getMaxWeight(readerWay), .01);
+        readerWay.setTag("hgv:conditional", "no @ (weight > 12)");
+        assertEquals(7.5, getMaxWeight(readerWay), .01);
     }
 
     @Test

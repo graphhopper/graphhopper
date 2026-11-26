@@ -49,7 +49,8 @@ public class OSMMaxWeightParser implements TagParser {
             String value = way.getTag(restriction, "");
             if (value.startsWith("no") && value.indexOf("@") < 6) { // no,none[ ]@
                 double dec = OSMValueExtractor.conditionalWeightToTons(value);
-                if (!Double.isNaN(dec)) weightEncoder.setDecimal(false, edgeId, edgeIntAccess, dec);
+                if (dec < weightEncoder.getDecimal(false, edgeId, edgeIntAccess))
+                    weightEncoder.setDecimal(false, edgeId, edgeIntAccess, dec);
             }
         }
     }
