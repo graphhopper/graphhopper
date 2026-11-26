@@ -39,7 +39,6 @@
         <nd ref="30"/>
         <tag k="name" v="A D C"/>
         <tag k="highway" v="motorway"/>
-        <tag k="oneway" v="no"/>
     </way>
 
     <way id="11" version="85761">
@@ -56,7 +55,6 @@
         <nd ref="50"/>
         <tag k="name" v="B D E"/>
         <tag k="highway" v="motorway"/>
-        <tag k="oneway" v="no"/>
         <tag k="maxspeed" v="40"/>
     </way>
 
