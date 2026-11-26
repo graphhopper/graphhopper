@@ -235,7 +235,7 @@ public class OSMReaderTest {
                         addToSpeed(If("road_environment == FERRY", LIMIT, "ferry_speed")).
                         addToSpeed(Else(LIMIT, "car_average_speed"))));
             }
-        }.importOrLoad();
+        }.setMinNetworkSize(0).importOrLoad();
 
         GHResponse rsp = hopper.route(new GHRequest(55.0, 10.2, 54.0, 10.1).
                 setProfile("car").
@@ -374,15 +374,15 @@ public class OSMReaderTest {
 
         assertEquals(n20, findID(hopper.getLocationIndex(), 52, 9.4));
 
-        assertEquals(GHUtility.asSet(n20, n30), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
-        assertEquals(GHUtility.asSet(new20, n10, n50), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
+        assertEquals(GHUtility.asSet(n20, n30), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n10)));
+        assertEquals(GHUtility.asSet(new20, n10, n50), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n30)));
 
-        EdgeIterator iter = carOutExplorer.setBaseNode(n20);
+        EdgeIterator iter = carAllExplorer.setBaseNode(n20);
         assertTrue(iter.next());
         assertEquals(n10, iter.getAdjNode());
         assertFalse(iter.next());
 
-        iter = carOutExplorer.setBaseNode(new20);
+        iter = carAllExplorer.setBaseNode(new20);
         assertTrue(iter.next());
         assertEquals(n30, iter.getAdjNode());
         assertFalse(iter.next());
@@ -464,15 +464,15 @@ public class OSMReaderTest {
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 55);
         int n30 = AbstractGraphStorageTester.getIdOf(graph, 53);
         int n80 = AbstractGraphStorageTester.getIdOf(graph, 58);
-        assertEquals(GHUtility.asSet(n50), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n60)));
+        assertEquals(GHUtility.asSet(n50), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n60)));
 
-        EdgeIterator iter = carOutExplorer.setBaseNode(n60);
+        EdgeIterator iter = carAllExplorer.setBaseNode(n60);
         assertTrue(iter.next());
         assertEquals(n50, iter.getAdjNode());
         assertFalse(iter.next());
 
-        assertTrue(GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)).contains(n50));
-        assertEquals(GHUtility.asSet(n30, n80, n60), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n50)));
+        assertTrue(GHUtility.getNeighbors(carAllExplorer.setBaseNode(n30)).contains(n50));
+        assertEquals(GHUtility.asSet(n30, n80, n60), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n50)));
     }
 
     @Test

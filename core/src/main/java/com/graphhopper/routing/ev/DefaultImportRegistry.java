@@ -286,7 +286,7 @@ public class DefaultImportRegistry implements ImportRegistry {
             );
         else if (VehicleAccess.key("car").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("car"),
-                    CarAccessParser::new,
+                    ModeAccessParser::createCar,
                     "roundabout"
             );
         else if (VehicleAccess.key("roads").equals(name))

@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Combined test for bike_access and bike_road_access — companion to
- * {@link CarAccessAndRoadAccessTest}.
+ * {@link CarModeAccessParserTest}.
  * <p>
  * For the car/foot pair the boolean and the qualifier almost always agree. For bikes they
  * deliberately don't: {@link BikeCommonAccessParser} is permissive on

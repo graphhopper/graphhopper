@@ -376,6 +376,7 @@ public class GraphHopperOSMTest {
                         TestProfiles.accessAndSpeed(profile2, "foot")
                 ).
                 setFileBacked(false).
+                setMinNetworkSize(0).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm8);
         instance.importOrLoad();

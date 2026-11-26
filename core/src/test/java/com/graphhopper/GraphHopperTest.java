@@ -593,12 +593,14 @@ public class GraphHopperTest {
     @Test
     public void testNorthBayreuthBlockedEdges() {
         final String profile = "profile";
+        Profile p = TestProfiles.accessAndSpeed(profile, "car");
+        p.getCustomModel().addToPriority(If("road_class == TRACK && (track_type == GRADE4 || track_type == GRADE5)", MULTIPLY, "0"));
 
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
-                setEncodedValuesString("car_access, car_average_speed").
-                setProfiles(TestProfiles.accessAndSpeed(profile, "car"));
+                setEncodedValuesString("car_access, car_average_speed, road_class, track_type").
+                setProfiles(p);
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
@@ -2599,9 +2601,10 @@ public class GraphHopperTest {
         final String profile = "profile";
         Profile p = TestProfiles.accessAndSpeed(profile, "car");
         p.getCustomModel().addToPriority(If("road_access == DESTINATION", MULTIPLY, ".1"));
+        p.getCustomModel().addToPriority(If("road_class == TRACK && (track_type == GRADE4 || track_type == GRADE5)", MULTIPLY, "0"));
 
         GraphHopper hopper = new GraphHopper()
-                .setEncodedValuesString("car_access, car_average_speed, road_access")
+                .setEncodedValuesString("car_access, car_average_speed, road_access, road_class, track_type")
                 .setProfiles(p)
                 .setGraphHopperLocation(GH_LOCATION)
                 .setOSMFile(BAYREUTH);

@@ -90,7 +90,8 @@ public class RouteResourceCustomModelTest {
                         new Profile("json_bike").setCustomModel(null).putHint("custom_model_files", List.of("bike.json", "bike_elevation.json")),
                         TestProfiles.accessSpeedAndPriority("foot_profile", "foot"),
                         new Profile("car_no_unclassified").setCustomModel(TestProfiles.accessAndSpeed("unused", "car").getCustomModel().
-                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0"))),
+                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0")).
+                                addToPriority(If("road_class == TRACK && (track_type == GRADE4 || track_type == GRADE5)", MULTIPLY, "0"))),
                         new Profile("custom_bike").
                                 setCustomModel(TestProfiles.accessSpeedAndPriority("unused", "bike").getCustomModel().
                                         addToSpeed(If("road_class == PRIMARY", LIMIT, "28")).

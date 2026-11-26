@@ -3,8 +3,13 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.Roundabout;
+import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 
 import java.util.*;
 import java.util.function.Function;
@@ -48,9 +53,8 @@ public class ModeAccessParser implements TagParser {
         VehicleConditions conditions;
 
         /**
-         * A motor vehicle like the former CarAccessParser: highway allowlist, pedestrian only if explicitly allowed,
+         * A motor vehicle like the car, see createCar: highway allowlist, pedestrian only if explicitly allowed,
          * oneway implied by motorway but not by motorway_link, customers unknown.
-         * For the generic car use new Options(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)).
          */
         public static Options motorVehicle(List<String> restrictionKeys) {
             Set<String> restricted = new HashSet<>(RESTRICTED);
@@ -254,6 +258,19 @@ public class ModeAccessParser implements TagParser {
     public ModeAccessParser(List<String> restrictionKeys, BooleanEncodedValue accessEnc,
                             boolean skipEmergency, BooleanEncodedValue roundaboutEnc) {
         this(restrictionKeys, accessEnc, skipEmergency, roundaboutEnc, Set.of(), Set.of());
+    }
+
+    /**
+     * The car: Options.motorVehicle, block_private=false allows private, permit and service. Further values can be
+     * moved with allow and restrict.
+     */
+    public static ModeAccessParser createCar(EncodedValueLookup lookup, PMap properties) {
+        Set<String> allow = new HashSet<>(PMap.toSet(properties.getString("allow", "")));
+        if (!properties.getBool("block_private", true)) allow.addAll(List.of("private", "permit", "service"));
+        Options options = Options.motorVehicle(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)).
+                allow(allow, PMap.toSet(properties.getString("restrict", "")));
+        return new ModeAccessParser(lookup.getBooleanEncodedValue(VehicleAccess.key("car")),
+                lookup.getBooleanEncodedValue(Roundabout.KEY), options);
     }
 
     public List<String> getRestrictionKeys() {

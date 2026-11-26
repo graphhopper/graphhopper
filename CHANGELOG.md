@@ -1,5 +1,6 @@
 ### 12.0 [not yet released]
 
+- removed CarAccessParser, car_access is now created from ModeAccessParser: the tracktype is no longer considered (car.json blocks grade4 and grade5, add a similar rule to your own models), direction-specific and conditional restrictions are evaluated like for hgv_access; allow and restrict are supported in addition to block_private
 - An unknown tracktype value like grade6 is now GRADE5 instead of MISSING.
 - the KVStorage (path details like access_conditional) now only gets the :conditional tags of access keys (access, vehicle, motor_vehicle, motorcar, motorcycle, hgv, psv, bus, hov, bicycle, foot, optionally :forward/:backward), no longer every :conditional tag like oneway:conditional or parking:*:conditional (requires reimport)
 - foot.json: a mapped sidewalk increases the priority of otherwise avoided roads like primary by 10%, add `sidewalk` to graph.encoded_values; foot_priority now also reads sidewalk:both and sidewalk:left+right for no/none/separate, as foot_road_access does
