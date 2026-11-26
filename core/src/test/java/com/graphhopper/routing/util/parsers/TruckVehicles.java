@@ -36,8 +36,8 @@ class TruckVehicles {
         switch (vehicle) {
             case "car" -> options.createConditions().height(1.99);
             case "small_truck" -> options.createConditions().height(2.7).width(2, 0.28).length(5.5).weight(2.08 + 1.4);
-            case "truck" -> options.trackTypes(Set.of()).createConditions().height(3.7).width(2.6, 0.34).length(12).weight(13.0 + 13.0).axes(3).hgv(true);
-            case "taxi" -> options.backwardLaneKeys(List.of("psv", "taxi")).trackTypes(Set.of()).createConditions();
+            case "truck" -> options.createConditions().height(3.7).width(2.6, 0.34).length(12).weight(13.0 + 13.0).axes(3).hgv(true);
+            case "taxi" -> options.backwardLaneKeys(List.of("psv", "taxi")).createConditions();
             case "scooter" -> {
                 Set<String> allowed = new HashSet<>(options.getAllowed());
                 allowed.add("dismount");

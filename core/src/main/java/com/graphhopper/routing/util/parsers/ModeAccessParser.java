@@ -38,21 +38,18 @@ public class ModeAccessParser implements TagParser {
         Set<String> restricted = RESTRICTED;
         final List<Predicate<ReaderWay>> blocked = new ArrayList<>(List.of(IMPASSABLE, EMERGENCY_ACCESS));
         Set<String> highways;
-        Set<String> trackTypes;
         Function<ReaderWay, Map<String, String>> impliedDefaults = AccessResolver::osmDefaults;
         Map<String, Map<String, String>> barrierDefaults = AccessResolver.BARRIER_TYPE_DEFAULTS;
         Set<String> onewayHighways = Set.of("motorway", "motorway_link");
-        List<String> directionalKeys;
         List<String> backwardLaneKeys = List.of();
-        boolean legacyOneway;
         Set<String> lockedValues = ALLOWED;
         boolean unknownBarrierValueHides;
         boolean impliedFerryAccess;
         VehicleConditions conditions;
 
         /**
-         * A motor vehicle like the former CarAccessParser: highway allowlist, tracks only grade1, grade2 or
-         * untagged, pedestrian only if explicitly allowed, no oneway implied by the highway type, customers unknown.
+         * A motor vehicle like the former CarAccessParser: highway allowlist, pedestrian only if explicitly allowed,
+         * oneway implied by motorway but not by motorway_link, customers unknown.
          * For the generic car use new Options(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)).
          */
         public static Options motorVehicle(List<String> restrictionKeys) {
@@ -61,12 +58,9 @@ public class ModeAccessParser implements TagParser {
             return new Options(restrictionKeys).
                     values(ALLOWED, restricted).
                     highways(CAR_HIGHWAYS).
-                    trackTypes(Set.of("grade1", "grade2", "")).
                     impliedDefaults(way -> way.hasTag("highway", "pedestrian") ? Map.of("access", "no") : Map.of()).
                     barrierDefaults(barriers(CAR_BARRIERS)).
-                    onewayHighways(Set.of()).
-                    directionalKeys(List.of("motor_vehicle", "vehicle")).
-                    legacyOneway(true).
+                    onewayHighways(Set.of("motorway")).
                     lockedValues(AccessResolver.INTENDED).
                     unknownBarrierValueHides(true).
                     impliedFerryAccess(true);
@@ -92,7 +86,6 @@ public class ModeAccessParser implements TagParser {
 
         public Options(List<String> restrictionKeys) {
             this.restrictionKeys = restrictionKeys;
-            directionalKeys = restrictionKeys;
             impliedFerryAccess = restrictionKeys.contains("motorcar");
         }
 
@@ -151,21 +144,10 @@ public class ModeAccessParser implements TagParser {
             return this;
         }
 
-        /**
-         * @param trackTypes the accepted tracktype values of highway=track ("" for untagged), other tracks are
-         *                   blocked, null for all
-         */
-        public Options trackTypes(Set<String> trackTypes) {
-            this.trackTypes = trackTypes;
-            return this;
-        }
-
         List<Predicate<ReaderWay>> blockingRules() {
             List<Predicate<ReaderWay>> rules = new ArrayList<>(blocked);
             if (highways != null)
                 rules.add(way -> way.hasTag("highway") && !way.hasTag("highway", highways));
-            if (trackTypes != null)
-                rules.add(way -> way.hasTag("highway", "track") && !trackTypes.contains(way.getTag("tracktype", "")));
             return rules;
         }
 
@@ -194,29 +176,11 @@ public class ModeAccessParser implements TagParser {
         }
 
         /**
-         * @param directionalKeys the keys of the considered oneway:key, key:forward and key:backward tags, most specific first
-         */
-        public Options directionalKeys(List<String> directionalKeys) {
-            this.directionalKeys = directionalKeys;
-            return this;
-        }
-
-        /**
          * @param backwardLaneKeys the keys like psv for which a lane against the oneway opens the backward direction,
          *                         e.g. oneway:psv=no, psv=opposite_lane, lanes:psv:backward=1 or psv:backward=yes
          */
         public Options backwardLaneKeys(List<String> backwardLaneKeys) {
             this.backwardLaneKeys = backwardLaneKeys;
-            return this;
-        }
-
-        /**
-         * @param legacyOneway true for the oneway handling of the former CarAccessParser: a restricted key:forward
-         *                     closes the forward and opens the backward direction even for oneway=yes, a roundabout
-         *                     is oneway even with oneway=no, oneway:key is ignored
-         */
-        public Options legacyOneway(boolean legacyOneway) {
-            this.legacyOneway = legacyOneway;
             return this;
         }
 
@@ -276,9 +240,9 @@ public class ModeAccessParser implements TagParser {
                 options.impliedDefaults, options.barrierDefaults, options.conditions, options.lockedValues,
                 options.unknownBarrierValueHides);
         blockingRules = options.blockingRules();
-        vehicleForward = options.directionalKeys.stream().map(r -> r + ":forward").toList();
-        vehicleBackward = options.directionalKeys.stream().map(r -> r + ":backward").toList();
-        onewayModeKeys = options.directionalKeys.stream().map(r -> "oneway:" + r).toList();
+        vehicleForward = options.restrictionKeys.stream().map(r -> r + ":forward").toList();
+        vehicleBackward = options.restrictionKeys.stream().map(r -> r + ":backward").toList();
+        onewayModeKeys = options.restrictionKeys.stream().map(r -> "oneway:" + r).toList();
     }
 
     public ModeAccessParser(List<String> restrictionKeys, BooleanEncodedValue accessEnc,
@@ -338,19 +302,9 @@ public class ModeAccessParser implements TagParser {
         }
 
         boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
-        boolean forward, backward;
-        if (options.legacyOneway) {
-            boolean forwardClosed = way.hasTag("oneway", "-1") || way.hasTag(vehicleForward, options.restricted);
-            boolean oneway = forwardClosed || isRoundabout || way.hasTag("oneway", ONEWAYS_FW) || way.hasTag(vehicleBackward, options.restricted);
-            forward = !forwardClosed;
-            backward = !oneway || forwardClosed || hasBackwardLane(way);
-        } else {
-            forward = isForwardAccessible(way);
-            backward = isBackwardAccessible(way, isRoundabout);
-        }
-        if (forward)
+        if (isForwardAccessible(way))
             accessEnc.setBool(false, edgeId, edgeIntAccess, true);
-        if (backward)
+        if (isBackwardAccessible(way, isRoundabout))
             accessEnc.setBool(true, edgeId, edgeIntAccess, true);
     }
 
@@ -389,7 +343,7 @@ public class ModeAccessParser implements TagParser {
         // 3. generic oneway tag, then implied oneway from highway type / roundabout.
         //    oneway=no explicitly relaxes the motorway/roundabout implication.
         if (way.hasTag("oneway", ONEWAYS_FW)) return false;
-        if (way.hasTag("oneway", "no")) return true;
+        if (way.hasTag("oneway", "no") || way.hasTag("oneway", "-1")) return true;
         if (way.hasTag("highway", options.onewayHighways)) return false;
         return !isRoundabout;
     }
@@ -403,7 +357,7 @@ public class ModeAccessParser implements TagParser {
         for (int i = 0; i < directionKeys.size(); i++) {
             String value = way.getTag(directionKeys.get(i));
             if (value != null) return "no".equals(value) || !intended && resolver.isRestricted(value);
-            intended |= way.hasTag(options.directionalKeys.get(i), AccessResolver.INTENDED);
+            intended |= way.hasTag(options.restrictionKeys.get(i), AccessResolver.INTENDED);
         }
         return false;
     }

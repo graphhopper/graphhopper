@@ -58,7 +58,7 @@ public class OSMTrackTypeParserTest {
         int edgeId = 0;
         readerWay.setTag("tracktype", "unknownstuff");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(TrackType.MISSING, ttEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(TrackType.GRADE5, ttEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
     @Test

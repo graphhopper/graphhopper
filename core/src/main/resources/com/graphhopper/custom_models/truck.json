@@ -1,5 +1,5 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.encoded_values: hgv_access|allow=delivery;private, hgv_road_access, max_width, max_height, car_average_speed, max_weight, max_weight_except, max_speed, ferry_speed
+// graph.encoded_values: hgv_access|allow=delivery;private, hgv_road_access, road_class, max_width, max_height, car_average_speed, max_weight, max_weight_except, max_speed, ferry_speed
 // profiles:
 //    - name: truck
 //      turn_costs:
@@ -11,6 +11,7 @@
   "parameters": { "vehicle_width": 3, "vehicle_height": 4, "vehicle_weight": 18, "vehicle_max_speed": { "value": 95, "min": 10, "max": 140 } },
   "priority": [
     { "if": "!hgv_access",  "multiply_by": "0" },
+    { "if": "road_class == TRACK", "multiply_by": "0" },
     { "if": "max_width < p_vehicle_width || max_height < p_vehicle_height", "multiply_by": "0" },
     { "if": "max_weight < p_vehicle_weight && max_weight_except == MISSING", "multiply_by": "0" }
   ],

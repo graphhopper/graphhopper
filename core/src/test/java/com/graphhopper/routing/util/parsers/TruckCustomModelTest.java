@@ -37,12 +37,13 @@ public class TruckCustomModelTest {
         em = new EncodingManager.Builder().
                 add(hgvAccess).add(hgvRoadAccess).
                 add(VehicleSpeed.create("car", 5, 5, false)).
-                add(RoadEnvironment.create()).
+                add(RoadEnvironment.create()).add(RoadClass.create()).
                 add(Roundabout.create()).add(FerrySpeed.create()).
                 add(maxWeight).add(maxWeightExcept).add(maxWidth).add(maxHeight).add(MaxSpeed.create()).
                 build();
 
         parsers = new OSMParsers().
+                addWayTagParser(new OSMRoadClassParser(em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class))).
                 addWayTagParser(new OSMMaxHeightParser(maxHeight)).
                 addWayTagParser(new OSMMaxWidthParser(maxWidth)).
                 addWayTagParser(new OSMMaxWeightParser(maxWeight)).
@@ -86,7 +87,7 @@ public class TruckCustomModelTest {
         for (String highway : List.of("primary", "secondary", "tertiary", "residential", "unclassified", "trunk", "motorway"))
             assertEquals(1, priority(createWay(highway)), 0.01, highway + " should be accessible");
 
-        for (String highway : List.of("steps", "footway", "cycleway", "pedestrian", "path", "bridleway"))
+        for (String highway : List.of("steps", "footway", "cycleway", "pedestrian", "path", "bridleway", "track"))
             assertEquals(0, priority(createWay(highway)), 0.01, highway + " should be blocked");
     }
 
