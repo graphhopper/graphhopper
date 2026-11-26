@@ -98,6 +98,7 @@ Here is an overview:
  * tyrasd, improved toll road handling in Austria #3190
  * Vectorial1024, country-specific speed limit issues like #3244, #3248
  * vvikas, ideas for many to many improvements and #616
+ * ZainnQureshii, fix speed limits on edges copied for via-way turn restrictions (#2914)
  * zstadler, multiple fixes and car4wd
  * binora, fix mode in navigation response converter
  * jwltrr, fixed pillar node limits

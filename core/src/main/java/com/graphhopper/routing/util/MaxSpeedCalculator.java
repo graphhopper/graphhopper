@@ -6,9 +6,11 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.DefaultMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.TagParser;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.StopWatch;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
@@ -143,29 +145,27 @@ public class MaxSpeedCalculator {
 
         StopWatch sw = new StopWatch().start();
         AllEdgesIterator iter = graph.getAllEdges();
+        BaseGraph baseGraph = graph.getBaseGraph();
+        EdgeExplorer explorer = baseGraph.createEdgeExplorer();
         while (iter.next()) {
             double fwdMaxSpeedPureOSM = iter.get(maxSpeedEnc);
             double bwdMaxSpeedPureOSM = iter.getReverse(maxSpeedEnc);
 
             // skip speeds-library if max_speed is known for both directions
-            if (fwdMaxSpeedPureOSM != MaxSpeed.MAXSPEED_MISSING
-                    && bwdMaxSpeedPureOSM != MaxSpeed.MAXSPEED_MISSING) continue;
+            boolean estimateFwd = fwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING;
+            boolean estimateBwd = bwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING;
+            if (!estimateFwd && !estimateBwd) continue;
 
             double maxSpeed = isUrbanDensityFun.apply(iter)
                     ? urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage)
                     : ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
-            if (maxSpeed != MaxSpeed.MAXSPEED_MISSING) {
-                if (maxSpeed == 0) {
-                    // TODO fix properly: RestrictionSetter adds artificial edges for which
-                    //  we didn't set the speed in DefaultMaxSpeedParser, #2914
-                    iter.set(maxSpeedEnc, MaxSpeed.MAXSPEED_MISSING, MaxSpeed.MAXSPEED_MISSING);
-                } else {
-                    iter.set(maxSpeedEnc,
-                            fwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING ? maxSpeed : fwdMaxSpeedPureOSM,
-                            bwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING ? maxSpeed : bwdMaxSpeedPureOSM);
-                    iter.set(maxSpeedEstEnc, fwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING, bwdMaxSpeedPureOSM == MaxSpeed.MAXSPEED_MISSING);
-                }
-            }
+            if (maxSpeed == 0 || maxSpeed == MaxSpeed.MAXSPEED_MISSING) continue;
+
+            baseGraph.forEdgeAndCopiesOfEdge(explorer, iter, edge -> {
+                edge.set(maxSpeedEnc, estimateFwd ? maxSpeed : fwdMaxSpeedPureOSM,
+                        estimateBwd ? maxSpeed : bwdMaxSpeedPureOSM);
+                edge.set(maxSpeedEstEnc, estimateFwd, estimateBwd);
+            });
         }
 
         LoggerFactory.getLogger(getClass()).info("max_speed_calculator took: " + sw.stop().getSeconds());
