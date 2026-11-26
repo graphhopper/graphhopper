@@ -44,18 +44,12 @@ class TruckModeAccessParserTest {
         assertFalse(forward(smallTruckParser, way));
         assertTrue(forward(carParser, way));
 
+        // tracks are left to the custom model
         way.clearTags();
         way.setTag("highway", "track");
-        assertFalse(forward(truckParser, way));
-        assertTrue(forward(smallTruckParser, way));
-        assertTrue(forward(carParser, way));
         way.setTag("tracktype", "grade3");
-        assertFalse(forward(truckParser, way));
-        assertFalse(forward(smallTruckParser, way));
-        assertFalse(forward(carParser, way));
-        way.setTag("tracktype", "grade2");
+        assertTrue(forward(truckParser, way));
         assertTrue(forward(carParser, way));
-        assertFalse(forward(taxiParser, way));
     }
 
     @Test
@@ -79,59 +73,75 @@ class TruckModeAccessParserTest {
         way.setTag("service", "emergency_access");
         assertFalse(forward(carParser, way));
 
-        // no oneway implied by motorway or motorway_link
+        // oneway is implied by motorway but not by motorway_link
         way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         assertTrue(forward(carParser, way));
         assertTrue(backward(carParser, way));
         way.setTag("highway", "motorway");
-        assertTrue(backward(carParser, way));
-        way.setTag("oneway", "yes");
+        assertTrue(forward(carParser, way));
         assertFalse(backward(carParser, way));
+        way.setTag("oneway", "no");
+        assertTrue(backward(carParser, way));
     }
 
     @Test
-    public void testLegacyOneway() {
+    public void testOneway() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("vehicle:forward", "no");
         assertFalse(forward(carParser, way));
         assertTrue(backward(carParser, way));
+        // both directions are independent
         way.setTag("vehicle:backward", "no");
-        // a closed forward direction opens the backward direction, even with oneway=yes
-        assertTrue(backward(carParser, way));
+        assertFalse(backward(carParser, way));
+        way.removeTag("vehicle:backward");
         way.setTag("oneway", "yes");
-        assertTrue(backward(carParser, way));
-        way.removeTag("vehicle:forward");
-        assertTrue(forward(carParser, way));
         assertFalse(backward(carParser, way));
 
-        // only the restricted values of vehicle and motor_vehicle count
         way = new ReaderWay(1);
         way.setTag("highway", "track");
-        way.setTag("motor_vehicle:forward", "agricultural");
-        assertFalse(forward(carParser, way));
-        assertTrue(backward(carParser, way));
         way.setTag("motor_vehicle:forward", "private");
         assertTrue(forward(TruckVehicles.create(em, "car", new PMap("block_private=false")), way));
         assertFalse(forward(carParser, way));
-        way = new ReaderWay(1);
-        way.setTag("highway", "residential");
-        way.setTag("motorcar:forward", "no");
-        assertTrue(forward(carParser, way));
-        way.setTag("oneway:motor_vehicle", "yes");
         assertTrue(backward(carParser, way));
 
-        // roundabouts are oneway, even with oneway=no
+        // every restriction key counts and the most specific one decides
+        way = new ReaderWay(1);
+        way.setTag("highway", "residential");
+        way.setTag("hgv:forward", "no");
+        assertFalse(forward(truckParser, way));
+        assertTrue(forward(carParser, way));
+        way.setTag("vehicle:backward", "no");
+        way.setTag("motorcar:backward", "yes");
+        assertTrue(backward(carParser, way));
+        assertFalse(backward(truckParser, way));
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "residential");
+        way.setTag("oneway:motor_vehicle", "yes");
+        assertTrue(forward(carParser, way));
+        assertFalse(backward(carParser, way));
+        way.setTag("oneway:hgv", "no");
+        assertFalse(backward(carParser, way));
+        assertTrue(backward(truckParser, way));
+
+        // oneway=no opens a roundabout, oneway=-1 reverses it
         way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("junction", "roundabout");
+        assertEquals("F-", roundabout(way));
         way.setTag("oneway", "no");
+        assertEquals("FB", roundabout(way));
+        way.setTag("oneway", "-1");
+        assertEquals("-B", roundabout(way));
+    }
+
+    private String roundabout(ReaderWay way) {
         EdgeIntAccess access = new ArrayEdgeIntAccess(1);
         em.getBooleanEncodedValue(Roundabout.KEY).setBool(false, 0, access, true);
         carParser.handleWayTags(0, access, way, null);
-        assertTrue(carParser.getAccessEnc().getBool(false, 0, access));
-        assertFalse(carParser.getAccessEnc().getBool(true, 0, access));
+        return (carParser.getAccessEnc().getBool(false, 0, access) ? "F" : "-") + (carParser.getAccessEnc().getBool(true, 0, access) ? "B" : "-");
     }
 
     @Test
