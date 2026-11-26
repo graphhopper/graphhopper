@@ -139,8 +139,8 @@ public class VehicleConditions {
         if (!way.hasTag("bridge") && (meter(way, "maxheight") < height || meter(way, "maxheight:physical") < height
                 || meter(way, "height") < height + 0.3))
             return true;
-        double tmpWidth = width + mirrorWidth;
-        if (meter(way, "maxwidth") < tmpWidth || meter(way, "maxwidth:physical") < tmpWidth || meter(way, "width") < tmpWidth + 0.05)
+        // signs refer to the vehicle body, only the physical gap has to fit the mirrors too
+        if (meter(way, "maxwidth") < width || meter(way, "maxwidth:physical") < width + mirrorWidth || meter(way, "width") < width + 0.05)
             return true;
         if (meter(way, "maxlength") < length || hgv && meter(way, "maxlength:hgv") < length)
             return true;

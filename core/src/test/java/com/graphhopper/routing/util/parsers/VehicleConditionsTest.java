@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class VehicleConditionsTest {
     private final VehicleConditions truck = new VehicleConditions(List.of("hgv", "motor_vehicle", "vehicle", "access"),
-            Set.of("yes", "destination")).weight(26).height(3.7).width(2.6, 0.34).length(12).axes(3).hgv(true);
+            Set.of("yes", "destination")).weight(26).height(3.7).width(2.55, 0.45).length(12).axes(3).hgv(true);
 
     @Test
     public void conditional() {
@@ -94,15 +94,18 @@ class VehicleConditionsTest {
 
         way.setTag("maxwidth:physical", "2.9");
         assertTrue(truck.exceedsLimits(way));
-        way.setTag("maxwidth:physical", "3");
+        way.setTag("maxwidth:physical", "3.1");
         assertFalse(truck.exceedsLimits(way));
         way.setTag("maxwidth", "6'6\"");
         assertTrue(truck.exceedsLimits(way));
+        // mirrors count for maxwidth:physical only
+        way.setTag("maxwidth", "8'6\"");
+        assertFalse(truck.exceedsLimits(way));
         way.clearTags();
-        // width needs a small margin over width + mirrors
-        way.setTag("width", "2.94");
+        // width needs a small margin
+        way.setTag("width", "2.59");
         assertTrue(truck.exceedsLimits(way));
-        way.setTag("width", "3");
+        way.setTag("width", "2.8");
         assertFalse(truck.exceedsLimits(way));
         way.clearTags();
 
