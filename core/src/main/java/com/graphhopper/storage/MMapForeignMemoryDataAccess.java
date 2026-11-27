@@ -122,6 +122,7 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
             throw new IllegalThreadStateException("already created");
         initRandomAccessFile();
         ensureCapacity(Math.max(10 * 4, bytes));
+        initialized = true;
         return this;
     }
 
@@ -172,6 +173,7 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
             long totalCapacity = (long) segmentCount * segmentSizeInBytes;
 
             mapSegment(HEADER_OFFSET, totalCapacity);
+            initialized = true;
             return true;
         } catch (IOException ex) {
             throw new RuntimeException("Problem while loading " + getFullName(), ex);
@@ -182,6 +184,8 @@ public final class MMapForeignMemoryDataAccess extends AbstractDataAccess {
     public void flush() {
         if (closed)
             throw new IllegalStateException("already closed");
+        if (!initialized)
+            throw new IllegalStateException("not initialized");
 
         try {
             mappedSegment.force();

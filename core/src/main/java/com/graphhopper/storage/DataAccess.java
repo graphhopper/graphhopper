@@ -87,6 +87,9 @@ public interface DataAccess extends Closeable {
      * This method makes sure that the underlying data is written to the storage. Keep in mind that
      * a disc normally has an IO cache so that flush() is (less) probably not save against power
      * loses.
+     *
+     * @throws IllegalStateException if neither {@link #create(long)} nor a successful
+     * {@link #loadExisting()} has initialized this DataAccess
      */
     void flush();
 

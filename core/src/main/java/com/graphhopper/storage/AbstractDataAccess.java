@@ -43,6 +43,8 @@ public abstract class AbstractDataAccess implements DataAccess {
     protected int segmentSizePower;
     protected int indexDivisor;
     protected boolean closed = false;
+    // Independent of capacity, since trimTo(0) does not undo initialization.
+    protected boolean initialized = false;
 
     public AbstractDataAccess(String name, String location, int segmentSize) {
         this.name = name;

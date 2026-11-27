@@ -51,6 +51,7 @@ public class RAMIntDataAccess extends AbstractDataAccess {
             throw new IllegalThreadStateException("already created");
 
         ensureCapacity(Math.max(10 * 4, bytes));
+        initialized = true;
         return this;
     }
 
@@ -116,6 +117,7 @@ public class RAMIntDataAccess extends AbstractDataAccess {
                     }
                     segments[s] = area;
                 }
+                initialized = true;
                 return true;
             }
         } catch (IOException ex) {
@@ -130,6 +132,8 @@ public class RAMIntDataAccess extends AbstractDataAccess {
         }
         if (readOnly)
             throw new IllegalStateException("Cannot flush the read-only DataAccess " + getFullName());
+        if (!initialized)
+            throw new IllegalStateException("not initialized");
         ensureParentDirectoryExists();
         try {
             try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
