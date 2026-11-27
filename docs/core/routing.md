@@ -30,6 +30,11 @@ The flexible and hybrid modes allow adding a desired heading (north based azimut
 to any point. Adding a heading makes it more likely that a route starts towards the provided direction, because
 roads going into other directions are penalized. See [heading](./heading.md) for an example and more information.
 
+## Level
+
+Adding a level forces the router to start or end at a given level. See [level](./level.md) for more information.
+
+
 ## Alternative Routes
 
 For all modes you can calculate alternative routes. Note, that the algorithm
