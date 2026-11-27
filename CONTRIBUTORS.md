@@ -65,6 +65,7 @@ Here is an overview:
  * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806
  * msbarry, fixes like #1733
+ * n8dx, contributions for accessible pedestrian routing
  * nakaner, documentation
  * naser13, fixes like #1923
  * njanakiev, fixes like #1560
