@@ -72,6 +72,8 @@ public class MapMatching {
     private double measurementErrorSigma = 10.0;
     private double transitionProbabilityBeta = 2.0;
     private double uTurnCost = 40.0;
+    private static final TransitionRouteLengthFunction GEOMETRIC_ROUTE_LENGTH = (distance, timeMillis, weight) -> distance;
+    private TransitionRouteLengthFunction transitionRouteLengthFunction = GEOMETRIC_ROUTE_LENGTH;
     private final DistanceCalc distanceCalc = new DistancePlaneProjection();
     private QueryGraph queryGraph;
     private boolean collectDebugInfo = false;
@@ -202,6 +204,10 @@ public class MapMatching {
         this.transitionProbabilityBeta = transitionProbabilityBeta;
     }
 
+    public double getTransitionProbabilityBeta() {
+        return transitionProbabilityBeta;
+    }
+
     /**
      * Standard deviation of the normal distribution [m] used for modeling the
      * GPS error.
@@ -210,8 +216,26 @@ public class MapMatching {
         this.measurementErrorSigma = measurementErrorSigma;
     }
 
+    public double getMeasurementErrorSigma() {
+        return measurementErrorSigma;
+    }
+
     public void setUTurnCost(double uTurnCost) {
         this.uTurnCost = uTurnCost;
+    }
+
+    /**
+     * Sets the strategy used to compute the effective route length passed to
+     * transition probability scoring. The default returns the raw geometric
+     * distance, matching the Newson &amp; Krumm HMM model.
+     * <p>
+     * Does not affect U-turn transitions, which use the fixed
+     * {@link #setUTurnCost(double) U-turn cost} mechanism.
+     *
+     * @param function the scoring strategy, or {@code null} to restore the default
+     */
+    public void setTransitionRouteLengthFunction(TransitionRouteLengthFunction function) {
+        this.transitionRouteLengthFunction = (function != null) ? function : GEOMETRIC_ROUTE_LENGTH;
     }
 
     public void setCollectDebugInfo(boolean collectDebugInfo) {
@@ -629,7 +653,8 @@ public class MapMatching {
                 State to = nextTimeStep.candidates.get(i);
                 Path path = paths.get(i);
                 if (path.isFound()) {
-                    double transitionLogProbability = probabilities.transitionLogProbability(path.getDistance(), linearDistance);
+                    double effectiveRouteLength = transitionRouteLengthFunction.apply(path.getDistance(), path.getTime(), path.getWeight());
+                    double transitionLogProbability = probabilities.transitionLogProbability(effectiveRouteLength, linearDistance);
                     Transition<State> transition = new Transition<>(from, to);
                     roadPaths.put(transition, path);
                     double minusLogProbability = qe.minusLogProbability - probabilities.emissionLogProbability(to.getSnap().getQueryDistance()) - transitionLogProbability;
@@ -767,6 +792,23 @@ public class MapMatching {
 
     public Map<String, Object> getStatistics() {
         return statistics;
+    }
+
+    /**
+     * Strategy for computing the effective route length used in transition
+     * probability scoring. See
+     * {@link MapMatching#setTransitionRouteLengthFunction(TransitionRouteLengthFunction)}.
+     */
+    @FunctionalInterface
+    public interface TransitionRouteLengthFunction {
+        /**
+         * @param distanceMeters geometric distance of the routed path in metres
+         * @param timeMillis     travel time of the routed path in milliseconds
+         * @param weight         weighted cost of the routed path (custom_model units)
+         * @return effective length to be passed to transition probability scoring;
+         *         must be non-negative and comparable to the chord (linear) distance
+         */
+        double apply(double distanceMeters, long timeMillis, double weight);
     }
 
     private static class MapMatchedPath extends Path {
