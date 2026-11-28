@@ -17,6 +17,7 @@
  */
 package com.graphhopper.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.jackson.MultiException;
@@ -66,6 +67,7 @@ public class NearestResource {
     }
 
     @GET
+    @Timed
     public Response doGet(@QueryParam("point") GHPoint point, @QueryParam("elevation") @DefaultValue("false") boolean elevation) {
         Snap snap = index.findClosest(point.lat, point.lon, EdgeFilter.ALL_EDGES);
         if (snap.isValid()) {

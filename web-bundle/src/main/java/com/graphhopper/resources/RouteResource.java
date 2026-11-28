@@ -17,6 +17,7 @@
  */
 package com.graphhopper.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -81,6 +82,7 @@ public class RouteResource {
 
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
+    @Timed
     public Response doGet(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
@@ -186,6 +188,7 @@ public class RouteResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Timed
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         if (!request.hasSnapPreventions())
             request.setSnapPreventions(snapPreventionsDefault);

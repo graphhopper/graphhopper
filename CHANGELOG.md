@@ -23,6 +23,7 @@
 - speeds generated from highway class now respects country-specific default speed limits, but the max_speed encoded value is now required; see #3249
 - subnetwork search now uses ~35% less memory, which potentially allows higher values of prepare.subnetworks.threads  
 - way geometry is now also sorted geographically, #3433
+- the routing endpoints (route, isochrone, spt, match, nearest, navigate, mvt and the pt endpoints) now record a Dropwizard timer each, e.g. com.graphhopper.resources.RouteResource.doGet in /metrics on the admin port
 
 ### 11.0 [14 Oct 2025]
 

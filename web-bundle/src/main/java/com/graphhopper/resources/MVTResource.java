@@ -1,5 +1,6 @@
 package com.graphhopper.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
@@ -48,6 +49,7 @@ public class MVTResource {
     @GET
     @Path("{z}/{x}/{y}.mvt")
     @Produces("application/x-protobuf")
+    @Timed
     public Response doGetXyz(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,

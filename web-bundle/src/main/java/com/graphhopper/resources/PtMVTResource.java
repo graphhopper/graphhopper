@@ -1,5 +1,6 @@
 package com.graphhopper.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.conveyal.gtfs.model.Stop;
 import com.google.protobuf.ByteString;
 import com.graphhopper.GraphHopper;
@@ -48,6 +49,7 @@ public class PtMVTResource {
     @GET
     @Path("{z}/{x}/{y}.mvt")
     @Produces("application/x-protobuf")
+    @Timed
     public Response doGetXyz(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,

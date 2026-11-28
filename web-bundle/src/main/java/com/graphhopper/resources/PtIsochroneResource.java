@@ -18,6 +18,7 @@
 
 package com.graphhopper.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.conveyal.gtfs.model.Stop;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.*;
@@ -89,6 +90,7 @@ public class PtIsochroneResource {
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
+    @Timed
     public Response doGet(
             @QueryParam("point") GHLocationParam sourceParam,
             @QueryParam("time_limit") @DefaultValue("600") long seconds,
