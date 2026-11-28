@@ -18,6 +18,7 @@
 
 package com.graphhopper.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperConfig;
@@ -61,6 +62,7 @@ public class PtRouteResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Timed
     public ObjectNode route(@QueryParam("point") @Size(min=2,max=2) List<GHLocationParam> requestPoints,
                             @QueryParam("pt.earliest_departure_time") @NotNull OffsetDateTimeParam departureTimeParam,
                             @QueryParam("pt.profile_duration") DurationParam profileDuration,

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.navigation;
 
+import com.codahale.metrics.annotation.Timed;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -82,6 +83,7 @@ public class NavigateResource {
     @GET
     @Path("/directions/v5/gh/{profile}/{coordinatesArray : .+}")
     @Produces({MediaType.APPLICATION_JSON})
+    @Timed
     public Response doGet(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
@@ -162,6 +164,7 @@ public class NavigateResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Timed
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
 

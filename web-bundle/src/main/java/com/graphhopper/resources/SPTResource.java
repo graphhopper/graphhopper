@@ -1,5 +1,6 @@
 package com.graphhopper.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.ProfileResolver;
@@ -73,6 +74,7 @@ public class SPTResource {
     // IllegalArgumentExceptions are not mapped to a fixed mediatype, because in RouteResource, it could be GPX.
     @GET
     @Produces({"text/csv", "application/json"})
+    @Timed
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,

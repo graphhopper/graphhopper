@@ -17,6 +17,7 @@
  */
 package com.graphhopper.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -85,6 +86,7 @@ public class MapMatchingResource {
     @POST
     @Consumes({MediaType.APPLICATION_XML, "application/gpx+xml"})
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
+    @Timed
     public Response match(
             @NotNull Gpx gpx,
             @Context UriInfo uriInfo,

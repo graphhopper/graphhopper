@@ -26,6 +26,7 @@ Here is an overview:
  * dewos, web API bug fixes
  * devemux86, improvements regarding Android, GPX and more
  * dos65, bug fixes in routing algo
+ * DrFaust92, timers for the routing endpoints
  * drnextgis, ru translation and JS fixes
  * duongnt, fixes in storage
  * easbar, one of the core developers

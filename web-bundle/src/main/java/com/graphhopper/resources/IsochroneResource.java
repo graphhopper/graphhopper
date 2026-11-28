@@ -1,5 +1,6 @@
 package com.graphhopper.resources;
 
+import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
@@ -70,6 +71,7 @@ public class IsochroneResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Timed
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
